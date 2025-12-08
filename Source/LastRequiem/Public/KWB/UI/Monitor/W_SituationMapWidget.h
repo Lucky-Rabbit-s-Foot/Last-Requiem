@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "W_MainHUDWidget.generated.h"
+#include "W_SituationMapWidget.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class LASTREQUIEM_API UW_MainHUDWidget : public UUserWidget
+class LASTREQUIEM_API UW_SituationMapWidget : public UUserWidget
 {
 	GENERATED_BODY()
 	
