@@ -75,6 +75,12 @@ void UB_UnitStatusComponent::UpdateBehaviorState ()
 {
 	EUnitBehaviorState NewState = EUnitBehaviorState::Normal;
 
+	bool bSanityHigh = (CurrentSanity >= 67.0f);
+	bool bSanityLow = (CurrentSanity <= 33.0f);
+
+	bool bLoyaltyHigh = (CurrentLoyalty >= 67.0f);
+	bool bLoyaltyLow = (CurrentLoyalty <= 33.0f);
+
 	if(bSanityHigh) // 정신력 상
 	{
 		if(bLoyaltyLow)

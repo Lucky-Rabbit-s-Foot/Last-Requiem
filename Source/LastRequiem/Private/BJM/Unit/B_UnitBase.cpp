@@ -47,24 +47,74 @@ void AB_UnitBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 void AB_UnitBase::CommandMoveToLocation(float InX, float InY)
 {
-	// 1. 현재 내 컨트롤러 가져오기
-	AController* controller = GetController ();
 
-	// 2. 형변환 (우리가 만든 AI 컨트롤러인지 확인)
-	AB_UnitAIController* AIController = Cast<AB_UnitAIController> ( controller );
+	if (StatusComponent == nullptr)
+	{
+		return;
+	}
+
+	// 현재 상태 확인
+	EUnitBehaviorState CurrentState = StatusComponent->CurrentState;
+
+	switch (CurrentState)
+	{
+		// 말 잘듣는 상태
+		case EUnitBehaviorState::Inspired: // 고양 (충성도 상)
+		case EUnitBehaviorState::Cold:	   // 냉정 (충성도 중)
+		case EUnitBehaviorState::Normal:   // 노말
+	
+			ProcessMoveCommand(InX, InY);
+			break;
+
+		// 말 건성으로 듣는 상태
+		case EUnitBehaviorState::Lazy: // 나태 (충성도 하)
+			// 50퍼 확률로 명령 수행
+			if (FMath::RandRange(0, 100) > 50)
+			{
+				ProcessMoveCommand(InX, InY);
+			}
+			else
+			{
+				// TODO: 나중에 "아 귀찮게 진짜..." 같은 보이스 출력
+				UE_LOG(LogTemp, Warning, TEXT("나태"));
+			}
+			break;
+
+
+		// 통제가 힘든 상태
+		case EUnitBehaviorState::Madness: // 광기 (충성도 상)
+			// TODO: 적에게 무지성 돌진하거나 웃음소리 출력
+			UE_LOG(LogTemp, Error, TEXT("광기"));
+			break;
+
+		case EUnitBehaviorState::Fear:	  // 공포 (충성도 중)
+			// TODO: 뒷걸음질 치거나 제자리에 주저앉음
+			UE_LOG(LogTemp, Error, TEXT("공포"));
+			break;
+
+		case EUnitBehaviorState::Panic:   // 패닉 (충성도 하)
+			// TODO: 아군을 공격하거나 도망침
+			UE_LOG(LogTemp, Error, TEXT("패닉"));
+			break;
+	}
+}
+
+void AB_UnitBase::ProcessMoveCommand ( float InX , float InY )
+{
+	// 현재 내 컨트롤러 가져오기
+	AController* controller = GetController();
+
+	// 내가 만든 AI 컨트롤러인지 확인
+	AB_UnitAIController* AIController = Cast<AB_UnitAIController>(controller);
 
 	if (AIController)
 	{
-		// 3. 목표 위치 만들기 (Z축은 현재 내 높이 그대로)
+		// 목표 위치 만들기)
 		FVector TargetLocation ( InX , InY , GetActorLocation ().Z );
 
-		// 4. 이동 명령 내리기 (MoveToLocation은 언리얼 내장 함수)
-		// - TargetLocation: 목표 지점
-		// - -1.0f: 멈추는 거리 (기본값)
+		// 목표 지점
 		AIController->MoveToLocation ( TargetLocation );
 
-		// (디버그용) 로그 찍어보기
-		// UE_LOG(LogTemp, Warning, TEXT("Moving To: %f, %f"), InX, InY);
 	}
 }
 

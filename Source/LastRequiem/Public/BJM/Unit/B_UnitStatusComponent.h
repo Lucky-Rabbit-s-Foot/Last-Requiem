@@ -36,7 +36,7 @@ public:
 	float MaxHP = 100.0f;
 
 	// 현재 체력
-	UPROPERTY (VisibleAnywhere, BlueprintReadOnly, Category = "Unit|Stat")
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Stat")
 	float CurrentHP;
 
 	// 최대 정신력
@@ -44,7 +44,7 @@ public:
 	float MaxSanity = 100.0f;
 
 	// 현제 정신력
-	UPROPERTY (VisibleAnywhere, BlueprintReadOnly, Category = "Unit|Stat")
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Stat")
 	float CurrentSanity;
 
 	// 최대 충성심
@@ -52,11 +52,11 @@ public:
 	float MaxLoyalty = 100.0f;
 
 	// 현재 충성심
-	UPROPERTY (VisibleAnywhere, BlueprintReadOnly, Category = "Unit|Stat")
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Stat")
 	float CurrentLoyalty;
 
 	// 유닛 멘탈 상황
-	UPROPERTY (VisibleAnywhere, BlueprintReadOnly, Category = "Unit|Stat")
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Stat")
 	EUnitBehaviorState CurrentState;
 
 	// =================================== [이 벤 트] ===================================
@@ -84,11 +84,7 @@ public:
 private:
 	void UpdateBehaviorState ();
 
-	bool bSanityHigh = (CurrentSanity >= 67.0f);
-	bool bSanityLow = (CurrentSanity <= 33.0f);
 
-	bool bLoyaltyHigh = (CurrentLoyalty >= 67.0f);
-	bool bLoyaltyLow = (CurrentLoyalty <= 33.0f);
 
 
 		

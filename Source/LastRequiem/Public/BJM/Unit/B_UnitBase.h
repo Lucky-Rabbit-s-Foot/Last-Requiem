@@ -36,7 +36,11 @@ public:
 public:
 
 	// 좌표를 받아 이동하는 함수
-	UFUNCTION(BlueprintCallable, Category = "Unit|Command")
+	UFUNCTION(BlueprintCallable, Category = "Unit|Move")
 	void CommandMoveToLocation(float InX, float InY);
+
+protected:
+	UFUNCTION(BlueprintCallable, Category = "Unit|Move")
+	void ProcessMoveCommand(float InX, float InY);
 
 };
