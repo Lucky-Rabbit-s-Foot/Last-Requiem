@@ -41,9 +41,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Unit|Move")
 	void CommandMoveToLocation(float InX, float InY);
 
-protected:
 	UFUNCTION(BlueprintCallable, Category = "Unit|Move")
 	void ProcessMoveCommand(float InX, float InY);
+
+	UFUNCTION ()
+	void OnMapMoveCommand ( FVector TargetLocation );
 
 public:
 

@@ -6,6 +6,7 @@
 #include "BJM/Unit/B_UnitAIController.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "KWB/UI/W_MapWidget.h"
 
 
 // Sets default values
@@ -116,7 +117,13 @@ void AB_UnitBase::ProcessMoveCommand(float InX, float InY)
 		// 목표 지점
 		AIController->MoveToLocation(TargetLocation);
 
+
 	}
+}
+
+void AB_UnitBase::OnMapMoveCommand ( FVector TargetLocation )
+{
+	ProcessMoveCommand ( TargetLocation.X , TargetLocation.Y );
 }
 
 float AB_UnitBase::TakeDamage ( float DamageAmount , FDamageEvent const& DamageEvent , AController* EventInstigator , AActor* DamageCauser )
