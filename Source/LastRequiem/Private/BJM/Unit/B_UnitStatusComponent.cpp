@@ -37,12 +37,12 @@ void UB_UnitStatusComponent::BeginPlay()
 //	// ...
 //}
 
-void UB_UnitStatusComponent::ApplyDamage (float InDamage)
+void UB_UnitStatusComponent::ApplyDamage(float InDamage)
 {
 	// 데미지 음수일 경우 무시(혹시몰라서 넣음)
 	if (InDamage <= 0.0f) return;
 
-	CurrentHP = FMath::Clamp ( CurrentHP - InDamage , 0.0f , MaxHP );
+	CurrentHP = FMath::Clamp(CurrentHP - InDamage, 0.0f, MaxHP);
 
 	if (OnHPChanged.IsBound())
 	{
@@ -54,11 +54,11 @@ void UB_UnitStatusComponent::ApplyDamage (float InDamage)
 
 void UB_UnitStatusComponent::ModifySanity (float InAmount)
 {
-	CurrentSanity = FMath::Clamp ( CurrentSanity + InAmount , 0.0f , MaxSanity );
+	CurrentSanity = FMath::Clamp(CurrentSanity + InAmount, 0.0f, MaxSanity);
 
-	if (OnSanityChanged.IsBound ())
+	if (OnSanityChanged.IsBound())
 	{
-		OnSanityChanged.Broadcast ( CurrentSanity , MaxSanity );
+		OnSanityChanged.Broadcast(CurrentSanity, MaxSanity);
 	}
 
 	UpdateBehaviorState ();
