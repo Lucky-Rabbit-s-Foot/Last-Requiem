@@ -11,6 +11,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam (FOnStateChanged, EUnitBehaviorState, NewState );
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams (FOnStatChanged, float, Current, float, Max );
 
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class LASTREQUIEM_API UB_UnitStatusComponent : public UActorComponent
 {
@@ -31,27 +32,21 @@ public:
 public:
 	// =================================== [스탯 설정] ===================================
 
-	// 최대 체력
+	// 체력
 	UPROPERTY (EditAnywhere, BlueprintReadWrite, Category = "Unit|Stat")
 	float MaxHP = 100.0f;
-
-	// 현재 체력
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Stat")
 	float CurrentHP;
 
-	// 최대 정신력
+	// 정신력
 	UPROPERTY (EditAnywhere, BlueprintReadWrite, Category = "Unit|Stat")
 	float MaxSanity = 100.0f;
-
-	// 현제 정신력
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Stat")
 	float CurrentSanity;
 
-	// 최대 충성심
+	// 충성심
 	UPROPERTY (EditAnywhere, BlueprintReadWrite, Category = "Unit|Stat")
 	float MaxLoyalty = 100.0f;
-
-	// 현재 충성심
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Stat")
 	float CurrentLoyalty;
 
@@ -73,7 +68,7 @@ public:
 	// =================================== [ 함    수] ===================================
 
 	UFUNCTION (BlueprintCallable, Category = "Unit|Logic")
-	void ApplyDamage (float InDamage);
+	void TakeDamage (float InDamage);
 
 	UFUNCTION (BlueprintCallable, Category = "Unit|Logic")
 	void ModifySanity (float InAmount);
@@ -85,6 +80,9 @@ private:
 	void UpdateBehaviorState ();
 
 
+
+
+private:
 
 
 		

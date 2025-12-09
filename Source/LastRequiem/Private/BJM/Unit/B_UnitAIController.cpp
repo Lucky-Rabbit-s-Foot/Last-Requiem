@@ -13,7 +13,7 @@
 AB_UnitAIController::AB_UnitAIController()
 {
 	BehaviorTreeComponent = CreateDefaultSubobject<UBehaviorTreeComponent>(TEXT("BehaviorTreeComponent"));
-	Blackboard = CreateDefaultSubobject<UBlackboardComponent>(TEXT("BlackboardComponent"));
+	BlackboardComponent = CreateDefaultSubobject<UBlackboardComponent>(TEXT("BlackboardComponent"));
 	AIPerception = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerception"));
 
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
@@ -81,8 +81,11 @@ void AB_UnitAIController::OnPossess(APawn* InPawn)
 
 	AIPerception->OnTargetPerceptionUpdated.AddDynamic(this, &AB_UnitAIController::OnTargetDetected);
 
-	// BT들어가야됨
-	// if (BTAsset) RunBehaviorTree(BTAsset);
+	if (BTAsset && BlackboardComponent)
+	{
+		BlackboardComponent->InitializeBlackboard(*BTAsset->BlackboardAsset);
+		RunBehaviorTree(BTAsset);
+	}
 }
 
 void AB_UnitAIController::OnTargetDetected(AActor* InActor, FAIStimulus InStimulus)

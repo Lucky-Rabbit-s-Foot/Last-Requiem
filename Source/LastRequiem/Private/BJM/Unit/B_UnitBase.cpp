@@ -4,6 +4,7 @@
 #include "BJM/Unit/B_UnitBase.h"
 #include "BJM/Unit/B_UnitStatusComponent.h"
 #include "BJM/Unit/B_UnitAIController.h"
+#include "Kismet/GameplayStatics.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 
@@ -99,7 +100,7 @@ void AB_UnitBase::CommandMoveToLocation(float InX, float InY)
 	}
 }
 
-void AB_UnitBase::ProcessMoveCommand ( float InX , float InY )
+void AB_UnitBase::ProcessMoveCommand(float InX, float InY)
 {
 	// 현재 내 컨트롤러 가져오기
 	AController* controller = GetController();
@@ -109,12 +110,69 @@ void AB_UnitBase::ProcessMoveCommand ( float InX , float InY )
 
 	if (AIController)
 	{
-		// 목표 위치 만들기)
-		FVector TargetLocation ( InX , InY , GetActorLocation ().Z );
+		// 목표 위치 만들기
+		FVector TargetLocation(InX, InY, GetActorLocation().Z);
 
 		// 목표 지점
-		AIController->MoveToLocation ( TargetLocation );
+		AIController->MoveToLocation(TargetLocation);
 
 	}
 }
 
+float AB_UnitBase::TakeDamage ( float DamageAmount , FDamageEvent const& DamageEvent , AController* EventInstigator , AActor* DamageCauser )
+{
+	float ActualDamage = Super::TakeDamage ( DamageAmount , DamageEvent , EventInstigator , DamageCauser );
+
+
+	OnTakeDamage_Unit ( this , ActualDamage , nullptr , EventInstigator , DamageCauser );
+
+	UE_LOG ( LogTemp , Warning , TEXT ( "%s에게 %.1f 데미지 / 남은 체력: %.1f" ) ,
+		*DamageCauser->GetName () , ActualDamage , StatusComponent->CurrentHP );
+
+	return ActualDamage;
+}
+
+void AB_UnitBase::UnitAttack(AActor* TargetActor)
+{
+	if (TargetActor == nullptr || !bIsAlive) return;
+
+	FVector LookDir = TargetActor->GetActorLocation () - GetActorLocation ();
+	LookDir.Z = 0.0f;
+	FRotator TargetRot = FRotationMatrix::MakeFromX ( LookDir ).Rotator ();
+	SetActorRotation ( TargetRot );
+
+	UGameplayStatics::ApplyDamage (
+		TargetActor,
+		AttackDamage,    
+		GetController(),
+		this,
+		UDamageType::StaticClass () // 데미지 유형
+	);
+
+	UE_LOG ( LogTemp , Warning , TEXT ( "% s 공격!" ) , *TargetActor->GetName () );
+
+
+	FVector MuzzleLoc = GetActorLocation ();
+	if (GetMesh ()->DoesSocketExist ( MuzzleSocketName ))
+	{
+		MuzzleLoc = GetMesh ()->GetSocketLocation ( MuzzleSocketName );
+	}
+	DrawDebugLine ( GetWorld () , MuzzleLoc , TargetActor->GetActorLocation () , FColor::Red , false , 0.2f , 0 , 1.0f );
+}
+
+void AB_UnitBase::OnTakeDamage_Unit ( AActor* DamagedActor , float Damage , const UDamageType* DamageType , AController* InstigateBy , AActor* DamageCauser )
+{
+	if (!bIsAlive) return;
+
+	StatusComponent->TakeDamage(Damage);
+	if (!IsAlive ())
+	{
+		OnDie_Unit ();
+	}
+}
+
+void AB_UnitBase::OnDie_Unit ()
+{
+	bIsAlive = false;
+	OnUnitDieDelegate.Broadcast ();
+}

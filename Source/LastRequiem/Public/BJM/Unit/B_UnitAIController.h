@@ -28,10 +28,10 @@ public:
 protected:
 
 	// BT 실행 함수
+
 	virtual void OnPossess(APawn* InPawn) override;
 
 public:
-	// =========================== [컴포넌트] ===========================
 
 	// 감각 시스템
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
@@ -47,6 +47,9 @@ public:
 	// 블랙보드
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	UBlackboardComponent* BlackboardComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	class UBehaviorTree* BTAsset;
 
 
 	// 적 감지 호출 이벤트

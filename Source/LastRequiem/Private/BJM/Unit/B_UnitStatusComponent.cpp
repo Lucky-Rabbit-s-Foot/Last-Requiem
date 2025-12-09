@@ -37,7 +37,7 @@ void UB_UnitStatusComponent::BeginPlay()
 //	// ...
 //}
 
-void UB_UnitStatusComponent::ApplyDamage(float InDamage)
+void UB_UnitStatusComponent::TakeDamage(float InDamage)
 {
 	// 데미지 음수일 경우 무시(혹시몰라서 넣음)
 	if (InDamage <= 0.0f) return;
@@ -127,4 +127,6 @@ void UB_UnitStatusComponent::UpdateBehaviorState ()
 	}
 
 }
+
+
 

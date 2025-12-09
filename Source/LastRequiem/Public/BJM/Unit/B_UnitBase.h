@@ -7,6 +7,8 @@
 #include "B_UnitAIController.h"
 #include "B_UnitBase.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnUnitDieDelegate );
+
 class UB_UnitStatusComponent;
 
 
@@ -42,5 +44,40 @@ public:
 protected:
 	UFUNCTION(BlueprintCallable, Category = "Unit|Move")
 	void ProcessMoveCommand(float InX, float InY);
+
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Unit|Attack")
+	float AttackRange = 1000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Unit|Attack")
+	float AttackDamage = 10.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Unit|Attack")
+	FName MuzzleSocketName = TEXT("Muzzle");
+
+	virtual float TakeDamage ( float DamageAmount , struct FDamageEvent const& DamageEvent , class AController* EventInstigator , AActor* DamageCauser ) override;
+
+	UFUNCTION(BlueprintCallable, Category = "Unit|Attack")
+	void UnitAttack(AActor* TargetActor);
+
+private:
+	bool bIsAlive = true;
+	FOnUnitDieDelegate OnUnitDieDelegate;
+
+public:
+	UFUNCTION ( BlueprintCallable )
+	inline bool IsAlive () { return bIsAlive; }
+
+	UFUNCTION ()
+	void OnTakeDamage_Unit (
+		AActor* DamagedActor ,
+		float Damage ,
+		const class UDamageType* DamageType ,
+		class AController* InstigateBy ,
+		AActor* DamageCauser
+	);
+
+	void OnDie_Unit ();
 
 };
