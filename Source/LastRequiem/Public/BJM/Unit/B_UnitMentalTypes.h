@@ -22,3 +22,13 @@ enum class EUnitBehaviorState : uint8
 	Fear        UMETA (DisplayName = "공포"),		// 충성도 중
 	Panic       UMETA (DisplayName = "패닉"),		// 충성도 하
 };
+
+UENUM ( BlueprintType )
+enum class EUnitActionState : uint8
+{
+	Idle        UMETA ( DisplayName = "Idle" ) ,        // 대기
+	Moving      UMETA ( DisplayName = "Moving" ) ,      // 이동 중
+	Attacking   UMETA ( DisplayName = "Attacking" ) ,   // 교전 중
+	Cover       UMETA ( DisplayName = "Cover" ) ,       // 은/엄폐
+	Retreat     UMETA ( DisplayName = "Retreat" )      // 후퇴 중
+};
