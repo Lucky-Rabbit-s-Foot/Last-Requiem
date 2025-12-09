@@ -3,14 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
-#include "W_SituationMapWidget.generated.h"
+#include "Engine/SceneCapture2D.h"
+#include "W_SituationMapCamera.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class LASTREQUIEM_API UW_SituationMapWidget : public UUserWidget
+class LASTREQUIEM_API AW_SituationMapCamera : public ASceneCapture2D
 {
 	GENERATED_BODY()
+	
 };
