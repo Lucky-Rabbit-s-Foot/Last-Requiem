@@ -1,5 +1,8 @@
 ﻿#include "PJB/Enemy/P_EnemyBase.h"
 
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "PJB/AI/P_AIControllerEnemyBase.h"
 #include "PJB/Component/P_CombatComponent.h"
 
 AP_EnemyBase::AP_EnemyBase()
@@ -8,6 +11,7 @@ AP_EnemyBase::AP_EnemyBase()
 
 	CombatComp = CreateDefaultSubobject<UP_CombatComponent> ( TEXT ( "Combat Component" ) );
 
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 }
 
 void AP_EnemyBase::BeginPlay()
@@ -44,14 +48,42 @@ void AP_EnemyBase::OnTakeDamage ( AActor* DamagedActor , float Damage , const UD
 
 void AP_EnemyBase::OnDie ()
 {
+	if (!bIsAlive)
+	{
+		return;
+	}
 	bIsAlive = false;
+
+	OnDeactivate ();
+
 	OnEnemyDieDelegate.Broadcast ();
 }
 
-void AP_EnemyBase::InitAnimInstance ()
+void AP_EnemyBase::OnDeactivate()
 {
-	if (GetMesh ())
+	AP_AIControllerEnemyBase* AIC = Cast<AP_AIControllerEnemyBase>(GetController());
+	if (AIC)
 	{
-		AnimInstance = GetMesh ()->GetAnimInstance ();
+		AIC->StopMovement();
+	}
+
+	GetCapsuleComponent ()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetCapsuleComponent ()->SetCollisionResponseToAllChannels ( ECR_Ignore );
+	
+	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+	GetMesh()->SetSimulatePhysics(true);
+	
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->DisableMovement();	
+	GetCharacterMovement ()->SetComponentTickEnabled ( false );
+
+	SetLifeSpan ( 5.0f );
+}
+
+void AP_EnemyBase::InitAnimInstance()
+{
+	if (GetMesh())
+	{
+		AnimInstance = GetMesh()->GetAnimInstance();
 	}
 }

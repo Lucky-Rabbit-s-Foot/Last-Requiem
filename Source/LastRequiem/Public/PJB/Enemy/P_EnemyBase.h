@@ -38,6 +38,8 @@ public:
 
 	void OnDie();
 
+	void OnDeactivate ();
+
 private:
 	void InitAnimInstance ();
 
