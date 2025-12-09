@@ -38,6 +38,9 @@ public:
 
 	void OnDie();
 
+private:
+	void InitAnimInstance ();
+
 protected:
 	// Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Data|Components")
@@ -49,6 +52,9 @@ protected:
 	float SprintSpeed = 600.0f;
 
 private:
+	UPROPERTY()
+	TWeakObjectPtr<UAnimInstance> AnimInstance = nullptr;
+
 	bool bIsAlive = true;
 	FOnEnemyDieDelegate OnEnemyDieDelegate;
 };

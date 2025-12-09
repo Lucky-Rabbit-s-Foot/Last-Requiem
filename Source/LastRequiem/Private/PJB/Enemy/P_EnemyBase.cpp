@@ -14,8 +14,9 @@ void AP_EnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	OnTakeAnyDamage.AddDynamic ( this , &AP_EnemyBase::OnTakeDamage );
+	InitAnimInstance ();
 
+	OnTakeAnyDamage.AddDynamic ( this , &AP_EnemyBase::OnTakeDamage );
 }
 
 void AP_EnemyBase::Tick(float DeltaTime)
@@ -47,3 +48,10 @@ void AP_EnemyBase::OnDie ()
 	OnEnemyDieDelegate.Broadcast ();
 }
 
+void AP_EnemyBase::InitAnimInstance ()
+{
+	if (GetMesh ())
+	{
+		AnimInstance = GetMesh ()->GetAnimInstance ();
+	}
+}
