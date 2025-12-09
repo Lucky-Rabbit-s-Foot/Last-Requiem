@@ -19,15 +19,19 @@ protected:
 public:
 	inline bool IsCombat() { return bIsCombat; }
 
-	void TakeDamage ( float InDamage );
-	void OnAttack ( AActor* Target );
-	void OnDie ();
+	void TakeDamage(float InDamage);
+	void OnAttack(AActor* Target);
+	void OnDie();
 
+	inline float GetMaxHealth() { return MaxHealth; }
 	inline float GetHealth() { return Health; }
 	inline float GetAttackRange() { return AttackRange; }
 	inline float GetAttackPower() { return AttackPower; }
 	inline float GetTerrorValue() { return TerrorValue; }
-	inline bool IsAlive () { return bIsAlive; }
+	inline bool IsAlive() { return bIsAlive; }
+
+private:
+	void InitPrimitiveValues();
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Data|Health")
@@ -47,5 +51,4 @@ protected:
 	bool bIsCombat = false;
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Combat" )
 	bool bIsAlive = true;
-
 };

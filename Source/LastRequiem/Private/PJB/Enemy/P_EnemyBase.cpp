@@ -14,6 +14,8 @@ void AP_EnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
 
+	OnTakeAnyDamage.AddDynamic ( this , &AP_EnemyBase::OnTakeDamage );
+
 }
 
 void AP_EnemyBase::Tick(float DeltaTime)
@@ -30,10 +32,18 @@ void AP_EnemyBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 void AP_EnemyBase::OnTakeDamage ( AActor* DamagedActor , float Damage , const UDamageType* DamageType , AController* InstigateBy , AActor* DamageCauser )
 {
-	
+	if (!bIsAlive) return;
+
+	CombatComp->TakeDamage ( Damage );
+	if (!CombatComp->IsAlive ())
+	{
+		OnDie ();
+	}
 }
 
 void AP_EnemyBase::OnDie ()
 {
+	bIsAlive = false;
+	OnEnemyDieDelegate.Broadcast ();
 }
 
