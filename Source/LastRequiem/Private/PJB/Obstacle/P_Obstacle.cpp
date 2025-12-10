@@ -4,6 +4,16 @@ AP_Obstacle::AP_Obstacle()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
+	Mesh = CreateDefaultSubobject<UStaticMeshComponent> ( TEXT ( "Mesh" ) );
+	SetRootComponent ( Mesh );
+
+	static FGameplayTag ObstacleTag = FGameplayTag::RequestGameplayTag ( FName ( "Obstacle" ) );
+	GameplayTags.AddTag ( ObstacleTag );
+}
+
+void AP_Obstacle::GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const
+{
+	TagContainer = GameplayTags;
 }
 
 void AP_Obstacle::BeginPlay()
