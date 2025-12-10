@@ -6,6 +6,15 @@
 #include "Blueprint/UserWidget.h"
 #include "W_SituationMapWidget.generated.h"
 
+DECLARE_DELEGATE_OneParam ( FOnOrderButtonClicked, uint8 );
+
+UENUM ( BlueprintType )
+enum class EOrderButtonType : uint8
+{
+	Attack ,
+	Patrol ,
+	Retreat
+};
 /**
  * 
  */
@@ -18,18 +27,26 @@ protected:
 	virtual void NativeConstruct () override;
 
 	UFUNCTION ()
-	void OnMyButtonClicked ();
+	void OnExitButtonClicked ();
+
+	UFUNCTION ()
+	void OnAttackButtonClicked ();
+
+	UFUNCTION ()
+	void OnPatrolButtonClicked ();
+
+	UFUNCTION ()
+	void OnRetreatButtonClicked ();
+
+	UFUNCTION ()
+	uint8 HandleOrderButtonClicked ( uint8 InOrderID ); // TEST : 실제 코드 리턴 타입은 void
 
 public:
-	// void OnClickActionButtonDelegate ( const FScriptDelegate& Delegate );
+	FOnOrderButtonClicked OnOrderButtonClicked;
 
 protected:
 	UPROPERTY ( BlueprintReadOnly , Category = "Widget" , meta = (BindWidget) )
 	TObjectPtr<class UW_MapWidget> RenderedMap;
-
-	// 추후 형님 위젯 추가 가능성 고려
-	//UPROPERTY ( BlueprintReadOnly , Category = "Widget" , meta = (BindWidget) )
-	//TObjectPtr<class UK_UnitStatusWidget> TEMP_UNIT_STATUS;
 
 	UPROPERTY ( BlueprintReadOnly , Category = "Button" , meta = (BindWidget) )
 	TObjectPtr<class UButton> Exit = nullptr;
