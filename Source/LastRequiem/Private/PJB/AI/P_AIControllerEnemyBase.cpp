@@ -11,19 +11,28 @@
 #include "GameplayTagAssetInterface.h"
 #include "Kismet/GameplayStatics.h"
 
+#include "PJB/System/P_GameStateBase.h"
+
 AP_AIControllerEnemyBase::AP_AIControllerEnemyBase ()
 {
 	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent> ( TEXT ( "AIPerception" ) );
 	
-	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight> ( TEXT ( "SenseSight" ) );
 	InitSightConfig ();
-	DamageConfig = CreateDefaultSubobject<UAISense_Damage> ( TEXT ( "SenseDamage" ) );
 	InitDamageConfig ();
 	
 	AIPerceptionComp->SetDominantSense ( SightConfig->GetSenseImplementation () );
 
 	InitGameplayTags ();
-	
+}
+
+void AP_AIControllerEnemyBase::SetCachedFortress ()
+{
+	if (!GetWorld ()) return;
+	UE_LOG ( LogTemp , Warning , TEXT ( "SetCachedFortress called" ) );
+	if (AP_GameStateBase* GS = GetWorld ()->GetGameState<AP_GameStateBase> ())
+	{
+		CachedFortress = GS->GetFortress ();
+	}
 }
 
 void AP_AIControllerEnemyBase::InitGameplayTags ()
@@ -35,13 +44,15 @@ void AP_AIControllerEnemyBase::InitGameplayTags ()
 
 void AP_AIControllerEnemyBase::InitDamageConfig ()
 {
+	DamageConfig = CreateDefaultSubobject<UAISenseConfig_Damage> ( TEXT ( "SenseDamage" ) );
 	if (!DamageConfig) return;
-	DamageConfig->SetImplementation ( UAISense_Damage::StaticClass () );
+	//DamageConfig->SetImplementation ( UAISense_Damage::StaticClass () );
 	AIPerceptionComp->ConfigureSense ( *DamageConfig );
 }
 
 void AP_AIControllerEnemyBase::InitSightConfig ()
 {
+	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight> ( TEXT ( "SenseSight" ) );
 	if (!SightConfig) return;
 	SightRangeSetting ();
 	SightDetectionSetting ();
@@ -66,6 +77,8 @@ void AP_AIControllerEnemyBase::OnPossess ( APawn* InPawn )
 {
 	Super::OnPossess ( InPawn );
 
+
+	SetCachedFortress ();
 	BindPerceptionUpdate ();
 	
 	if (BehaviorTree)
@@ -108,12 +121,9 @@ void AP_AIControllerEnemyBase::UpdateBestTarget ()
 	}
 	else
 	{
-		TArray<AActor*> Fortresses;
-		UGameplayStatics::GetAllActorsWithTag ( this , TEXT ( "Fortress" ) , Fortresses );
-
-		if (Fortresses.Num () > 0)
+		if(CachedFortress.IsValid())
 		{
-			BB->SetValueAsObject ( TEXT ( "TargetActor" ) , Fortresses[0]);
+			BB->SetValueAsObject ( TEXT ( "TargetActor" ) , CachedFortress.Get () );
 		}
 		else
 		{

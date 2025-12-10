@@ -20,28 +20,28 @@ class LASTREQUIEM_API AP_AIControllerEnemyBase : public AAIController
 public:
 	AP_AIControllerEnemyBase ();
 
-	void InitGameplayTags ();
-
-	void InitDamageConfig ();
-
-	void InitSightConfig ();
-
-	void SightRangeSetting ();
-
-	void SightDetectionSetting ();
-
 protected:
 	virtual void OnPossess ( APawn* InPawn ) override;
-
-	void BindPerceptionUpdate ();
 
 	UFUNCTION()
 	void OnTargetPerceived ( AActor* InActor , FAIStimulus Stimulus );
 
 	void UpdateBestTarget ();
+	bool IsUnit ( AActor* TargetActor ) const;
+
+private:
+	void InitSightConfig ();
+	void InitDamageConfig ();
+	void InitGameplayTags ();
+
+	void SightRangeSetting ();
+	void SightDetectionSetting ();
+
+	void SetCachedFortress ();
+	void BindPerceptionUpdate ();
+
 	void FindClosestUnitOnDamaging ( APawn* PossedPawn , float& MinDistSq , AActor*& ClosestUnit );
 	void FindClosestUnitOnVisible ( APawn* PossedPawn , float& MinDistSq , AActor*& ClosestUnit );
-	bool IsUnit ( AActor* TargetActor ) const;
 
 protected:
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|AI|Perception" )
@@ -49,7 +49,7 @@ protected:
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|AI|Perception" )
 	TObjectPtr<UAISenseConfig_Sight> SightConfig;
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|AI|Perception" )
-	TObjectPtr<UAISense_Damage> DamageConfig;
+	TObjectPtr<UAISenseConfig_Damage> DamageConfig;
 
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|AI" )
 	TObjectPtr<UBehaviorTree> BehaviorTree;
@@ -62,7 +62,6 @@ protected:
 	FGameplayTag FortressTag;
 	
 	TWeakObjectPtr<AActor> CachedFortress;
-
 
 	UPROPERTY( EditAnywhere , BlueprintReadOnly , Category = "Data|AI|Perception")
 	float SightRadius = 1500.0f;

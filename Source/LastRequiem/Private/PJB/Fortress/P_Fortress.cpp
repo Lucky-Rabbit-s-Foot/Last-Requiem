@@ -1,5 +1,7 @@
 ﻿#include "PJB/Fortress/P_Fortress.h"
 
+#include "PJB/System/P_GameStateBase.h"
+
 AP_Fortress::AP_Fortress()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -10,6 +12,11 @@ void AP_Fortress::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (AP_GameStateBase* GS = GetWorld ()->GetGameState<AP_GameStateBase> ())
+	{
+		GS->RegisterFortress ( this );
+	}
+
 	Health = MaxHealth;
 	OnTakeAnyDamage.AddDynamic ( this , &AP_Fortress::OnTakeDamage );
 }

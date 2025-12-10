@@ -69,10 +69,10 @@ void AP_EnemyBase::OnDeactivate()
 
 	GetCapsuleComponent ()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetCapsuleComponent ()->SetCollisionResponseToAllChannels ( ECR_Ignore );
-	
+
 	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
 	GetMesh()->SetSimulatePhysics(true);
-	
+
 	GetCharacterMovement()->StopMovementImmediately();
 	GetCharacterMovement()->DisableMovement();	
 	GetCharacterMovement ()->SetComponentTickEnabled ( false );
