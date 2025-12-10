@@ -5,6 +5,8 @@
 #include "PJB/AI/P_AIControllerEnemyBase.h"
 #include "PJB/Component/P_CombatComponent.h"
 
+#include "Navigation/PathFollowingComponent.h"
+
 AP_EnemyBase::AP_EnemyBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -26,7 +28,25 @@ void AP_EnemyBase::BeginPlay()
 void AP_EnemyBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
+	// AI 경로 시각화
+	AAIController* AIC = Cast<AAIController> ( GetController () );
+	if ( AIC->GetPathFollowingComponent () && AIC->GetPathFollowingComponent ()->GetPath ().IsValid ())
+	{
+		const TArray<FNavPathPoint>& PathPoints = AIC->GetPathFollowingComponent ()->GetPath ()->GetPathPoints ();
 
+		for (int32 i = 0; i < PathPoints.Num () - 1; ++i)
+		{
+			DrawDebugLine (
+				GetWorld () ,
+				PathPoints[i].Location ,
+				PathPoints[i + 1].Location ,
+				FColor::Green ,
+				false , -1.0f , 0 , 3.0f
+			);
+		}
+	}
+	// -----
 }
 
 void AP_EnemyBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
