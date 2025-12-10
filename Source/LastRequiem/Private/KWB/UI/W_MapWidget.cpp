@@ -54,16 +54,16 @@ FReply UW_MapWidget::NativeOnMouseButtonDown ( const FGeometry& InGeometry , con
 	// 7. (U,V) → 월드 좌표 변환
 	const FVector WorldPos = MapUVToWorld ( U , V );
 
-	//// 8. 디버그 출력
-	//UE_LOG ( LogTemp , Log , TEXT ( "Minimap Click: U=%.3f V=%.3f -> World=%s" ) ,
-	//	U , V , *WorldPos.ToString () );
-	//if (GEngine)
-	//{
-	//	GEngine->AddOnScreenDebugMessage (
-	//		-1 , 2.f , FColor::Green ,
-	//		FString::Printf ( TEXT ( "WorldPos: %s" ) , *WorldPos.ToString () )
-	//	);
-	//}
+	// 8. 디버그 출력
+	UE_LOG ( LogTemp , Log , TEXT ( "Minimap Click: U=%.3f V=%.3f -> World=%s" ) ,
+		U , V , *WorldPos.ToString () );
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage (
+			-1 , 2.f , FColor::Green ,
+			FString::Printf ( TEXT ( "WorldPos: %s" ) , *WorldPos.ToString () )
+		);
+	}
 
 	if (PressedButton == EKeys::LeftMouseButton)
 	{

@@ -109,8 +109,17 @@ void AK_Drone::UpdateDroneMovement(float DeltaTime)
 		FVector rightDir = GetActorRightVector();
 		FVector upDir = FVector::UpVector;
 		
+		//방향별 Force 계산
 		FVector horizontalForce = (forwardDir * moveInputValue.Y + rightDir * moveInputValue.X) * droneData->DRONE_HORIZONTAL_FORCE;
 		FVector verticalForce = upDir * upDownInputValue * droneData->DRONE_VERTICAL_FORCE;
+		
+		//고도 제한 적용
+		bool bOnLimitHeight = GetActorLocation().Z > droneData->DRONE_FLIGHT_MAX_HEIGHT && upDownInputValue > 0.0f;
+		if (bOnLimitHeight)
+		{
+			verticalForce = FVector::ZeroVector;
+		}
+		
 		FVector totalForce = horizontalForce + verticalForce;
 		
 		sphereComp->AddForce(totalForce, NAME_None, true);
