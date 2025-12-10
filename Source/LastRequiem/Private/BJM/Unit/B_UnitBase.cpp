@@ -11,7 +11,7 @@
 #include "DrawDebugHelpers.h"
 #include "KWB/UI/W_MapWidget.h"
 #include "Perception/AISense_Damage.h"
-
+#include "TimerManager.h"
 
 // Sets default values
 AB_UnitBase::AB_UnitBase()
@@ -41,31 +41,18 @@ void AB_UnitBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	TArray<AActor*> FoundActors;
-	UUserWidget* FoundWidget = nullptr;
-
-	TArray<UUserWidget*> FoundWidgets;
-	UWidgetBlueprintLibrary::GetAllWidgetsOfClass ( GetWorld () , FoundWidgets , UW_MapWidget::StaticClass () , false );
-
-	if (FoundWidgets.Num () > 0)
-	{
-		// 첫 번째로 발견된 맵 위젯을 가져옴
-		UW_MapWidget* MapWidget = Cast<UW_MapWidget> ( FoundWidgets[0] );
-
-		if (MapWidget)
-		{
-			// 2. 델리게이트 연결 (Binding)
-			// 맵 위젯의 OnRightMouseButtonClicked가 터지면 -> 내 CommandMoveToLocation 함수 실행
-			MapWidget->OnRightMouseButtonClicked.AddDynamic ( this , &AB_UnitBase::CommandMoveToLocation_Test );
-
-			UE_LOG ( LogTemp , Warning , TEXT ( "연결 성공" ) );
-		}
-	}
-	else
-	{
-		UE_LOG ( LogTemp , Warning , TEXT ( "연결 실패" ) );
-	}
 	
+	GetWorld ()->GetTimerManager ().SetTimer (
+		FindWidgetTimerHandle ,
+		this ,
+		&AB_UnitBase::FindMapWidgetLoop ,
+		0.5f ,
+		true
+	);
+
+	UE_LOG ( LogTemp , Warning , TEXT ( "위젯 찾기 시작" ) );
+
+
 }
 
 // Called every frame
@@ -80,6 +67,30 @@ void AB_UnitBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+void AB_UnitBase::FindMapWidgetLoop ()
+{
+	TArray<UUserWidget*> FoundWidgets;
+	UWidgetBlueprintLibrary::GetAllWidgetsOfClass ( GetWorld () , FoundWidgets , UW_MapWidget::StaticClass () , false );
+
+	if (FoundWidgets.Num () > 0)
+	{
+		UW_MapWidget* MapWidget = Cast<UW_MapWidget> ( FoundWidgets[0] );
+		if (MapWidget)
+		{
+		
+			MapWidget->OnRightMouseButtonClicked.AddDynamic ( this , &AB_UnitBase::CommandMoveToLocation );
+
+			UE_LOG ( LogTemp , Warning , TEXT ( "연결 성공" ) );
+
+			GetWorld ()->GetTimerManager ().ClearTimer ( FindWidgetTimerHandle );
+		}
+	}
+	else
+	{
+		 UE_LOG(LogTemp, Log, TEXT("위젯 아직 못찾음"));
+	}
 }
 
 FUnitProfileData AB_UnitBase::GetUnitProfileData ()
@@ -108,7 +119,7 @@ FUnitProfileData AB_UnitBase::GetUnitProfileData ()
 	return Data;
 }
 
-void AB_UnitBase::CommandMoveToLocation(float InX, float InY)
+void AB_UnitBase::UnitMentalCheck_Move(float InX, float InY)
 {
 
 	if (StatusComponent == nullptr)
@@ -121,16 +132,14 @@ void AB_UnitBase::CommandMoveToLocation(float InX, float InY)
 
 	switch (CurrentState)
 	{
-		// 말 잘듣는 상태
-		case EUnitBehaviorState::Inspired: // 고양 (충성도 상)
-		case EUnitBehaviorState::Cold:	   // 냉정 (충성도 중)
-		case EUnitBehaviorState::Normal:   // 노말
-	
+
+		case EUnitBehaviorState::Awakened:
 			ProcessMoveCommand(InX, InY);
 			break;
-
-		// 말 건성으로 듣는 상태
-		case EUnitBehaviorState::Lazy: // 나태 (충성도 하)
+		case EUnitBehaviorState::Normal:
+			ProcessMoveCommand(InX, InY);
+			break;
+		case EUnitBehaviorState::Tense:
 			// 50퍼 확률로 명령 수행
 			if (FMath::RandRange(0, 100) > 50)
 			{
@@ -138,27 +147,19 @@ void AB_UnitBase::CommandMoveToLocation(float InX, float InY)
 			}
 			else
 			{
-				// TODO: 나중에 "아 귀찮게 진짜..." 같은 보이스 출력
 				UE_LOG(LogTemp, Warning, TEXT("나태"));
 			}
 			break;
-
-
-		// 통제가 힘든 상태
-		case EUnitBehaviorState::Madness: // 광기 (충성도 상)
-			// TODO: 적에게 무지성 돌진하거나 웃음소리 출력
+		case EUnitBehaviorState::Fear:
+			UE_LOG(LogTemp, Error, TEXT("공포"));
+			break;
+		case EUnitBehaviorState::Panic:
+			UE_LOG(LogTemp, Error, TEXT("패닉"));
+			break;
+		case EUnitBehaviorState::Madness:
 			UE_LOG(LogTemp, Error, TEXT("광기"));
 			break;
 
-		case EUnitBehaviorState::Fear:	  // 공포 (충성도 중)
-			// TODO: 뒷걸음질 치거나 제자리에 주저앉음
-			UE_LOG(LogTemp, Error, TEXT("공포"));
-			break;
-
-		case EUnitBehaviorState::Panic:   // 패닉 (충성도 하)
-			// TODO: 아군을 공격하거나 도망침
-			UE_LOG(LogTemp, Error, TEXT("패닉"));
-			break;
 	}
 }
 
@@ -182,12 +183,8 @@ void AB_UnitBase::ProcessMoveCommand(float InX, float InY)
 	}
 }
 
-void AB_UnitBase::OnMapMoveCommand ( FVector TargetLocation )
-{
-	ProcessMoveCommand ( TargetLocation.X , TargetLocation.Y );
-}
 
-void AB_UnitBase::CommandMoveToLocation_Test ( FVector TargetLocation )
+void AB_UnitBase::CommandMoveToLocation ( FVector TargetLocation )
 {
 
 	DrawDebugSphere ( GetWorld () , TargetLocation , 50.0f , 16 , FColor::Red , false , 3.0f );
@@ -208,20 +205,25 @@ void AB_UnitBase::CommandMoveToLocation_Test ( FVector TargetLocation )
 
 	FVector SearchExtent ( 500.0f , 500.0f , 5000.0f );
 
+	FVector FinalLocation = TargetLocation; 
+
 	if (NavSystem && NavSystem->ProjectPointToNavigation ( SearchCenter , ProjectedLocation , SearchExtent ))
 	{
 	
+		FinalLocation = ProjectedLocation.Location;
+
 		DrawDebugSphere ( GetWorld () , ProjectedLocation.Location , 50.0f , 16 , FColor::Green , false , 3.0f );
 		UE_LOG ( LogTemp , Warning , TEXT ( "보정된 좌표: %s" ) , *ProjectedLocation.Location.ToString () );
 
 		// 이동 명령
-		AIController->MoveToLocation ( ProjectedLocation.Location );
+		//AIController->MoveToLocation ( ProjectedLocation.Location );
 	}
 	else
 	{
 		UE_LOG ( LogTemp , Error , TEXT ( "네비 메시 못 찾음" ) );
 	}
 
+	UnitMentalCheck_Move ( FinalLocation.X , FinalLocation.Y );
 }
 
 float AB_UnitBase::TakeDamage ( float DamageAmount , FDamageEvent const& DamageEvent , AController* EventInstigator , AActor* DamageCauser )
