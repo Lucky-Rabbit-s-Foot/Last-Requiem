@@ -6,9 +6,10 @@
 
 #include "Camera/CameraComponent.h"
 #include "Components/SphereComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
-
+#include "GameFramework/SpringArmComponent.h"
 
 
 // Sets default values
@@ -21,13 +22,21 @@ AK_Drone::AK_Drone()
 	SetRootComponent(sphereComp);
 	sphereComp->SetSphereRadius(100.f);
 	
+	springArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("springArmComp"));
+	springArmComp->SetupAttachment(RootComponent);
+	springArmComp->SetRelativeLocation(FVector(0.0f, 0.0f, 70.0f));
+	springArmComp->TargetArmLength = 300.f;
+	springArmComp->bUsePawnControlRotation = true;
+	
 	cameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("cameraComp"));
-	cameraComp->SetupAttachment(RootComponent);
-	cameraComp->SetRelativeLocation(FVector(0.0f, -3.0f, 20.0f));
-	cameraComp->bUsePawnControlRotation = true;
+	cameraComp->SetupAttachment(springArmComp);
+	cameraComp->bUsePawnControlRotation = false;
 	
 	meshComp = CreateDefaultSubobject<USkeletalMeshComponent>("meshComp");
 	meshComp->SetupAttachment(RootComponent);
+	
+	
+	bUseControllerRotationYaw = true;
 	
 	
 	SetReplicates(true);
@@ -101,11 +110,21 @@ void AK_Drone::OnDroneLook(const FInputActionValue& value)
 void AK_Drone::OnDroneMove(const FInputActionValue& value)
 {
 	moveInputValue = value.Get<FVector2D>();
+	
+	if (moveInputValue.SizeSquared() > 0.0f)
+	{
+		lastInputTime = GetWorld()->GetTimeSeconds();
+	}
 }
 
 void AK_Drone::OnDroneUpDown(const FInputActionValue& value)
 {
 	upDownInputValue = value.Get<float>();
+	
+	if (FMath::Abs(upDownInputValue) > 0.0f)
+	{
+		lastInputTime = GetWorld()->GetTimeSeconds();
+	}
 }
 
 void AK_Drone::OnDroneScan(const FInputActionValue& value)
@@ -122,18 +141,25 @@ void AK_Drone::UpdateDroneSpeed(float DeltaTime)
 	FVector rightDir = GetActorRightVector();
 	FVector upDir = FVector::UpVector;
 	
-	FVector horizontalTargetVec = (forwardDir * moveInputValue.Y + rightDir * moveInputValue.X) * droneData->DRONE_MAX_SPEED;
-	FVector verticalTargetVec = upDir * upDownInputValue * droneData->DRONE_MAX_VERTICAL_SPEED;
-	
-	targetVelocity = horizontalTargetVec + verticalTargetVec;
+	float timeFromLastInput = GetWorld()->GetTimeSeconds() - lastInputTime;
 	
 	float interpSpeed;
-	if (moveInputValue.SizeSquared() > 0.0f || FMath::Abs(upDownInputValue) > 0.0f)
+	bool bHasInput = (moveInputValue.SizeSquared() > 0.0f || FMath::Abs(upDownInputValue) > 0.0f);
+	if (bHasInput)
 	{
+		FVector horizontalTargetVec = (forwardDir * moveInputValue.Y + rightDir * moveInputValue.X) * droneData->DRONE_MAX_SPEED;
+		FVector verticalTargetVec = upDir * upDownInputValue * droneData->DRONE_MAX_VERTICAL_SPEED;
+		targetVelocity = horizontalTargetVec + verticalTargetVec;
 		interpSpeed = droneData->ACCELERATION;
+	}
+	else if (timeFromLastInput < INPUT_IDLE_THRESHOLD)
+	{
+		targetVelocity = curVelocity;
+		interpSpeed = 0.0f;
 	}
 	else
 	{
+		targetVelocity = FVector::ZeroVector;
 		interpSpeed = droneData->DECELERATION;
 	}
 	
