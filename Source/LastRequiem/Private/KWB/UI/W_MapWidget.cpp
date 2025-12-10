@@ -18,7 +18,8 @@ FReply UW_MapWidget::NativeOnMouseButtonDown ( const FGeometry& InGeometry , con
 {
 	FKey PressedButton = InMouseEvent.GetEffectingButton ();
 	
-	if (PressedButton != EKeys::LeftMouseButton || PressedButton != EKeys::LeftMouseButton)
+	if (PressedButton != EKeys::LeftMouseButton &&
+		PressedButton != EKeys::RightMouseButton)
 	{
 		return Super::NativeOnMouseButtonDown ( InGeometry , InMouseEvent );
 	}
@@ -52,7 +53,7 @@ FReply UW_MapWidget::NativeOnMouseButtonDown ( const FGeometry& InGeometry , con
 	U_top = FMath::Clamp ( U_top , 0.f , 1.f );
 	V_top = FMath::Clamp ( V_top , 0.f , 1.f );
 
-	// 7. 좌하단을 (0,0)으로 쓰고 싶으니 Y 뒤집기
+	// 7. 좌하단을 (0,0)으로 쓰고 싶으니 Y 뒤집기 => 불필요한 연산이라 우선 뒤집는 기능 제거
 	const float U = U_top;
 	const float V = 1.f - V_top;
 
@@ -71,26 +72,16 @@ FReply UW_MapWidget::NativeOnMouseButtonDown ( const FGeometry& InGeometry , con
 		);
 	}
 
-	//// Debug : 정확한 위젯 상의 좌표값 확인용
-	//FString LogMessage = FString::Printf (
-	//	TEXT ( "Map 위젯 좌표값 X: %.6f, Y: %.6f 클릭 됨" ) ,
-	//	ClickedWidgetLocation.X ,
-	//	ClickedWidgetLocation.Y
-	//);
 
 	if (PressedButton == EKeys::LeftMouseButton)
 	{
 		// 좌클릭은 액터를 선택하거나 액션 버튼을 조작하는 기능을 담당
-		// UE_LOG ( LogTemp , Log , TEXT ( "%s" ), *LogMessage );
-		OnLeftMouseButtonClicked.Broadcast ();
+		OnLeftMouseButtonClicked.Broadcast ();	// 굳이 필요하지 않을 수도 있음
 	
 	}
 	else if (PressedButton == EKeys::RightMouseButton)
 	{
 		// 우클릭은 위치 값을 유닛에게 전달
-		// UE_LOG ( LogTemp , Log , TEXT ( "Map 위젯 위 RMB 클릭 됨" ) );
-
-		//WidgetPosToWorldPos(FVector InWidgetLocation);
 
 		// 가장 마지막에 할 것
 		OnRightMouseButtonClicked.Broadcast ( WorldPos );
@@ -108,9 +99,9 @@ FVector UW_MapWidget::WidgetPosToWorldPos ( FVector InWidgetLocation )
 
 FVector UW_MapWidget::MapUVToWorld ( float U , float V ) const
 {
-	// 1. 중심을 기준으로 오프셋 계산
-	const float OffsetX = (U - 0.5f) * MapWorldWidth;   // U=0 → -W/2, U=1 → +W/2
-	const float OffsetY = (V - 0.5f) * MapWorldHeight;  // V=0 → -H/2, V=1 → +H/2
+	// 1. 맵 로컬 기준 오프셋 계산
+	const float OffsetX = (V - 0.5f) * MapWorldHeight; // 위/아래 방향이 월드 X
+	const float OffsetY = (U - 0.5f) * MapWorldWidth;  // 좌/우 방향이 월드 Y
 
 	FVector Offset ( OffsetX , OffsetY , 0.f );
 
