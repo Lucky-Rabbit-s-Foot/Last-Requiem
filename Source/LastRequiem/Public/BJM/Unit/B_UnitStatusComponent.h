@@ -43,11 +43,6 @@ public:
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Stat")
 	float CurrentSanity;
 
-	// 충성심
-	UPROPERTY (EditAnywhere, BlueprintReadWrite, Category = "Unit|Stat")
-	float MaxLoyalty = 100.0f;
-	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Stat")
-	float CurrentLoyalty;
 
 	// 유닛 멘탈 상황
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Stat")
@@ -76,16 +71,11 @@ public:
 	void ModifySanity (float InAmount);
 
 	UFUNCTION (BlueprintCallable, Category = "Unit|Logic")
-	void ModifyLoyalty (float InAmount);
-
-	UFUNCTION (BlueprintCallable, Category = "Unit|Logic")
 	void SetCombatState ( bool bNewState );
 
 protected:
 	FTimerHandle CombatTimerHandle;
 	void ResetCombatState ();
-
-
 
 private:
 	void UpdateBehaviorState ();

@@ -22,7 +22,6 @@ void UB_UnitStatusComponent::BeginPlay()
 	// 스탯 초기설정
 	CurrentHP = MaxHP;
 	CurrentSanity = MaxSanity;
-	CurrentLoyalty = MaxLoyalty;
 
 	UpdateBehaviorState ();
 
@@ -64,13 +63,6 @@ void UB_UnitStatusComponent::ModifySanity (float InAmount)
 	UpdateBehaviorState ();
 }
 
-void UB_UnitStatusComponent::ModifyLoyalty (float InAmount)
-{
-	CurrentLoyalty = FMath::Clamp ( CurrentLoyalty + InAmount , 0.0f , MaxLoyalty );
-
-	UpdateBehaviorState ();
-}
-
 void UB_UnitStatusComponent::SetCombatState(bool bNewState)
 {
 	bIsInCombat = bNewState;
@@ -101,46 +93,32 @@ void UB_UnitStatusComponent::UpdateBehaviorState ()
 {
 	EUnitBehaviorState NewState = EUnitBehaviorState::Normal;
 
-	bool bSanityHigh = (CurrentSanity >= 67.0f);
-	bool bSanityLow = (CurrentSanity <= 33.0f);
 
-	bool bLoyaltyHigh = (CurrentLoyalty >= 67.0f);
-	bool bLoyaltyLow = (CurrentLoyalty <= 33.0f);
+	if (CurrentSanity < 1.0f) 
+	{
+		NewState = EUnitBehaviorState::Madness;  
+	}
+	else if (CurrentSanity < 10.0f)  
+	{
+		NewState = EUnitBehaviorState::Panic;     
+	}
+	else if (CurrentSanity < 20.0f)  
+	{
+		NewState = EUnitBehaviorState::Fear;     
+	}
+	else if (CurrentSanity < 40.0f)  
+	{
+		NewState = EUnitBehaviorState::Tense;  
+	}
+	else if (CurrentSanity < 80.0f)  
+	{
+		NewState = EUnitBehaviorState::Normal;   
+	}
+	else 
+	{
+		NewState = EUnitBehaviorState::Awakened;
+	}
 
-	if(bSanityHigh) // 정신력 상
-	{
-		if(bLoyaltyLow)
-		{
-			NewState = EUnitBehaviorState::Lazy;	 // 나태
-		}
-		else if(bLoyaltyHigh)
-		{
-			NewState = EUnitBehaviorState::Inspired; // 고양
-		}
-		else
-		{
-			NewState = EUnitBehaviorState::Cold;	 // 냉정
-		}
-	}
-	else if (bSanityLow) // 정신력 하
-	{
-		if (bLoyaltyLow)
-		{
-			NewState = EUnitBehaviorState::Panic;	 // 패닉
-		}
-		else if (bLoyaltyHigh)
-		{
-			NewState = EUnitBehaviorState::Madness;	 // 광기
-		}
-		else
-		{
-			NewState = EUnitBehaviorState::Fear;	 // 공포
-		}
-	}
-	else // 정신력 중
-	{
-		NewState = EUnitBehaviorState::Normal;		 // 평범
-	}
 
 	// 3. 상태 변경 시 방송
 	if (CurrentState != NewState)
