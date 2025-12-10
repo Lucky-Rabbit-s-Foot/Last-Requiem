@@ -6,9 +6,8 @@
 
 #include "Camera/CameraComponent.h"
 #include "Components/SphereComponent.h"
-#include "EnhancedInputSubsystems.h"
-#include "EnhancedInputComponent.h"
-
+#include "Components/SkeletalMeshComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 
 
 // Sets default values
@@ -17,18 +16,9 @@ AK_Drone::AK_Drone()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	sphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("sphereComp"));
-	SetRootComponent(sphereComp);
-	sphereComp->SetSphereRadius(100.f);
+	InitializeComponents();
 	
-	cameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("cameraComp"));
-	cameraComp->SetupAttachment(RootComponent);
-	cameraComp->SetRelativeLocation(FVector(0.0f, -3.0f, 20.0f));
-	cameraComp->bUsePawnControlRotation = true;
-	
-	meshComp = CreateDefaultSubobject<USkeletalMeshComponent>("meshComp");
-	meshComp->SetupAttachment(RootComponent);
-	
+	bUseControllerRotationYaw = true;
 	
 	SetReplicates(true);
 	SetReplicateMovement(true);
@@ -38,15 +28,12 @@ AK_Drone::AK_Drone()
 void AK_Drone::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	auto pc = Cast<APlayerController>(Controller);
-	if (pc)
+	//Anim
+	UAnimInstance* animInst = meshComp->GetAnimInstance();
+	if (flightMontage && animInst)
 	{
-		UEnhancedInputLocalPlayerSubsystem* subsys = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(pc->GetLocalPlayer());
-		if (subsys)
-		{
-			subsys->AddMappingContext(IMC_Drone, 0);
-		}
+		animInst->Montage_Play(flightMontage);
+		animInst->Montage_JumpToSection(FName("Start"));
 	}
 	
 	//SFX settings
@@ -68,82 +55,105 @@ void AK_Drone::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	UpdateDroneSpeed(DeltaTime);
+	UpdateDroneMovement(DeltaTime);
+	UpdateDroneRotation(DeltaTime);
 }
 
-// Called to bind functionality to input
-void AK_Drone::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void AK_Drone::InitializeComponents()
 {
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	//sphere 
+	sphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("sphereComp"));
+	SetRootComponent(sphereComp);
+	sphereComp->SetSphereRadius(100.f);
+	
+	//sphere 물리설정 추가
+	sphereComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	sphereComp->SetCollisionObjectType(ECollisionChannel::ECC_Pawn);
+	sphereComp->SetCollisionResponseToAllChannels(ECR_Block);
+	sphereComp->SetSimulatePhysics(true);
+	sphereComp->SetEnableGravity(false); 
+	sphereComp->SetLinearDamping(1.2f);  //관성 감쇠
+	sphereComp->SetAngularDamping(2.0f); //회전 감쇠
+	sphereComp->SetMassOverrideInKg(NAME_None, DRONE_MASS_WEIGHT); //드론 질량
+	
+	//springArm
+	springArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("springArmComp"));
+	springArmComp->SetupAttachment(RootComponent);
+	springArmComp->SetRelativeLocation(FVector(0.0f, 0.0f, 70.0f));
+	springArmComp->TargetArmLength = 300.f;
+	springArmComp->bUsePawnControlRotation = true;
+	
+	//camera
+	cameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("cameraComp"));
+	cameraComp->SetupAttachment(springArmComp);
+	cameraComp->bUsePawnControlRotation = false;
+	
+	//mesh
+	meshComp = CreateDefaultSubobject<USkeletalMeshComponent>("meshComp");
+	meshComp->SetupAttachment(RootComponent);
+}
 
-	UEnhancedInputComponent* enhanced = Cast<UEnhancedInputComponent>(PlayerInputComponent);
-	if (enhanced)
+void AK_Drone::UpdateDroneMovement(float DeltaTime)
+{
+	if (!sphereComp)
 	{
-		enhanced->BindAction(IA_Move, ETriggerEvent::Triggered, this, &AK_Drone::OnDroneMove);
-		enhanced->BindAction(IA_Look, ETriggerEvent::Triggered, this, &AK_Drone::OnDroneLook);
-		enhanced->BindAction(IA_UpDown, ETriggerEvent::Triggered, this, &AK_Drone::OnDroneUpDown);
-		enhanced->BindAction(IA_Scan, ETriggerEvent::Started, this, &AK_Drone::OnDroneScan);
-		enhanced->BindAction(IA_ModeChange, ETriggerEvent::Started, this, &AK_Drone::OnDroneModeChange);
+		return;
+	}
+	
+	//입력이 있을때만 Force 적용
+	bool bHasInput = (moveInputValue.SizeSquared() > 0.0f || FMath::Abs(upDownInputValue) > 0.0f);
+	
+	if(bHasInput)
+	{
+		FVector forwardDir = GetActorForwardVector();
+		FVector rightDir = GetActorRightVector();
+		FVector upDir = FVector::UpVector;
+		
+		FVector horizontalForce = (forwardDir * moveInputValue.Y + rightDir * moveInputValue.X) * droneData->DRONE_HORIZONTAL_FORCE;
+		FVector verticalForce = upDir * upDownInputValue * droneData->DRONE_VERTICAL_FORCE;
+		FVector totalForce = horizontalForce + verticalForce;
+		
+		sphereComp->AddForce(totalForce, NAME_None, true);
 	}
 }
 
-void AK_Drone::OnDroneLook(const FInputActionValue& value)
+void AK_Drone::UpdateDroneRotation(float DeltaTime)
 {
-	FVector2D lookInput = value.Get<FVector2D>();
-	
-	if (Controller)
+	if (!GetController())
 	{
-		AddControllerYawInput(lookInput.X);
-		AddControllerPitchInput(lookInput.Y);
-	}
-}
-
-void AK_Drone::OnDroneMove(const FInputActionValue& value)
-{
-	moveInputValue = value.Get<FVector2D>();
-}
-
-void AK_Drone::OnDroneUpDown(const FInputActionValue& value)
-{
-	upDownInputValue = value.Get<float>();
-}
-
-void AK_Drone::OnDroneScan(const FInputActionValue& value)
-{
-}
-
-void AK_Drone::OnDroneModeChange(const FInputActionValue& value)
-{
-}
-
-void AK_Drone::UpdateDroneSpeed(float DeltaTime)
-{
-	FVector forwardDir = GetActorForwardVector();
-	FVector rightDir = GetActorRightVector();
-	FVector upDir = FVector::UpVector;
-	
-	FVector horizontalTargetVec = (forwardDir * moveInputValue.Y + rightDir * moveInputValue.X) * droneData->DRONE_MAX_SPEED;
-	FVector verticalTargetVec = upDir * upDownInputValue * droneData->DRONE_MAX_VERTICAL_SPEED;
-	
-	targetVelocity = horizontalTargetVec + verticalTargetVec;
-	
-	float interpSpeed;
-	if (moveInputValue.SizeSquared() > 0.0f || FMath::Abs(upDownInputValue) > 0.0f)
-	{
-		interpSpeed = droneData->ACCELERATION;
-	}
-	else
-	{
-		interpSpeed = droneData->DECELERATION;
+		return;
 	}
 	
-	curVelocity = FMath::VInterpTo(curVelocity, targetVelocity, DeltaTime, interpSpeed);
+	FRotator currentRot = GetActorRotation();
+	FRotator targetRot = GetController()->GetControlRotation();
 	
-	FVector newLoc = GetActorLocation() + curVelocity * DeltaTime;
-	SetActorLocation(newLoc);
+	targetRot.Pitch = 0.0f;
+	targetRot.Roll = 0.0f;
+	
+	FRotator newRot = FMath::RInterpTo(targetRot, currentRot, DeltaTime, droneData->ROTATION_SPEED);
+	SetActorRotation(newRot);
 }
 
-void AK_Drone::UpdateDroneAltitude()
+
+void AK_Drone::Move(const FVector2D& inputValue)
+{
+	moveInputValue = inputValue;
+}
+
+void AK_Drone::UpDown(float inputValue)
+{
+	upDownInputValue = inputValue;
+}
+
+void AK_Drone::ChangeMode()
+{
+}
+
+void AK_Drone::UseSkill01()
+{
+}
+
+void AK_Drone::UseSkill02()
 {
 }
 
