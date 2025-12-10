@@ -6,6 +6,8 @@ AP_Fortress::AP_Fortress()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
+	Mesh = CreateDefaultSubobject<UStaticMeshComponent> ( TEXT ( "Mesh" ) );
+	SetRootComponent ( Mesh );
 }
 
 void AP_Fortress::BeginPlay()
@@ -19,6 +21,8 @@ void AP_Fortress::BeginPlay()
 
 	Health = MaxHealth;
 	OnTakeAnyDamage.AddDynamic ( this , &AP_Fortress::OnTakeDamage );
+
+	Mesh->SetCanEverAffectNavigation ( false );
 }
 
 

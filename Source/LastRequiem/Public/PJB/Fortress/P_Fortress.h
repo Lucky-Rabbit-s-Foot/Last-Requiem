@@ -31,6 +31,9 @@ public:
 	void OnBroken ();
 
 protected:
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Components" )
+	TObjectPtr<UStaticMeshComponent> Mesh = nullptr;
+	
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Health" )
 	float MaxHealth = 300.0f;
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Health" )
