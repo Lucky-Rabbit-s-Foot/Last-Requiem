@@ -45,10 +45,15 @@ protected:
 public:
 	
 private:
+	//movement 
 	FVector curVelocity = FVector::ZeroVector;
 	FVector targetVelocity = FVector::ZeroVector;
+	
 	FVector2D moveInputValue = FVector2D::ZeroVector;
 	float upDownInputValue = 0.0f;
+	
+	float lastInputTime = 0.0f;
+	const float INPUT_IDLE_THRESHOLD = 1.0f;
 
 protected:
 	
@@ -58,6 +63,9 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Components")
 	TObjectPtr<class USkeletalMeshComponent> meshComp;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Components")
+	TObjectPtr<class USpringArmComponent> springArmComp;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Components")
 	TObjectPtr<class UCameraComponent> cameraComp;
