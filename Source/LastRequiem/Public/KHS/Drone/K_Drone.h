@@ -66,6 +66,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Data")
 	TObjectPtr<class UK_DroneData> droneData;
 	
+	//Anim
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Anim")
+	TObjectPtr<class UAnimMontage> flightMontage;
+	
 	////UI
 	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|UI")
 	// TSubclassOf<class UUserWidget> droneUIFactory;

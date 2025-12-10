@@ -49,23 +49,16 @@ void AK_DroneController::OnDroneLook(const FInputActionValue& value)
 	currentRot.Normalize();
 	
 	bool bAtMaxLimit = (currentRot.Pitch >= 10.0f && lookInput.Y < 0);
-	bool bAtMinLimit = (currentRot.Pitch <= -70.0f && lookInput.Y > 0);
-	
-	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan,
-		FString::Printf(TEXT("Pitch: %.2f | InputY: %.2f | Max: %s | Min: %s"),
-		currentRot.Pitch, lookInput.Y, 
-		bAtMaxLimit ? TEXT("TRUE") : TEXT("FALSE"),
-		bAtMinLimit ? TEXT("TRUE") : TEXT("FALSE")));
+	bool bAtMinLimit = (currentRot.Pitch <= -45.0f && lookInput.Y > 0);
 	
 	if (!bAtMaxLimit && !bAtMinLimit)
 	{
 		AddPitchInput(lookInput.Y);
 	}
 	
-	
 	currentRot = GetControlRotation();
 	currentRot.Normalize();
-	currentRot.Pitch = FMath::Clamp(currentRot.Pitch, -70.0f, 10.0f);
+	currentRot.Pitch = FMath::Clamp(currentRot.Pitch, -45.0f, 10.0f);
 	SetControlRotation(currentRot);
 }
 

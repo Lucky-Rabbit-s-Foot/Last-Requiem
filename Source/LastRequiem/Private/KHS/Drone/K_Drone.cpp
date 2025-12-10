@@ -28,7 +28,13 @@ AK_Drone::AK_Drone()
 void AK_Drone::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	//Anim
+	UAnimInstance* animInst = meshComp->GetAnimInstance();
+	if (flightMontage && animInst)
+	{
+		animInst->Montage_Play(flightMontage);
+		animInst->Montage_JumpToSection(FName("Start"));
+	}
 	
 	//SFX settings
 	
