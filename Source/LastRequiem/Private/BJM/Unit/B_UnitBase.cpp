@@ -25,6 +25,14 @@ AB_UnitBase::AB_UnitBase()
 	bUseControllerRotationYaw = false; 
 	GetCharacterMovement()->bOrientRotationToMovement = true; 
 
+	static FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
+	GameplayTags.AddTag ( UnitTag );
+
+}
+
+void AB_UnitBase::GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const
+{
+	TagContainer = GameplayTags;
 }
 
 // Called when the game starts or when spawned

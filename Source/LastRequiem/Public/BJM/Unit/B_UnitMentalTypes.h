@@ -32,3 +32,22 @@ enum class EUnitActionState : uint8
 	Cover       UMETA ( DisplayName = "Cover" ) ,       // 은/엄폐
 	Retreat     UMETA ( DisplayName = "Retreat" )      // 후퇴 중
 };
+
+USTRUCT ( BlueprintType )
+struct FUnitProfileData
+{
+	GENERATED_BODY ()
+
+public:
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Profile" )
+	UTexture2D* ProfileImage;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Profile" )
+	FText UnitName;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Profile" )
+	float MaxHP;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Profile" )
+	float MaxSanity;
+};
