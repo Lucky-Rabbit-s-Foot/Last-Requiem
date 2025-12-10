@@ -6,7 +6,7 @@
 #include "P_DataTableRows.generated.h"
 
 USTRUCT ( BlueprintType )
-struct FEnemySpawnRow : public FTableRowBase
+struct FP_EnemySpawnRow : public FTableRowBase
 {
 	GENERATED_BODY ()
 public:

@@ -50,13 +50,13 @@ void AP_EnemySpawner::SpawnEnemy ()
 		return;
 	}
 
-	FEnemySpawnRow* SelectedRow = nullptr;
+	FP_EnemySpawnRow* SelectedRow = nullptr;
 
 	static const FString ContextString ( TEXT ( "EnemySpawnContext" ) );
-	TArray<FEnemySpawnRow*> AllRows;
-	EnemyDataTable->GetAllRows<FEnemySpawnRow> ( ContextString , AllRows );
+	TArray<FP_EnemySpawnRow*> AllRows;
+	EnemyDataTable->GetAllRows<FP_EnemySpawnRow> ( ContextString , AllRows );
 
-	for(FEnemySpawnRow* Row : AllRows)
+	for(FP_EnemySpawnRow* Row : AllRows)
 	{
 		if (Row && Row->EnemyTag.MatchesTag ( EnemyTagToSpawn ))
 		{
