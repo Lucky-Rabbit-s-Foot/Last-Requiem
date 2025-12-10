@@ -43,6 +43,16 @@ public:
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
 	FGameplayTagContainer GameplayTags;
 
+public:
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Data" )
+	UTexture2D* MyProfileImage = nullptr;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Data" )
+	FText MyUnitName;
+
+	UFUNCTION ( BlueprintCallable , Category = "Unit|Data" )
+	FUnitProfileData GetUnitProfileData ();
+
 
 public:
 

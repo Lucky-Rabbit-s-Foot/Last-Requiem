@@ -10,6 +10,7 @@
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "DrawDebugHelpers.h"
 #include "KWB/UI/W_MapWidget.h"
+#include "Perception/AISense_Damage.h"
 
 
 // Sets default values
@@ -79,6 +80,32 @@ void AB_UnitBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+FUnitProfileData AB_UnitBase::GetUnitProfileData ()
+{
+	FUnitProfileData Data;
+
+	// 고정정보
+	Data.ProfileImage = MyProfileImage;
+	Data.UnitName = MyUnitName;
+
+	// 변동정보
+	if (StatusComponent)
+	{
+		Data.MaxHP = StatusComponent->MaxHP;
+		Data.CurrentHP = StatusComponent->CurrentHP;
+
+		Data.MaxSanity = StatusComponent->MaxSanity;
+		Data.CurrentSanity = StatusComponent->CurrentSanity;
+
+		Data.bIsInCombat = StatusComponent->bIsInCombat;
+		Data.bIsSpeaking = StatusComponent->bIsSpeaking;
+	}
+
+	Data.bIsAlive = bIsAlive;
+
+	return Data;
 }
 
 void AB_UnitBase::CommandMoveToLocation(float InX, float InY)
@@ -236,6 +263,16 @@ void AB_UnitBase::UnitAttack(AActor* TargetActor)
 		MuzzleLoc = GetMesh ()->GetSocketLocation ( MuzzleSocketName );
 	}
 	DrawDebugLine ( GetWorld () , MuzzleLoc , TargetActor->GetActorLocation () , FColor::Red , false , 0.2f , 0 , 1.0f );
+
+	UAISense_Damage::ReportDamageEvent (
+		GetWorld () ,
+		TargetActor ,                     // 맞은 놈 (적 AI)
+		this ,                            // 때린 놈 (플레이어)
+		10.0f ,                           // 데미지 양
+		this->GetActorLocation () ,       // 때린 위치
+		TargetActor->GetActorLocation ()  // 맞은 위치
+	);
+
 }
 
 void AB_UnitBase::OnTakeDamage_Unit ( AActor* DamagedActor , float Damage , const UDamageType* DamageType , AController* InstigateBy , AActor* DamageCauser )

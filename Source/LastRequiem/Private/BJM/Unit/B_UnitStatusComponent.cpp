@@ -71,6 +71,32 @@ void UB_UnitStatusComponent::ModifyLoyalty (float InAmount)
 	UpdateBehaviorState ();
 }
 
+void UB_UnitStatusComponent::SetCombatState(bool bNewState)
+{
+	bIsInCombat = bNewState;
+
+	if (bIsInCombat)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(CombatTimerHandle);
+
+		GetWorld()->GetTimerManager().SetTimer(
+			CombatTimerHandle,
+			this,
+			&UB_UnitStatusComponent::ResetCombatState,
+			5.0f,
+			false
+		);
+
+		 UE_LOG(LogTemp, Warning, TEXT("전투 모드 활성화"));
+	}
+}
+
+void UB_UnitStatusComponent::ResetCombatState()
+{
+	bIsInCombat = false;
+	UE_LOG(LogTemp, Warning, TEXT("전투 모드 비활성화"));
+}
+
 void UB_UnitStatusComponent::UpdateBehaviorState ()
 {
 	EUnitBehaviorState NewState = EUnitBehaviorState::Normal;
