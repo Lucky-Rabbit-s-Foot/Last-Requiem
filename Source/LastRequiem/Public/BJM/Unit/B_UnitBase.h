@@ -47,6 +47,10 @@ public:
 	UFUNCTION ()
 	void OnMapMoveCommand ( FVector TargetLocation );
 
+	UFUNCTION ()
+	void CommandMoveToLocation_Test ( FVector TargetLocation );
+
+
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Unit|Attack")

@@ -1,11 +1,14 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "BJM/Unit/B_UnitBase.h"
+#include "NavigationSystem.h"
 #include "BJM/Unit/B_UnitStatusComponent.h"
 #include "BJM/Unit/B_UnitAIController.h"
+#include "AIController.h" 
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
+#include "DrawDebugHelpers.h"
 #include "KWB/UI/W_MapWidget.h"
 
 
@@ -17,12 +20,10 @@ AB_UnitBase::AB_UnitBase()
 
 	StatusComponent = CreateDefaultSubobject<UB_UnitStatusComponent>(TEXT("StatusComponent"));
 
-	// [중요] 이 유닛은 우리가 만든 AI 컨트롤러가 조종한다!
 	AIControllerClass = AB_UnitAIController::StaticClass ();
 
-	// 유닛이 회전할 때 컨트롤러가 보는 방향으로 몸을 돌리도록 설정
-	bUseControllerRotationYaw = false; // 카메라는 따로 돌고
-	GetCharacterMovement()->bOrientRotationToMovement = true; // 이동 방향으로 몸을 돌림
+	bUseControllerRotationYaw = false; 
+	GetCharacterMovement()->bOrientRotationToMovement = true; 
 
 }
 
@@ -30,6 +31,31 @@ AB_UnitBase::AB_UnitBase()
 void AB_UnitBase::BeginPlay()
 {
 	Super::BeginPlay();
+
+	TArray<AActor*> FoundActors;
+	UUserWidget* FoundWidget = nullptr;
+
+	TArray<UUserWidget*> FoundWidgets;
+	UWidgetBlueprintLibrary::GetAllWidgetsOfClass ( GetWorld () , FoundWidgets , UW_MapWidget::StaticClass () , false );
+
+	if (FoundWidgets.Num () > 0)
+	{
+		// 첫 번째로 발견된 맵 위젯을 가져옴
+		UW_MapWidget* MapWidget = Cast<UW_MapWidget> ( FoundWidgets[0] );
+
+		if (MapWidget)
+		{
+			// 2. 델리게이트 연결 (Binding)
+			// 맵 위젯의 OnRightMouseButtonClicked가 터지면 -> 내 CommandMoveToLocation 함수 실행
+			MapWidget->OnRightMouseButtonClicked.AddDynamic ( this , &AB_UnitBase::CommandMoveToLocation_Test );
+
+			UE_LOG ( LogTemp , Warning , TEXT ( "연결 성공" ) );
+		}
+	}
+	else
+	{
+		UE_LOG ( LogTemp , Warning , TEXT ( "연결 실패" ) );
+	}
 	
 }
 
@@ -124,6 +150,43 @@ void AB_UnitBase::ProcessMoveCommand(float InX, float InY)
 void AB_UnitBase::OnMapMoveCommand ( FVector TargetLocation )
 {
 	ProcessMoveCommand ( TargetLocation.X , TargetLocation.Y );
+}
+
+void AB_UnitBase::CommandMoveToLocation_Test ( FVector TargetLocation )
+{
+
+	DrawDebugSphere ( GetWorld () , TargetLocation , 50.0f , 16 , FColor::Red , false , 3.0f );
+	UE_LOG ( LogTemp , Error , TEXT ( "이동좌표: %s" ) , *TargetLocation.ToString () );
+
+	AAIController* AIController = Cast<AAIController> ( GetController () );
+	if (!AIController)
+	{
+		UE_LOG ( LogTemp , Error , TEXT ( "AIController 없음" ) );
+		return;
+	}
+
+	FVector SearchCenter = TargetLocation;
+	SearchCenter.Z = GetActorLocation ().Z;
+
+	UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1> ( GetWorld () );
+	FNavLocation ProjectedLocation;
+
+	FVector SearchExtent ( 500.0f , 500.0f , 5000.0f );
+
+	if (NavSystem && NavSystem->ProjectPointToNavigation ( SearchCenter , ProjectedLocation , SearchExtent ))
+	{
+	
+		DrawDebugSphere ( GetWorld () , ProjectedLocation.Location , 50.0f , 16 , FColor::Green , false , 3.0f );
+		UE_LOG ( LogTemp , Warning , TEXT ( "보정된 좌표: %s" ) , *ProjectedLocation.Location.ToString () );
+
+		// 이동 명령
+		AIController->MoveToLocation ( ProjectedLocation.Location );
+	}
+	else
+	{
+		UE_LOG ( LogTemp , Error , TEXT ( "네비 메시 못 찾음" ) );
+	}
+
 }
 
 float AB_UnitBase::TakeDamage ( float DamageAmount , FDamageEvent const& DamageEvent , AController* EventInstigator , AActor* DamageCauser )
