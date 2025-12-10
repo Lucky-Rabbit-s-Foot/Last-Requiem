@@ -1,89 +1,91 @@
 ﻿#include "PJB/AI/P_AIControllerEnemyBase.h"
 
-#include "BehaviorTree/BehaviorTree.h"
-#include "BehaviorTree/BlackboardComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
 #include "Perception/AISenseConfig_Damage.h"
-#include "Kismet/GameplayStatics.h"
+#include "Perception/AISense_Sight.h"
+#include "Perception/AISense_Damage.h"
 
-// include Unit Header
-// include Fortress Header
+#include "BehaviorTree/BehaviorTree.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "GameplayTagAssetInterface.h"
+#include "Kismet/GameplayStatics.h"
 
 AP_AIControllerEnemyBase::AP_AIControllerEnemyBase ()
 {
 	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent> ( TEXT ( "AIPerception" ) );
 	
-	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight> ( TEXT ( "SightConfig" ) );
-	if (SightConfig)
-	{
-		SightConfig->SightRadius = SightRadius;
-		SightConfig->LoseSightRadius = LoseSightRadius;
-		SightConfig->PeripheralVisionAngleDegrees = ViewAngleDegree;
+	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight> ( TEXT ( "SenseSight" ) );
+	InitSightConfig ();
+	DamageConfig = CreateDefaultSubobject<UAISense_Damage> ( TEXT ( "SenseDamage" ) );
+	InitDamageConfig ();
+	
+	AIPerceptionComp->SetDominantSense ( SightConfig->GetSenseImplementation () );
 
-		SightConfig->DetectionByAffiliation.bDetectEnemies = true;
-		SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
-		SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
+	InitGameplayTags ();
+	
+}
 
-		AIPerceptionComp->ConfigureSense ( *SightConfig );
-	}
+void AP_AIControllerEnemyBase::InitGameplayTags ()
+{
+	UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
+	ObstacleTag = FGameplayTag::RequestGameplayTag ( FName ( "Obstacle" ) );
+	FortressTag = FGameplayTag::RequestGameplayTag ( FName ( "Fortress" ) );
+}
 
-	DamageConfig = CreateDefaultSubobject<UAISenseConfig_Damage> ( TEXT ( "DamageConfig" ) );
-	if (DamageConfig)
-	{
-		//DamageConfig->SetImplementation ( UAISenseConfig_Damage::StaticClass () );
-		AIPerceptionComp->ConfigureSense ( *DamageConfig );
-	}
+void AP_AIControllerEnemyBase::InitDamageConfig ()
+{
+	if (!DamageConfig) return;
+	DamageConfig->SetImplementation ( UAISense_Damage::StaticClass () );
+	AIPerceptionComp->ConfigureSense ( *DamageConfig );
+}
 
+void AP_AIControllerEnemyBase::InitSightConfig ()
+{
+	if (!SightConfig) return;
+	SightRangeSetting ();
+	SightDetectionSetting ();
+	AIPerceptionComp->ConfigureSense ( *SightConfig );
+}
+
+void AP_AIControllerEnemyBase::SightRangeSetting ()
+{
+	SightConfig->SightRadius = SightRadius;
+	SightConfig->LoseSightRadius = LoseSightRadius;
+	SightConfig->PeripheralVisionAngleDegrees = ViewAngleDegree;
+}
+
+void AP_AIControllerEnemyBase::SightDetectionSetting ()
+{
+	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
+	SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
+	SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
 }
 
 void AP_AIControllerEnemyBase::OnPossess ( APawn* InPawn )
 {
 	Super::OnPossess ( InPawn );
 
+	BindPerceptionUpdate ();
+	
 	if (BehaviorTree)
 	{
 		RunBehaviorTree ( BehaviorTree );
 	}
+	
 	UpdateBestTarget ();
+}
+
+void AP_AIControllerEnemyBase::BindPerceptionUpdate ()
+{
+	if (!AIPerceptionComp) return;
+	AIPerceptionComp->OnTargetPerceptionUpdated.AddDynamic ( this , &AP_AIControllerEnemyBase::OnTargetPerceived );
 }
 
 void AP_AIControllerEnemyBase::OnTargetPerceived ( AActor* InActor , FAIStimulus Stimulus )
 {
-	UBlackboardComponent* BB = GetBlackboardComponent ();
-	if (!BB) return;
-
-	if (Stimulus.Type == UAISense::GetSenseID<UAISenseConfig_Damage> ())
-	{
-		if (Stimulus.WasSuccessfullySensed ())
-		{
-			/*
-			Unit 에서 추가해야 할 코드
-			#include "Perception/AISense_Damage.h"
-
-			UAISense_Damage::ReportDamageEvent(
-				GetWorld(),
-				EnemyActor,                     // 맞은 놈 (적 AI)
-				this,                           // 때린 놈 (플레이어)
-				10.0f,                          // 데미지 양
-				this->GetActorLocation(),       // 때린 위치
-				EnemyActor->GetActorLocation()  // 맞은 위치
-			);
-
-			*/
-
-
-			BB->SetValueAsObject ( TEXT ( "TargetActor" ) , InActor );
-			//BB->SetValueAsEnum ( TEXT ( "TargetType" ) , 1 );
-			
-
-
-			SetFocus ( InActor );
-			return;
-		}
-	}
-
-	if (Stimulus.Type == UAISense::GetSenseID<UAISense_Sight> ())
+	if (Stimulus.Type == UAISense::GetSenseID<UAISense_Damage> ()
+		|| Stimulus.Type == UAISense::GetSenseID<UAISense_Sight> ())
 	{
 		UpdateBestTarget ();
 	}
@@ -92,64 +94,17 @@ void AP_AIControllerEnemyBase::OnTargetPerceived ( AActor* InActor , FAIStimulus
 void AP_AIControllerEnemyBase::UpdateBestTarget ()
 {
 	UBlackboardComponent* BB = GetBlackboardComponent ();
-	if (!BB)
-	{
-		return;
-	}
-
 	APawn* PossedPawn = GetPawn ();
-	if (!PossedPawn)
-	{
-		return;
-	}
+	if (!BB || !PossedPawn) return;
 
 	AActor* ClosestUnit = nullptr;
 	float MinDistSq = FLT_MAX;
-
-	TArray<AActor*> TargetCandidates;
-
-	TArray<AActor*> VisibleActors;
-	AIPerceptionComp->GetCurrentlyPerceivedActors ( UAISenseConfig_Sight::StaticClass () , VisibleActors );
-	for (AActor* VisibleActor : VisibleActors)
-	{
-		if (VisibleActor)
-		{
-			// AActor -> Unit Class
-			if (AActor* PerceiveUnit = Cast<AActor> ( VisibleActor ))
-			{
-				float DistSq = PossedPawn->GetSquaredDistanceTo (VisibleActor);
-				if (DistSq < MinDistSq)
-				{
-					MinDistSq = DistSq;
-					ClosestUnit = VisibleActor;
-				}
-			}
-		}
-	}
-
-	TArray<AActor*> DamagingActors;
-	AIPerceptionComp->GetCurrentlyPerceivedActors ( UAISenseConfig_Damage::StaticClass () , DamagingActors );
-	for (AActor* DamagingActor : DamagingActors)
-	{
-		if (DamagingActor)
-		{
-			// AActor -> Unit Class
-			if (AActor* PerceiveUnit = Cast<AActor> ( DamagingActor ))
-			{
-				float DistSq = PossedPawn->GetSquaredDistanceTo ( DamagingActor );
-				if (DistSq < MinDistSq)
-				{
-					MinDistSq = DistSq;
-					ClosestUnit = DamagingActor;
-				}
-			}
-		}
-	}
+	FindClosestUnitOnVisible ( PossedPawn , MinDistSq , ClosestUnit );
+	FindClosestUnitOnDamaging ( PossedPawn , MinDistSq , ClosestUnit );
 
 	if (ClosestUnit)
 	{
 		BB->SetValueAsObject ( TEXT ( "TargetActor" ), ClosestUnit );
-		//BB->SetValueAsEnum ( TEXT ( "TargetType" ) , 1 );
 	}
 	else
 	{
@@ -159,12 +114,54 @@ void AP_AIControllerEnemyBase::UpdateBestTarget ()
 		if (Fortresses.Num () > 0)
 		{
 			BB->SetValueAsObject ( TEXT ( "TargetActor" ) , Fortresses[0]);
-			//BB->SetValueAsEnum ( TEXT ( "TragetType" ) , 2 );
 		}
 		else
 		{
 			BB->SetValueAsObject ( TEXT ( "TargetActor" ) , nullptr );
-			//BB->SetValueAsEnum ( TEXT ( "TargetType" ) , 0 );
 		}
 	}
+}
+
+void AP_AIControllerEnemyBase::FindClosestUnitOnDamaging ( APawn* PossedPawn , float& MinDistSq , AActor*& ClosestUnit )
+{
+	TArray<AActor*> DamagingActors;
+	AIPerceptionComp->GetCurrentlyPerceivedActors ( UAISense_Damage::StaticClass () , DamagingActors );
+	for (AActor* DamagingActor : DamagingActors)
+	{
+		if (!IsUnit ( DamagingActor )) continue;
+
+		float DistSq = PossedPawn->GetSquaredDistanceTo ( DamagingActor );
+		if (DistSq < MinDistSq)
+		{
+			MinDistSq = DistSq;
+			ClosestUnit = DamagingActor;
+		}
+	}
+}
+
+void AP_AIControllerEnemyBase::FindClosestUnitOnVisible ( APawn* PossedPawn , float& MinDistSq , AActor*& ClosestUnit )
+{
+	TArray<AActor*> VisibleActors;
+	AIPerceptionComp->GetCurrentlyPerceivedActors ( UAISense_Sight::StaticClass () , VisibleActors );
+	for (AActor* VisibleActor : VisibleActors)
+	{
+		if (!IsUnit ( VisibleActor )) continue;
+
+		float DistSq = PossedPawn->GetSquaredDistanceTo ( VisibleActor );
+		if (DistSq < MinDistSq)
+		{
+			MinDistSq = DistSq;
+			ClosestUnit = VisibleActor;
+		}
+	}
+}
+
+bool AP_AIControllerEnemyBase::IsUnit ( AActor* InActor ) const
+{
+	if (!InActor) return false;
+
+	const IGameplayTagAssetInterface* TagAsset = Cast<IGameplayTagAssetInterface> ( InActor );
+	if (!TagAsset) return false;
+
+	return TagAsset->HasMatchingGameplayTag ( UnitTag );
 }
