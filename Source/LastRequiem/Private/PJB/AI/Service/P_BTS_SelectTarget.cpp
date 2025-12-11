@@ -8,6 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Engine/OverlapResult.h"
+#include "PJB/System/P_GameStateBase.h"
 
 UP_BTS_SelectTarget::UP_BTS_SelectTarget ()
 {
@@ -21,15 +22,14 @@ void UP_BTS_SelectTarget::TickNode ( UBehaviorTreeComponent& OwnerComp , uint8* 
 
 	AAIController* AIC = OwnerComp.GetAIOwner ();
 	APawn* OwnedPawn = AIC ? AIC->GetPawn () : nullptr;
-
 	UBlackboardComponent* BB = OwnerComp.GetBlackboardComponent ();
 	if (!AIC || !OwnedPawn || !BB) return;
 
 	UAIPerceptionComponent* PerceptionComp = AIC->FindComponentByClass<UAIPerceptionComponent> ();
 
 	AActor* FinalTarget = nullptr;
-	FGameplayTag FinalTag = FGameplayTag::EmptyTag;
 
+	// Unit Targetting
 	if (PerceptionComp)
 	{
 		TArray<AActor*> PerceivedActors;
@@ -46,12 +46,13 @@ void UP_BTS_SelectTarget::TickNode ( UBehaviorTreeComponent& OwnerComp , uint8* 
 				{
 					ClosestDistSq = DistSq;
 					FinalTarget = Actor;
-					FinalTag = UnitTag;
+					BB->SetValueAsInt ( TagKey.SelectedKeyName , 1 );
 				}
 			}
 		}
 	}
 
+	// Obstacle Targetting
 	if (FinalTarget == nullptr)
 	{
 		// 내 주변 아주 가까운 곳(SearchRadius)에 장애물이 있는지 검사
@@ -77,34 +78,24 @@ void UP_BTS_SelectTarget::TickNode ( UBehaviorTreeComponent& OwnerComp , uint8* 
 				{
 					// 장애물 발견! (가장 먼저 걸린 놈 타겟)
 					FinalTarget = Actor;
-					FinalTag = ObstacleTag;
+					BB->SetValueAsInt ( TagKey.SelectedKeyName , 2 );
 					break;
 				}
 			}
 		}
 	}
 
+	// Fortress Targetting
 	if (FinalTarget == nullptr)
 	{
-		TArray<AActor*> Fortresses;
-		UGameplayStatics::GetAllActorsOfClass ( OwnedPawn , AActor::StaticClass () , Fortresses ); // 최적화 필요: 태그나 특정 클래스로 검색
-
-		for (AActor* Actor : Fortresses)
+		if (AP_GameStateBase* GS = GetWorld ()->GetGameState<AP_GameStateBase> ())
 		{
-			if (HasGameplayTag ( Actor , FortressTag ))
-			{
-				FinalTarget = Actor;
-				FinalTag = FortressTag;
-				break;
-			}
+			FinalTarget = GS->GetFortress ();
+			BB->SetValueAsInt ( TagKey.SelectedKeyName , 3 );
 		}
 	}
 
 	BB->SetValueAsObject ( TargetActorKey.SelectedKeyName , FinalTarget );
-	if (FinalTag.IsValid ())
-	{
-		BB->SetValueAsInt ( TagKey.SelectedKeyName , 0 );
-	}
 }
 
 bool UP_BTS_SelectTarget::HasGameplayTag ( AActor* Actor , FGameplayTag Tag ) const

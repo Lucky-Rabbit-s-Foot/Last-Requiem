@@ -28,5 +28,12 @@ void UP_BTS_CheckAttackRange::TickNode ( UBehaviorTreeComponent& OwnerComp , uin
 
 		bInRange = (Distance <= AttackRange);
 	}
-	BB->SetValueAsBool ( CanAttackKey.SelectedKeyName , bInRange );
+	if (bInRange)
+	{
+		BB->SetValueAsBool ( CanAttackKey.SelectedKeyName , bInRange );
+	}
+	else
+	{
+		BB->ClearValue ( CanAttackKey.SelectedKeyName );
+	}
 }

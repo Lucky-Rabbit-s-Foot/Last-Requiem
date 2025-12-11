@@ -25,12 +25,17 @@ void AP_Fortress::BeginPlay()
 	Mesh->SetCanEverAffectNavigation ( false );
 }
 
-
 void AP_Fortress::OnTakeDamage ( AActor* DamagedActor , float Damage , const UDamageType* DamageType , AController* InstigateBy , AActor* DamageCauser )
 {
 	if (bIsBroken) return;
 
 	Health -= Damage;
+	UE_LOG(LogTemp, Log, TEXT ( "%s took %f damage. Current Health: %f" ) ,
+		*GetName () ,
+		Damage ,
+		Health
+	);
+	
 	if (Health < 0.0f)
 	{
 		OnBroken ();

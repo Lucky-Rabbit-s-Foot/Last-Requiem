@@ -21,6 +21,11 @@ EBTNodeResult::Type UP_BTT_Attack::ExecuteTask ( UBehaviorTreeComponent& OwnerCo
 
 	if (Target)
 	{
+		UE_LOG(LogTemp, Log, TEXT ( "%s attacks %s for %f damage." ) ,
+			*Attacker->GetName () ,
+			*Target->GetName () ,
+			DamageAmount
+		);
 		UGameplayStatics::ApplyDamage (
 			Target ,
 			DamageAmount ,
