@@ -9,8 +9,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "DrawDebugHelpers.h"
-#include "KWB/UI/W_MapWidget.h"
 #include "KWB/UI/Monitor/W_SituationMapWidget.h"
+#include "KWB/UI/W_MapWidget.h"
 #include "Perception/AISense_Damage.h"
 #include "TimerManager.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -73,38 +73,77 @@ void AB_UnitBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 void AB_UnitBase::FindMapWidgetLoop ()
 {
+
 	TArray<UUserWidget*> FoundWidgets;
-	UWidgetBlueprintLibrary::GetAllWidgetsOfClass ( GetWorld () , FoundWidgets , UW_MapWidget::StaticClass () , false );
+
+	// 1. 가장 큰 부모인 SituationMapWidget을 찾는다.
+	UWidgetBlueprintLibrary::GetAllWidgetsOfClass ( GetWorld () , FoundWidgets , UW_SituationMapWidget::StaticClass () , false );
 
 	if (FoundWidgets.Num () > 0)
 	{
-		UW_MapWidget* MapWidget = Cast<UW_MapWidget> ( FoundWidgets[0] );
-		if (MapWidget)
+		UW_SituationMapWidget* SituationWidget = Cast<UW_SituationMapWidget> ( FoundWidgets[0] );
+
+		if (SituationWidget)
 		{
-		
-			MapWidget->OnRightMouseButtonClicked.AddDynamic ( this , &AB_UnitBase::CommandMoveToLocation );
+			SituationWidget->OnAttackButtonClicked.AddDynamic ( this , &AB_UnitBase::OnAttackButtonClicked_Unit );
+			SituationWidget->OnStopButtonClicked.AddDynamic ( this , &AB_UnitBase::OnStopButtonClicked_Unit );
+			SituationWidget->OnHoldButtonClicked.AddDynamic ( this , &AB_UnitBase::OnHoldButtonClicked_Unit );
+			SituationWidget->OnRetreatButtonClicked.AddDynamic ( this , &AB_UnitBase::OnRetreatButtonClicked_Unit );
 
-			UE_LOG ( LogTemp , Warning , TEXT ( "연결 성공" ) );
+			UW_MapWidget* MapWidget = SituationWidget->GetRenderedMap ();
+			if (MapWidget)
+			{
+				MapWidget->OnRightMouseButtonClicked.AddDynamic ( this , &AB_UnitBase::CommandMoveToLocation );
+				UE_LOG ( LogTemp , Warning , TEXT ( "맵 이동 명령 연결 성공" ) );
+			}
+			else
+			{
+				UE_LOG ( LogTemp , Error , TEXT ( "SituationWidget은 찾았는데 그 안에 RenderedMap이 비어있음" ) );
+			}
 
+			UE_LOG ( LogTemp , Warning , TEXT ( "위젯 찾음 & 모든 연결 완료!" ) );
+
+			// 4. 타이머 해제
 			GetWorld ()->GetTimerManager ().ClearTimer ( FindWidgetTimerHandle );
 		}
 	}
 	else
 	{
-		 UE_LOG(LogTemp, Log, TEXT("위젯 아직 못찾음"));
+		UE_LOG ( LogTemp , Log , TEXT ( "SituationMapWidget 아직 못 찾음..." ) );
 	}
 
-	if (FoundWidgets.Num () > 0)
-	{
-		UW_SituationMapWidget* SituationMapWidget = Cast<UW_SituationMapWidget> ( FoundWidgets[0] );
+	//TArray<UUserWidget*> FoundWidgets;
+	//UWidgetBlueprintLibrary::GetAllWidgetsOfClass ( GetWorld () , FoundWidgets , UW_MapWidget::StaticClass () , false );
 
-		//MapWidget->OnAttackButtonClicked.AddDynamic ( this , &AB_UnitBase::OnAttackButtonClicked );
-		//MapWidget->OnStopButtonClicked.AddDynamic ( this , &AB_UnitBase::OnStopButtonClicked );
-		//MapWidget->OnHoldButtonClicked.AddDynamic ( this , &AB_UnitBase::OnHoldButtonClicked );
-		//MapWidget->OnRetreatButtonClicked.AddDynamic ( this , &AB_UnitBase::OnRetreatButtonClicked );
+	//if (FoundWidgets.Num () > 0)
+	//{
+	//	UW_MapWidget* MapWidget = Cast<UW_MapWidget> ( FoundWidgets[0] );
+	//	if (MapWidget)
+	//	{
+	//	
+	//		MapWidget->OnRightMouseButtonClicked.AddDynamic ( this , &AB_UnitBase::CommandMoveToLocation );
 
-		UE_LOG ( LogTemp , Warning , TEXT ( "액션 버튼 연결 완료!" ) );
-	}
+	//		UE_LOG ( LogTemp , Warning , TEXT ( "연결 성공" ) );
+
+	//		GetWorld ()->GetTimerManager ().ClearTimer ( FindWidgetTimerHandle );
+	//	}
+	//}
+	//else
+	//{
+	//	 UE_LOG(LogTemp, Log, TEXT("위젯 아직 못찾음"));
+	//}
+
+	//if (FoundWidgets.Num () > 0)
+	//{
+	//	UW_SituationMapWidget* SituationMapWidget = Cast<UW_SituationMapWidget> ( FoundWidgets[0] );
+
+	//	//MapWidget->OnAttackButtonClicked.AddDynamic ( this , &AB_UnitBase::OnAttackButtonClicked );
+	//	//MapWidget->OnStopButtonClicked.AddDynamic ( this , &AB_UnitBase::OnStopButtonClicked );
+	//	//MapWidget->OnHoldButtonClicked.AddDynamic ( this , &AB_UnitBase::OnHoldButtonClicked );
+	//	//MapWidget->OnRetreatButtonClicked.AddDynamic ( this , &AB_UnitBase::OnRetreatButtonClicked );
+
+	//	UE_LOG ( LogTemp , Warning , TEXT ( "액션 버튼 연결 완료!" ) );
+	//}
 
 }
 
@@ -145,20 +184,20 @@ void AB_UnitBase::UnitMentalCheck_Move(float InX, float InY)
 	// 현재 상태 확인
 	EUnitBehaviorState CurrentState = StatusComponent->CurrentState;
 
+	bool bCanMove = false;
+
 	switch (CurrentState)
 	{
 
 		case EUnitBehaviorState::Awakened:
-			ProcessMoveCommand(InX, InY);
-			break;
 		case EUnitBehaviorState::Normal:
-			ProcessMoveCommand(InX, InY);
+			bCanMove = true;
 			break;
 		case EUnitBehaviorState::Tense:
 			// 50퍼 확률로 명령 수행
 			if (FMath::RandRange(0, 100) > 50)
 			{
-				ProcessMoveCommand(InX, InY);
+				bCanMove = true;
 			}
 			else
 			{
@@ -174,28 +213,65 @@ void AB_UnitBase::UnitMentalCheck_Move(float InX, float InY)
 		case EUnitBehaviorState::Madness:
 			UE_LOG(LogTemp, Error, TEXT("광기"));
 			break;
-
 	}
+	if (bCanMove)
+	{
+		ProcessMoveCommand ( InX , InY );
+	}
+
 }
 
 void AB_UnitBase::ProcessMoveCommand(float InX, float InY)
 {
-	// 현재 내 컨트롤러 가져오기
-	AController* controller = GetController();
+	AAIController* AIController = Cast<AAIController> ( GetController () );
+	if (!AIController) return;
 
-	// 내가 만든 AI 컨트롤러인지 확인
-	AB_UnitAIController* AIController = Cast<AB_UnitAIController>(controller);
-
-	if (AIController)
+	UBlackboardComponent* BlackboardComp = AIController->GetBlackboardComponent ();
+	if (BlackboardComp)
 	{
-		// 목표 위치 만들기
-		FVector TargetLocation(InX, InY, GetActorLocation().Z);
+		AIController->StopMovement ();
 
-		// 목표 지점
-		AIController->MoveToLocation(TargetLocation);
+		BlackboardComp->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
 
+		// 1. 목표 좌표 입력
+		FVector TargetLocation ( InX , InY , GetActorLocation ().Z );
+		BlackboardComp->SetValueAsVector ( TEXT ( "TargetLocation" ) , TargetLocation );
 
+		// 2. 공격 모드(A키)가 켜져있었다면 'AttackMove', 아니면 그냥 'Move'
+		if (bIsAttackMode)
+		{
+			// 어택 땅 (이동하다 적 만나면 싸움)
+			BlackboardComp->SetValueAsEnum ( TEXT ( "Command" ) , (uint8)EUnitCommandType::AttackMove ); // Enum에 AttackMove가 있어야 함! 없다면 Attack으로 대체
+			UE_LOG ( LogTemp , Warning , TEXT ( "공격 이동" ) );
+
+			// 명령 내렸으니 공격 모드 해제
+			bIsAttackMode = false;
+		}
+		else
+		{
+			// 일반 이동
+			BlackboardComp->SetValueAsEnum ( TEXT ( "Command" ) , (uint8)EUnitCommandType::Move );
+			UE_LOG ( LogTemp , Warning , TEXT ( "일반 이동" ) );
+		}
 	}
+
+
+
+	//// 현재 내 컨트롤러 가져오기
+	//AController* controller = GetController();
+
+	//// 내가 만든 AI 컨트롤러인지 확인
+	//AB_UnitAIController* AIController = Cast<AB_UnitAIController>(controller);
+
+	//if (AIController)
+	//{
+	//	// 목표 위치 만들기
+	//	FVector TargetLocation(InX, InY, GetActorLocation().Z);
+
+	//	// 목표 지점
+	//	AIController->MoveToLocation(TargetLocation);
+
+	//}
 }
 
 
@@ -249,63 +325,84 @@ void AB_UnitBase::CommandMoveToLocation ( FVector TargetLocation )
 
 void AB_UnitBase::CommandAttackMove ( FVector TargetLocation )
 {
-	AB_UnitAIController* AI = Cast<AB_UnitAIController> ( GetController () );
-	if (AI)
+	AAIController* AIController = Cast<AAIController> ( GetController () );
+	if (AIController && AIController->GetBlackboardComponent ())
 	{
-		AI->SetCommandState ( EUnitCommandType::AttackMove , TargetLocation );
+		// 1. 목표 좌표 설정
+		AIController->GetBlackboardComponent ()->SetValueAsVector ( TEXT ( "TargetLocation" ) , TargetLocation );
+		// 2. 상태를 AttackMove (없으면 Attack)로 변경
+		AIController->GetBlackboardComponent ()->SetValueAsEnum ( TEXT ( "Command" ) , (uint8)EUnitCommandType::AttackMove );
+
 	}
 }
 
 void AB_UnitBase::CommandStop ()
 {
-	AB_UnitAIController* AI = Cast<AB_UnitAIController> ( GetController () );
-	if (AI)
+	AAIController* AIController = Cast<AAIController> ( GetController () );
+	if (AIController)
 	{
-		AI->StopMovement ();
-		AI->SetCommandState ( EUnitCommandType::None , FVector::ZeroVector );
+		AIController->StopMovement (); // 즉시 정지
+
+		if (AIController->GetBlackboardComponent ())
+		{
+			// 상태를 Idle (없으면 Stop)로 변경
+			AIController->GetBlackboardComponent ()->SetValueAsEnum ( TEXT ( "Command" ) , (uint8)EUnitCommandType::None );
+		}
 	}
 }
 
 void AB_UnitBase::CommandHold ()
 {
-	AB_UnitAIController* AI = Cast<AB_UnitAIController> ( GetController () );
-	if (AI)
+	AAIController* AIController = Cast<AAIController> ( GetController () );
+	if (AIController)
 	{
-		AI->StopMovement ();
-		AI->SetCommandState ( EUnitCommandType::Hold , GetActorLocation () );
+		AIController->StopMovement (); // 일단 정지
+
+		if (AIController->GetBlackboardComponent ())
+		{
+			// 상태를 Hold로 변경
+			AIController->GetBlackboardComponent ()->SetValueAsEnum ( TEXT ( "Command" ) , (uint8)EUnitCommandType::Hold );
+		}
 	}
 }
 
 void AB_UnitBase::CommandRetreat ()
 {
-	AB_UnitAIController* AI = Cast<AB_UnitAIController> ( GetController () );
-	if (AI)
+	AAIController* AIController = Cast<AAIController> ( GetController () );
+	if (AIController && AIController->GetBlackboardComponent ())
 	{
-		AI->SetCommandState ( EUnitCommandType::Retreat , FortressLocation );
+		// 본진 좌표 입력
+		AIController->GetBlackboardComponent ()->SetValueAsVector ( TEXT ( "TargetLocation" ) , FortressLocation );
+		// 상태를 Retreat으로 변경
+		AIController->GetBlackboardComponent ()->SetValueAsEnum ( TEXT ( "Command" ) , (uint8)EUnitCommandType::Retreat );
+
 	}
 }
 
 void AB_UnitBase::OnAttackButtonClicked_Unit ()
 {
 	bIsAttackMode = true;
-	UE_LOG ( LogTemp , Warning , TEXT ( "공격모드" ));
+	UE_LOG ( LogTemp , Warning , TEXT ( "공격모드" ));	
 }
 
 void AB_UnitBase::OnStopButtonClicked_Unit ()
 {
 	bIsAttackMode = false;
+	UE_LOG ( LogTemp , Warning , TEXT ( "스땁" ));
 	CommandStop ();
 }
 
 void AB_UnitBase::OnHoldButtonClicked_Unit ()
 {
 	bIsAttackMode = false;
+	UE_LOG ( LogTemp , Warning , TEXT ( "홀드" ));
 	CommandHold ();
 }
 
 void AB_UnitBase::OnRetreatButtonClicked_Unit ()
 {
 	bIsAttackMode = false;
+	UE_LOG ( LogTemp , Warning , TEXT ( "후토ㅓㅣ" ));
 	CommandRetreat ();
 }
 

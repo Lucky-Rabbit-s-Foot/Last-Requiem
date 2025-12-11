@@ -107,6 +107,7 @@ void AB_UnitAIController::OnTargetDetected(AActor* InActor, FAIStimulus InStimul
         if(BlackboardComponent) 
 		{
 			BlackboardComponent->SetValueAsObject(TEXT("TargetEnemy"), InActor);
+			SetFocus ( InActor );
 		}
     }
     else
@@ -116,6 +117,16 @@ void AB_UnitAIController::OnTargetDetected(AActor* InActor, FAIStimulus InStimul
         DrawDebugString(GetWorld(), FVector(0,0,50), TEXT("Lost Target..."), InActor, FColor::Red, 2.0f);
 
         UE_LOG(LogTemp, Warning, TEXT("적 놓침 : %s"), *InActor->GetName());
+
+		if (BlackboardComponent)
+		{
+			UObject* CurrentTarget = BlackboardComponent->GetValueAsObject ( TEXT ( "TargetEnemy" ) );
+			if (CurrentTarget == InActor)
+			{
+				BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
+				ClearFocus ( EAIFocusPriority::Gameplay );
+			}
+		}
     }
 }
 
@@ -123,7 +134,7 @@ void AB_UnitAIController::SetCommandState ( EUnitCommandType NewCommand , FVecto
 {
 	if (BlackboardComponent)
 	{
-		BlackboardComponent->SetValueAsEnum ( TEXT ( "CommandType" ) , (uint8)NewCommand );
+		BlackboardComponent->SetValueAsEnum ( TEXT ( "Command" ) , (uint8)NewCommand );
 
 		BlackboardComponent->SetValueAsVector ( TEXT ( "TargetLocation" ) , TargetLocation );
 
