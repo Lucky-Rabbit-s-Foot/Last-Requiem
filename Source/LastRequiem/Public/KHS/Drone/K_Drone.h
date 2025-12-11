@@ -6,6 +6,9 @@
 #include "GameFramework/Pawn.h"
 #include "K_Drone.generated.h"
 
+//탐지용 델리게이트
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnUnitDetected, AActor*);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnUnitLostDetection, AActor*);
 
 
 UCLASS()
@@ -17,21 +20,25 @@ public:
 	// Sets default values for this pawn's properties
 	AK_Drone();
 
+	FOnUnitDetected onUnitDetected;
+	FOnUnitLostDetection onUnitLostDetection;
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 private:
-	void InitializeComponents();
-	void UpdateDroneSpeed(float DeltaTime);
+	void InitializeDefaultComponents();
 	void UpdateDroneMovement(float DeltaTime);
 	void UpdateDroneRotation(float DeltaTime);
 	
-protected:
+	void InitializeDetectedUnitSlot();
+	void UpdateDetectedUnitSlot();
 	
 public:
 	void Move(const FVector2D& inputValue);
@@ -46,9 +53,14 @@ private:
 	FVector2D moveInputValue = FVector2D::ZeroVector;
 	float upDownInputValue = 0.0f;
 	const float DRONE_MASS_WEIGHT = 5.0f;
+	
+	//Scanning
+	FTimerHandle detectionTimerHandle;
+	
+	//Detected Unit Set
+	TSet<AActor*> previouslyDetectedUnits;
 
 protected:
-	
 	//Components
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Components")
 	TObjectPtr<class USphereComponent> sphereComp;
@@ -70,12 +82,13 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Anim")
 	TObjectPtr<class UAnimMontage> flightMontage;
 	
-	////UI
-	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|UI")
-	// TSubclassOf<class UUserWidget> droneUIFactory;
-	//
-	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|UI")
-	// TObjectPtr<class UUserWidget> droneUI;
+	//UI
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|UI")
+	TSubclassOf<class UK_HUDWidget> hudWidget;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|UI")
+	TSubclassOf<class UK_UnitListWidget> unitListWidget;
+	
 	//
 	////SFX
 	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Sound")

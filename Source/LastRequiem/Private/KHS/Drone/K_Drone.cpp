@@ -2,12 +2,19 @@
 
 
 #include "KHS/Drone/K_Drone.h"
+
+#include "BJM/Unit/B_UnitBase.h"
+#include "BJM/Unit/B_UnitMentalTypes.h"
 #include "KHS/Data/K_DroneData.h"
 
 #include "Camera/CameraComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+
+#include "KHS/UI/K_HUDWidget.h"
+#include "KHS/UI/K_UnitListWidget.h"
+#include "KHS/UI/K_UIManagerSubsystem.h"
 
 
 // Sets default values
@@ -16,7 +23,7 @@ AK_Drone::AK_Drone()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	InitializeComponents();
+	InitializeDefaultComponents();
 	
 	bUseControllerRotationYaw = true;
 	
@@ -36,18 +43,33 @@ void AK_Drone::BeginPlay()
 		animInst->Montage_JumpToSection(FName("Start"));
 	}
 	
-	//SFX settings
+	//Persistent UI Open
+	UK_UIManagerSubsystem* UIManager = GetGameInstance()->GetSubsystem<UK_UIManagerSubsystem>();
+	if (UIManager)
+	{
+		UIManager->OpenUI<UK_HUDWidget>(hudWidget);
+		UIManager->OpenUI<UK_UnitListWidget>(unitListWidget);
+	}
 	
-	//UI Settings
-	// if (droneUIFactory)
-	// {
-	// 	droneUI = CreateWidget<UUserWidget>(GetWorld(), droneUIFactory);
-	// 	if (droneUI)
-	// 	{
-	// 		droneUI->AddToViewPort(0);
-	// 		
-	// 	}
-	// }
+	
+	//최초 UnitSlot 활성화 후
+	//타이머로 n초마다 UpdateDetectedUnitSlot 호출
+	InitializeDetectedUnitSlot();
+	
+	GetWorldTimerManager().SetTimer(
+		detectionTimerHandle,
+		this,
+		&AK_Drone::UpdateDetectedUnitSlot,
+		1.0f,
+		true
+		);
+}
+
+void AK_Drone::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	GetWorldTimerManager().ClearTimer(detectionTimerHandle);
+	
+	Super::EndPlay(EndPlayReason);
 }
 
 // Called every frame
@@ -59,7 +81,7 @@ void AK_Drone::Tick(float DeltaTime)
 	UpdateDroneRotation(DeltaTime);
 }
 
-void AK_Drone::InitializeComponents()
+void AK_Drone::InitializeDefaultComponents()
 {
 	//sphere 
 	sphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("sphereComp"));
@@ -141,6 +163,135 @@ void AK_Drone::UpdateDroneRotation(float DeltaTime)
 	
 	FRotator newRot = FMath::RInterpTo(targetRot, currentRot, DeltaTime, droneData->ROTATION_SPEED);
 	SetActorRotation(newRot);
+}
+
+void AK_Drone::InitializeDetectedUnitSlot()
+{
+	//CapsuleTrace로 유닛 탐지
+	TArray<FHitResult> hitResults;
+	FVector start = GetActorLocation();
+	FVector end = start;
+	
+	float capsuleRadius = 2500.f;
+	float capsuleHalfHeight = 700.f;
+	FCollisionShape capsuleShpae = FCollisionShape::MakeCapsule(capsuleRadius, capsuleHalfHeight);
+	
+	GetWorld()->SweepMultiByChannel(
+		hitResults,
+		start, end,
+		FQuat::Identity,
+		ECC_Pawn,
+		capsuleShpae);
+	
+
+	DrawDebugCapsule(
+		GetWorld(),
+		start,
+		capsuleHalfHeight,
+		capsuleRadius,
+		FQuat::Identity,
+		FColor::Blue,
+		false,
+		1.f, 0, 3.f
+		);
+	
+	//현재 탐지된 유닛 캐싱
+	TSet<AActor*> currentDetectedUnits;
+	
+	//탐지결과 처리
+	for (const FHitResult& hit : hitResults)
+	{
+		DrawDebugPoint(
+			GetWorld(),
+			hit.ImpactPoint,
+			20.f,
+			FColor::Red,
+			false,
+			1.f);
+		
+		
+		AActor* detectedActor = hit.GetActor();
+		AB_UnitBase* detectedUnit = Cast<AB_UnitBase>(detectedActor);
+		
+		if (detectedUnit)
+		{
+			currentDetectedUnits.Add(detectedActor);
+			//broadcast
+			onUnitDetected.Broadcast(detectedActor);
+		}
+	}
+	
+	previouslyDetectedUnits = currentDetectedUnits;
+}
+
+void AK_Drone::UpdateDetectedUnitSlot()
+{
+	//CapsuleTrace로 유닛 탐지
+	TArray<FHitResult> hitResults;
+	FVector start = GetActorLocation();
+	FVector end = start;
+	
+	float capsuleRadius = 300.f;
+	float capsuleHalfHeight = 1000.f;
+	FCollisionShape capsuleShpae = FCollisionShape::MakeCapsule(capsuleRadius, capsuleHalfHeight);
+	
+	GetWorld()->SweepMultiByChannel(
+		hitResults,
+		start, end,
+		FQuat::Identity,
+		ECC_Pawn,
+		capsuleShpae);
+	
+
+	DrawDebugCapsule(
+		GetWorld(),
+		start,
+		capsuleHalfHeight,
+		capsuleRadius,
+		FQuat::Identity,
+		FColor::Green,
+		false,
+		1.f, 0, 3.f
+		);
+	
+	//현재 탐지된 유닛 캐싱
+	TSet<AActor*> currentDetectedUnits;
+	
+	//탐지결과 처리
+	for (const FHitResult& hit : hitResults)
+	{
+		DrawDebugPoint(
+			GetWorld(),
+			hit.ImpactPoint,
+			20.f,
+			FColor::Red,
+			false,
+			5.f);
+		
+		
+		AActor* detectedActor = hit.GetActor();
+		AB_UnitBase* detectedUnit = Cast<AB_UnitBase>(detectedActor);
+		
+		if (detectedUnit)
+		{
+			currentDetectedUnits.Add(detectedActor);
+			//broadcast
+			onUnitDetected.Broadcast(detectedActor);
+		}
+	}
+	
+	//이전 탐지되었으나 지금은 안된 유닛들 UNDETECTED로 변경
+	for (AActor* detectedActor : previouslyDetectedUnits)
+	{
+		if (!currentDetectedUnits.Contains(detectedActor))
+		{
+			//broadcast
+			onUnitLostDetection.Broadcast(detectedActor);
+		}
+	}
+	
+	//unit list update
+	previouslyDetectedUnits = currentDetectedUnits;
 }
 
 

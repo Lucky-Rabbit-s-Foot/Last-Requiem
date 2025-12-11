@@ -18,12 +18,13 @@ public:
 	virtual void Deinitialize() override;
 	
 private:
-	UK_BaseUIWidget* GetOrCreateWidget(TSubclassOf<UK_BaseUIWidget> targetClass);
-	
 	int32 CalculateZOrder(UK_BaseUIWidget* widget) const;
 	void NotifyInputModeChange();
 	
 public:
+	template<typename T>
+	T* GetOrCreateWidget(TSubclassOf<T> widgetClass);
+	
 	template<typename T>
 	T* OpenUI(TSubclassOf<T> targetClass);
 	
@@ -48,6 +49,32 @@ private:
 	
 };
 
+template<typename T>
+T* UK_UIManagerSubsystem::GetOrCreateWidget(TSubclassOf<T> widgetClass)
+{
+	TSubclassOf<UK_BaseUIWidget> targetClass = widgetClass;
+	
+	//캐싱된 UI가 있으면 반환
+	if (cachedWidgets.Contains(targetClass))
+	{
+		return Cast<T>(cachedWidgets[targetClass]);
+	}
+	
+	//없으면 생성 후 반환
+	APlayerController* pc = GetWorld()->GetFirstPlayerController();
+	if (!pc)
+	{
+		return nullptr;
+	}
+	
+	T* newWidget = CreateWidget<T>(pc, widgetClass);
+	if (newWidget)
+	{
+		cachedWidgets.Add(targetClass, newWidget);
+	}
+	return newWidget;
+}
+
 template <typename T>
 T* UK_UIManagerSubsystem::OpenUI(TSubclassOf<T> targetClass)
 {
@@ -56,7 +83,7 @@ T* UK_UIManagerSubsystem::OpenUI(TSubclassOf<T> targetClass)
 		return nullptr;
 	}
 	
-	UK_BaseUIWidget* widget = GetOrCreateWidget(targetClass);
+	T* widget = GetOrCreateWidget<T>(targetClass);
 	if (!widget)
 	{
 		return nullptr;
@@ -64,22 +91,25 @@ T* UK_UIManagerSubsystem::OpenUI(TSubclassOf<T> targetClass)
 	
 	if (widget->IsOpen())
 	{
-		return Cast<T>(widget);
+		return widget;
 	}
 	
+	UK_BaseUIWidget* baseWidget = widget;
+	
 	//Persistent 타입 UI일때
-	if (widget->UILayer == EUILayer::PERSISTENT)
+	if (baseWidget->UILayer == EUILayer::PERSISTENT)
 	{
+		TSubclassOf<UK_BaseUIWidget> baseClass = targetClass;;
 		//Map에 저장된 내용인지 확인 후
-		if (!persitentUIMap.Contains(targetClass))
+		if (!persitentUIMap.Contains(baseClass))
 		{
-			persitentUIMap.Add(targetClass, widget);
+			persitentUIMap.Add(baseClass, baseWidget);
 		}
 		
 		//UI 켜기 및 뷰포트 추가
-		widget->OpenUI();
-		int32 zOrder = CalculateZOrder(widget);
-		widget->AddToViewport(zOrder);
+		baseWidget->OpenUI();
+		int32 zOrder = CalculateZOrder(baseWidget);
+		baseWidget->AddToViewport(zOrder);
 	}
 	else //PopUp 타입 UI일때
 	{
@@ -90,18 +120,18 @@ T* UK_UIManagerSubsystem::OpenUI(TSubclassOf<T> targetClass)
 		}
 		
 		//스택에 추가
-		popUpUIStack.Add(widget);
+		popUpUIStack.Add(baseWidget);
 		
 		//UI 켜기 및 뷰포트 추가
-		widget->OpenUI();
-		int32 zOrder = CalculateZOrder(widget);
-		widget->AddToViewport(zOrder);
+		baseWidget->OpenUI();
+		int32 zOrder = CalculateZOrder(baseWidget);
+		baseWidget->AddToViewport(zOrder);
 		
 		//input모드 변경
 		NotifyInputModeChange();
 	}
 	
-	return Cast<T>(widget);
+	return widget;
 }
 
 

@@ -28,28 +28,7 @@ void UK_UIManagerSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
-UK_BaseUIWidget* UK_UIManagerSubsystem::GetOrCreateWidget(TSubclassOf<UK_BaseUIWidget> targetClass)
-{
-	//캐싱된 UI가 있으면 반환
-	if (cachedWidgets.Contains(targetClass))
-	{
-		return cachedWidgets[targetClass];
-	}
-	
-	//없으면 생성 후 반환
-	APlayerController* pc = GetWorld()->GetFirstPlayerController();
-	if (!pc)
-	{
-		return nullptr;
-	}
-	
-	UK_BaseUIWidget* newWidget = CreateWidget<UK_BaseUIWidget>(pc, targetClass);
-	if (newWidget)
-	{
-		cachedWidgets.Add(targetClass, newWidget);
-	}
-	return newWidget;
-}
+
 
 int32 UK_UIManagerSubsystem::CalculateZOrder(UK_BaseUIWidget* widget) const
 {

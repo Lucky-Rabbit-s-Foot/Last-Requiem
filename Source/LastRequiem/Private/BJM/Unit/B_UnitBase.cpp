@@ -226,6 +226,22 @@ void AB_UnitBase::CommandMoveToLocation ( FVector TargetLocation )
 	UnitMentalCheck_Move ( FinalLocation.X , FinalLocation.Y );
 }
 
+void AB_UnitBase::CommandAttackMove ( FVector TargetLocation )
+{
+}
+
+void AB_UnitBase::CommandStop ()
+{
+}
+
+void AB_UnitBase::CommandHold ()
+{
+}
+
+void AB_UnitBase::CommandRetreat ()
+{
+}
+
 float AB_UnitBase::TakeDamage ( float DamageAmount , FDamageEvent const& DamageEvent , AController* EventInstigator , AActor* DamageCauser )
 {
 	float ActualDamage = Super::TakeDamage ( DamageAmount , DamageEvent , EventInstigator , DamageCauser );
@@ -291,5 +307,5 @@ void AB_UnitBase::OnTakeDamage_Unit ( AActor* DamagedActor , float Damage , cons
 void AB_UnitBase::OnDie_Unit ()
 {
 	bIsAlive = false;
-	OnUnitDieDelegate.Broadcast ();
+	OnUnitDieDelegate.Broadcast (this);
 }
