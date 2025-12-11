@@ -10,6 +10,7 @@
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "DrawDebugHelpers.h"
 #include "KWB/UI/W_MapWidget.h"
+#include "KWB/UI/Monitor/W_SituationMapWidget.h"
 #include "Perception/AISense_Damage.h"
 #include "TimerManager.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -95,7 +96,7 @@ void AB_UnitBase::FindMapWidgetLoop ()
 
 	if (FoundWidgets.Num () > 0)
 	{
-		UW_MapWidget* MapWidget = Cast<UW_MapWidget> ( FoundWidgets[0] );
+		UW_SituationMapWidget* SituationMapWidget = Cast<UW_SituationMapWidget> ( FoundWidgets[0] );
 
 		//MapWidget->OnAttackButtonClicked.AddDynamic ( this , &AB_UnitBase::OnAttackButtonClicked );
 		//MapWidget->OnStopButtonClicked.AddDynamic ( this , &AB_UnitBase::OnStopButtonClicked );
