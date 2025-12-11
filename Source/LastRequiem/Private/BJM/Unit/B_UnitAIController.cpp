@@ -118,3 +118,21 @@ void AB_UnitAIController::OnTargetDetected(AActor* InActor, FAIStimulus InStimul
         UE_LOG(LogTemp, Warning, TEXT("적 놓침 : %s"), *InActor->GetName());
     }
 }
+
+void AB_UnitAIController::SetCommandState ( EUnitCommandType NewCommand , FVector TargetLocation )
+{
+	if (BlackboardComponent)
+	{
+		BlackboardComponent->SetValueAsEnum ( TEXT ( "CommandType" ) , (uint8)NewCommand );
+
+		BlackboardComponent->SetValueAsVector ( TEXT ( "TargetLocation" ) , TargetLocation );
+
+		if (NewCommand == EUnitCommandType::None || NewCommand == EUnitCommandType::Hold)
+		{
+			BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
+		}
+	}
+
+}
+
+

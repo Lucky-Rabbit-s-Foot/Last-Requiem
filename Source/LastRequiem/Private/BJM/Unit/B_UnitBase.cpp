@@ -12,6 +12,7 @@
 #include "KWB/UI/W_MapWidget.h"
 #include "Perception/AISense_Damage.h"
 #include "TimerManager.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 // Sets default values
 AB_UnitBase::AB_UnitBase()
@@ -91,6 +92,19 @@ void AB_UnitBase::FindMapWidgetLoop ()
 	{
 		 UE_LOG(LogTemp, Log, TEXT("위젯 아직 못찾음"));
 	}
+
+	if (FoundWidgets.Num () > 0)
+	{
+		UW_MapWidget* MapWidget = Cast<UW_MapWidget> ( FoundWidgets[0] );
+
+		//MapWidget->OnAttackButtonClicked.AddDynamic ( this , &AB_UnitBase::OnAttackButtonClicked );
+		//MapWidget->OnStopButtonClicked.AddDynamic ( this , &AB_UnitBase::OnStopButtonClicked );
+		//MapWidget->OnHoldButtonClicked.AddDynamic ( this , &AB_UnitBase::OnHoldButtonClicked );
+		//MapWidget->OnRetreatButtonClicked.AddDynamic ( this , &AB_UnitBase::OnRetreatButtonClicked );
+
+		UE_LOG ( LogTemp , Warning , TEXT ( "액션 버튼 연결 완료!" ) );
+	}
+
 }
 
 FUnitProfileData AB_UnitBase::GetUnitProfileData ()
@@ -197,6 +211,13 @@ void AB_UnitBase::CommandMoveToLocation ( FVector TargetLocation )
 		return;
 	}
 
+	UBlackboardComponent* BlackboardComp = AIController->GetBlackboardComponent ();
+	if (!BlackboardComp)
+	{
+		UE_LOG ( LogTemp , Error , TEXT ( "BlackboardComponent 없음" ) );
+		return;
+	}
+
 	FVector SearchCenter = TargetLocation;
 	SearchCenter.Z = GetActorLocation ().Z;
 
@@ -214,9 +235,8 @@ void AB_UnitBase::CommandMoveToLocation ( FVector TargetLocation )
 
 		DrawDebugSphere ( GetWorld () , ProjectedLocation.Location , 50.0f , 16 , FColor::Green , false , 3.0f );
 		UE_LOG ( LogTemp , Warning , TEXT ( "보정된 좌표: %s" ) , *ProjectedLocation.Location.ToString () );
-
-		// 이동 명령
-		//AIController->MoveToLocation ( ProjectedLocation.Location );
+		BlackboardComp->SetValueAsVector ( TEXT ( "TargetLocation" ) , FinalLocation );
+		BlackboardComp->SetValueAsEnum ( TEXT ( "Command" ) , (uint8)EUnitCommandType::Move );
 	}
 	else
 	{
@@ -228,18 +248,64 @@ void AB_UnitBase::CommandMoveToLocation ( FVector TargetLocation )
 
 void AB_UnitBase::CommandAttackMove ( FVector TargetLocation )
 {
+	AB_UnitAIController* AI = Cast<AB_UnitAIController> ( GetController () );
+	if (AI)
+	{
+		AI->SetCommandState ( EUnitCommandType::AttackMove , TargetLocation );
+	}
 }
 
 void AB_UnitBase::CommandStop ()
 {
+	AB_UnitAIController* AI = Cast<AB_UnitAIController> ( GetController () );
+	if (AI)
+	{
+		AI->StopMovement ();
+		AI->SetCommandState ( EUnitCommandType::None , FVector::ZeroVector );
+	}
 }
 
 void AB_UnitBase::CommandHold ()
 {
+	AB_UnitAIController* AI = Cast<AB_UnitAIController> ( GetController () );
+	if (AI)
+	{
+		AI->StopMovement ();
+		AI->SetCommandState ( EUnitCommandType::Hold , GetActorLocation () );
+	}
 }
 
 void AB_UnitBase::CommandRetreat ()
 {
+	AB_UnitAIController* AI = Cast<AB_UnitAIController> ( GetController () );
+	if (AI)
+	{
+		AI->SetCommandState ( EUnitCommandType::Retreat , FortressLocation );
+	}
+}
+
+void AB_UnitBase::OnAttackButtonClicked_Unit ()
+{
+	bIsAttackMode = true;
+	UE_LOG ( LogTemp , Warning , TEXT ( "공격모드" ));
+}
+
+void AB_UnitBase::OnStopButtonClicked_Unit ()
+{
+	bIsAttackMode = false;
+	CommandStop ();
+}
+
+void AB_UnitBase::OnHoldButtonClicked_Unit ()
+{
+	bIsAttackMode = false;
+	CommandHold ();
+}
+
+void AB_UnitBase::OnRetreatButtonClicked_Unit ()
+{
+	bIsAttackMode = false;
+	CommandRetreat ();
 }
 
 float AB_UnitBase::TakeDamage ( float DamageAmount , FDamageEvent const& DamageEvent , AController* EventInstigator , AActor* DamageCauser )

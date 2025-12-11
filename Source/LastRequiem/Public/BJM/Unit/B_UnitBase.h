@@ -87,6 +87,22 @@ public:
 	UFUNCTION ( BlueprintCallable , Category = "Unit|Command" )
 	void CommandRetreat ();
 
+	UFUNCTION ()
+	void OnAttackButtonClicked_Unit ();  
+
+	UFUNCTION ()
+	void OnStopButtonClicked_Unit ();
+
+	UFUNCTION ()
+	void OnHoldButtonClicked_Unit ();
+
+	UFUNCTION ()
+	void OnRetreatButtonClicked_Unit ();
+
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Unit|State" )
+	bool bIsAttackMode = false;
+
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Data" )
 	FVector FortressLocation;
 

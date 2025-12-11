@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "Perception/AIPerceptionTypes.h"
+#include "B_UnitMentalTypes.h"
 #include "B_UnitAIController.generated.h"
 
 
@@ -56,5 +57,7 @@ public:
 	UFUNCTION()
 	void OnTargetDetected(AActor* InActor, FAIStimulus InStimulus);
 
+
+	void SetCommandState ( EUnitCommandType NewCommand , FVector TargetLocation );
 
 };
