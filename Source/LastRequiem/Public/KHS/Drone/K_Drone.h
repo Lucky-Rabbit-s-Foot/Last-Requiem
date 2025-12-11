@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
-#include "InputActionValue.h"
 #include "K_Drone.generated.h"
 
 
@@ -26,34 +25,27 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+private:
+	void InitializeComponents();
+	void UpdateDroneSpeed(float DeltaTime);
+	void UpdateDroneMovement(float DeltaTime);
+	void UpdateDroneRotation(float DeltaTime);
+	
+protected:
+	
+public:
+	void Move(const FVector2D& inputValue);
+	void UpDown(float inputValue);
+	void ChangeMode();
+	void UseSkill01();
+	void UseSkill02();
 
 	
 private:
-	void OnDroneLook(const FInputActionValue& value);
-	void OnDroneMove(const FInputActionValue& value);
-	void OnDroneUpDown(const FInputActionValue& value);
-	void OnDroneScan(const FInputActionValue& value);
-	void OnDroneModeChange(const FInputActionValue& value);
-	
-	void UpdateDroneSpeed(float DeltaTime);
-	
-protected:
-	void UpdateDroneAltitude();
-	
-public:
-	
-private:
 	//movement 
-	FVector curVelocity = FVector::ZeroVector;
-	FVector targetVelocity = FVector::ZeroVector;
-	
 	FVector2D moveInputValue = FVector2D::ZeroVector;
 	float upDownInputValue = 0.0f;
-	
-	float lastInputTime = 0.0f;
-	const float INPUT_IDLE_THRESHOLD = 1.0f;
+	const float DRONE_MASS_WEIGHT = 5.0f;
 
 protected:
 	
@@ -70,29 +62,13 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Components")
 	TObjectPtr<class UCameraComponent> cameraComp;
 	
-	//Input
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Input")
-	TObjectPtr<class UInputMappingContext> IMC_Drone;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Input")
-	TObjectPtr<class UInputAction> IA_Move;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Input")
-	TObjectPtr<class UInputAction> IA_Look;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Input")
-	TObjectPtr<class UInputAction> IA_UpDown;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Input")
-	TObjectPtr<class UInputAction> IA_Scan;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Input")
-	TObjectPtr<class UInputAction> IA_ModeChange;
-	
-	
 	//Data
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Data")
 	TObjectPtr<class UK_DroneData> droneData;
+	
+	//Anim
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Anim")
+	TObjectPtr<class UAnimMontage> flightMontage;
 	
 	////UI
 	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|UI")

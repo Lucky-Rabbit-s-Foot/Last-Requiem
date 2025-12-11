@@ -30,7 +30,6 @@ public:
 	// virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
-	// =================================== [스탯 설정] ===================================
 
 	// 체력
 	UPROPERTY (EditAnywhere, BlueprintReadWrite, Category = "Unit|Stat")
@@ -44,17 +43,16 @@ public:
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Stat")
 	float CurrentSanity;
 
-	// 충성심
-	UPROPERTY (EditAnywhere, BlueprintReadWrite, Category = "Unit|Stat")
-	float MaxLoyalty = 100.0f;
-	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Stat")
-	float CurrentLoyalty;
 
 	// 유닛 멘탈 상황
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Stat")
 	EUnitBehaviorState CurrentState;
 
-	// =================================== [이 벤 트] ===================================
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Unit|Status" )
+	bool bIsInCombat = false;
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadWrite , Category = "Unit|Status" )
+	bool bIsSpeaking = false;
 
 	UPROPERTY (BlueprintAssignable)
 	FOnStateChanged OnStateChanged;
@@ -65,7 +63,6 @@ public:
 	UPROPERTY (BlueprintAssignable)
 	FOnStatChanged OnSanityChanged;
 
-	// =================================== [ 함    수] ===================================
 
 	UFUNCTION (BlueprintCallable, Category = "Unit|Logic")
 	void TakeDamage (float InDamage);
@@ -74,16 +71,13 @@ public:
 	void ModifySanity (float InAmount);
 
 	UFUNCTION (BlueprintCallable, Category = "Unit|Logic")
-	void ModifyLoyalty (float InAmount);
+	void SetCombatState ( bool bNewState );
+
+protected:
+	FTimerHandle CombatTimerHandle;
+	void ResetCombatState ();
 
 private:
 	void UpdateBehaviorState ();
-
-
-
-
-private:
-
-
 		
 };

@@ -24,46 +24,39 @@ FReply UW_MapWidget::NativeOnMouseButtonDown ( const FGeometry& InGeometry , con
 		return Super::NativeOnMouseButtonDown ( InGeometry , InMouseEvent );
 	}
 
-	/* TEST : 실사용할 코드 아래 코드 테스트 위해 잠시 가림 */
-	//FVector2D ClickedLocation = InMouseEvent.GetScreenSpacePosition ();
-	//// 해당 위젯을 기준으로 실제 크기에 맞춰서 좌표값 변환
-	//ClickedWidgetLocation = InGeometry.AbsoluteToLocal ( ClickedWidgetLocation );
-
-	// 2. 화면(스크린) 좌표
+	// 1. 전체 스크린 좌표
 	const FVector2D ScreenPos = InMouseEvent.GetScreenSpacePosition ();
 
-	// 3. 이 위젯(또는 맵 이미지)의 로컬 좌표로 변환
-	//    - 여기서는 InGeometry 자체가 맵 영역이라고 가정
-	const FVector2D LocalPos = InGeometry.AbsoluteToLocal ( ScreenPos );
+	// 2. MapWidget의 로컬 좌표로 변환
+	const FVector2D WidgetLocalPos = InGeometry.AbsoluteToLocal ( ScreenPos );
 
-	// 4. 이 위젯의 실제 크기 (DPI, 부모 스케일 다 반영된 값)
-	const FVector2D LocalSize = InGeometry.GetLocalSize ();
+	// 3. MapWidget의 실제 크기 (DPI, 부모 스케일 반영된 값)
+	const FVector2D WidgetLocalSize = InGeometry.GetLocalSize ();
 
 	// 방어 코드: 크기가 0이면 계산 불가
-	if (LocalSize.X <= 0.f || LocalSize.Y <= 0.f)
+	if (WidgetLocalSize.X <= 0.f || WidgetLocalSize.Y <= 0.f)
 	{
 		return FReply::Unhandled ();
 	}
 
-	// 5. 0~1로 정규화 (좌상단 기준)
-	float U_top = LocalPos.X / LocalSize.X;
-	float V_top = LocalPos.Y / LocalSize.Y;
+	// 4. 0~1로 정규화 (좌상단 기준)
+	float U_top = WidgetLocalPos.X / WidgetLocalSize.X;
+	float V_top = WidgetLocalPos.Y / WidgetLocalSize.Y;
 
-	// 6. 범위 밖 클릭은 맵 밖이므로 0~1로 클램프
+	// 5. 범위 밖 클릭은 맵 밖이므로 0~1로 클램프
 	U_top = FMath::Clamp ( U_top , 0.f , 1.f );
 	V_top = FMath::Clamp ( V_top , 0.f , 1.f );
 
-	// 7. 좌하단을 (0,0)으로 쓰고 싶으니 Y 뒤집기 => 불필요한 연산이라 우선 뒤집는 기능 제거
+	// 6. 기준점(0, 0)을 좌하단으로 잡고, 월드 방향 방향과 위젯의 방향 일치시키기
 	const float U = U_top;
 	const float V = 1.f - V_top;
 
-	// 8. (U,V) → 월드 좌표 변환
+	// 7. (U,V) → 월드 좌표 변환
 	const FVector WorldPos = MapUVToWorld ( U , V );
 
-	// 9. 디버그 출력
+	// 8. 디버그 출력
 	UE_LOG ( LogTemp , Log , TEXT ( "Minimap Click: U=%.3f V=%.3f -> World=%s" ) ,
 		U , V , *WorldPos.ToString () );
-
 	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage (
@@ -72,12 +65,14 @@ FReply UW_MapWidget::NativeOnMouseButtonDown ( const FGeometry& InGeometry , con
 		);
 	}
 
-
 	if (PressedButton == EKeys::LeftMouseButton)
 	{
 		// 좌클릭은 액터를 선택하거나 액션 버튼을 조작하는 기능을 담당
-		OnLeftMouseButtonClicked.Broadcast ();	// 굳이 필요하지 않을 수도 있음
-	
+		// 1. 선택한 부분이 액터일 때
+
+		// 2. 선택한 부분이 
+
+		OnLeftMouseButtonClicked.Broadcast ();
 	}
 	else if (PressedButton == EKeys::RightMouseButton)
 	{
@@ -85,6 +80,7 @@ FReply UW_MapWidget::NativeOnMouseButtonDown ( const FGeometry& InGeometry , con
 
 		// 가장 마지막에 할 것
 		OnRightMouseButtonClicked.Broadcast ( WorldPos );
+		UE_LOG ( LogTemp , Warning , TEXT ( "World Loc Val 반환 델리게이트 발송 완료" ) );
 	}
 
 	return FReply::Handled ();
