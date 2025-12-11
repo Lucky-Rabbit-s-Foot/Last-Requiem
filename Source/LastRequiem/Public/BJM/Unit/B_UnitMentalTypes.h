@@ -25,13 +25,13 @@ enum class EUnitBehaviorState : uint8
 };
 
 UENUM ( BlueprintType )
-enum class EUnitActionState : uint8
+enum class EUnitCommandType : uint8
 {
-	Idle        UMETA ( DisplayName = "Idle" ) ,        // 대기
-	Moving      UMETA ( DisplayName = "Moving" ) ,      // 이동 중
-	Attacking   UMETA ( DisplayName = "Attacking" ) ,   // 교전 중
-	Cover       UMETA ( DisplayName = "Cover" ) ,       // 은/엄폐
-	Retreat     UMETA ( DisplayName = "Retreat" )       // 후퇴 중
+	None        UMETA ( DisplayName = "None" ) ,
+	Move        UMETA ( DisplayName = "Move" ) ,
+	AttackMove  UMETA ( DisplayName = "AttackMove" ) ,
+	Hold        UMETA ( DisplayName = "Hold" ) ,
+	Retreat     UMETA ( DisplayName = "Retreat" ),
 };
 
 USTRUCT ( BlueprintType )
