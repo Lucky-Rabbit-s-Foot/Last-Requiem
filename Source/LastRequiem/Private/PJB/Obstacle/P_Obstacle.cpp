@@ -40,6 +40,6 @@ void AP_Obstacle::OnTakeDamage ( AActor* DamagedActor , float Damage , const UDa
 void AP_Obstacle::OnBroken ()
 {
 	bIsBroken = true;
-	OnObstacleBrokenDelegate.Broadcast ();
+	OnObstacleBrokenDelegate.Broadcast ( this );
 	Destroy ();
 }

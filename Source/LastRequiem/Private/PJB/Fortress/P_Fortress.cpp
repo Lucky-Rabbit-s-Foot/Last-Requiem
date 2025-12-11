@@ -37,13 +37,13 @@ void AP_Fortress::OnTakeDamage ( AActor* DamagedActor , float Damage , const UDa
 	}
 	else
 	{
-		OnFortressDamagedDelegate.Broadcast ();
+		OnFortressDamagedDelegate.Broadcast ( this );
 	}
 }
 
 void AP_Fortress::OnBroken ()
 {
 	bIsBroken = true;
-	OnFortressBrokenDelegate.Broadcast ();
+	OnFortressBrokenDelegate.Broadcast ( this );
 	Destroy ();
 }

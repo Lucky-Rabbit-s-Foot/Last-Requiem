@@ -5,8 +5,8 @@
 
 #include "P_Fortress.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnFortressDamagedDelegate );
-DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnFortressBrokenDelegate );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnFortressDamagedDelegate , AActor* , InActor );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnFortressBrokenDelegate , AActor* , InActor );
 
 UCLASS()
 class LASTREQUIEM_API AP_Fortress : public AActor
@@ -30,6 +30,10 @@ public:
 	);
 	void OnBroken ();
 
+public:
+	FOnFortressDamagedDelegate OnFortressDamagedDelegate;
+	FOnFortressBrokenDelegate OnFortressBrokenDelegate;
+
 protected:
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Components" )
 	TObjectPtr<UStaticMeshComponent> Mesh = nullptr;
@@ -41,7 +45,4 @@ protected:
 
 private:
 	bool bIsBroken = false;
-	FOnFortressDamagedDelegate OnFortressDamagedDelegate;
-	FOnFortressBrokenDelegate OnFortressBrokenDelegate;
-
 };

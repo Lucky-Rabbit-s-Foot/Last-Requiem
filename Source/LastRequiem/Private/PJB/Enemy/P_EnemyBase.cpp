@@ -76,7 +76,7 @@ void AP_EnemyBase::OnDie ()
 
 	OnDeactivate ();
 
-	OnEnemyDieDelegate.Broadcast ();
+	OnEnemyDieDelegate.Broadcast ( this );
 }
 
 void AP_EnemyBase::OnDeactivate()
