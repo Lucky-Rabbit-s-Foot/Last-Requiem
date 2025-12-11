@@ -27,4 +27,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "LR|Move", meta=(ClampMin="0.0", ToolTip = "Drone Deceleration Index"))
 	float MAX_SPEED = 2000.f;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "LR|Move", meta=(ClampMin="0.0", ToolTip = "Drone Deceleration Index"))
+	float DRONE_FLIGHT_MAX_HEIGHT = 2000.f;
+	
 };
