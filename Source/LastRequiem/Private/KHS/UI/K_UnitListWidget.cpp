@@ -4,7 +4,9 @@
 #include "KHS/UI/K_UnitListWidget.h"
 
 #include "BJM/Unit/B_UnitBase.h"
+#include "Components/Spacer.h"
 #include "Components/VerticalBox.h"
+#include "Components/VerticalBoxSlot.h"
 #include "KHS/Drone/K_Drone.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -12,16 +14,20 @@ void UK_UnitListWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 	
+	//Drone 델리게이트 구독(MULTICAST)
 	AK_Drone* drone = Cast<AK_Drone>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
 	if (drone)
 	{
-		DetectionDelegateHandle = drone->onUnitDetected.AddUObject(this, &UK_UnitListWidget::OnUnitDetected);
-		LostDetectionDelegateHandle = drone->onUnitLostDetection.AddUObject(this, &UK_UnitListWidget::OnUnitLostDetection);
+		DetectionDelegateHandle = drone->onUnitDetected.AddUObject(
+			this, &UK_UnitListWidget::OnUnitDetected);
+		LostDetectionDelegateHandle = drone->onUnitLostDetection.AddUObject(
+			this, &UK_UnitListWidget::OnUnitLostDetection);
 	}
 }
 
 void UK_UnitListWidget::NativeDestruct()
 {
+	//Drone 델리게이트 구독해제
 	AK_Drone* drone = Cast<AK_Drone>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
 	if (drone)
 	{
@@ -36,17 +42,16 @@ void UK_UnitListWidget::NativeDestruct()
 		}
 	}
 	
-	//모든 유닛 Death델리게이트 해제
-	for (auto& pair : DeathDeleageMap)
+	//남아있는 유닛들에 대한 Death 델리게이트 구독해제
+	for (auto& pair : unitSlotMap)
 	{
 		AB_UnitBase* unit = Cast<AB_UnitBase>(pair.Key);
-		if (unit && pair.Value.IsValid())
+		if (unit)
 		{
-			//TODO : 나중에 public으로 바뀌면 다시 주석 해제
-			//unit->OnUnitDieDelegate.Remove(pair.Value);
+			unit->OnUnitDieDelegate.RemoveDynamic(this, &UK_UnitListWidget::OnUnitDied);
 		}
 	}
-	DeathDeleageMap.Empty();
+	
 	
 	Super::NativeDestruct();
 }
@@ -73,7 +78,7 @@ void UK_UnitListWidget::OnUnitDetected(AActor* detectedUnit)
 			unitSlot->SetSlotState(EUnitSlotState::DETECTED);
 		}
 		
-		//Date Update
+		//Data Update
 		FUnitProfileData data = unit->GetUnitProfileData();
 		unitSlot->UpdateUnitData(data);
 	}
@@ -100,23 +105,53 @@ void UK_UnitListWidget::OnUnitLostDetection(AActor* lostUnit)
 	}
 }
 
+void UK_UnitListWidget::OnUnitDied(AActor* deadUnit)
+{
+	if (!deadUnit)
+	{
+		return;
+	}
+	
+	//유닛슬롯 맵핑에서 상태변경
+	if (unitSlotMap.Contains(deadUnit))
+	{
+		UK_UnitSlotWiddget* unitSlot = unitSlotMap[deadUnit];
+		if (unitSlot)
+		{
+			unitSlot->SetSlotState(EUnitSlotState::DEAD);
+		}
+	}
+	
+	//구독해제
+	AB_UnitBase* unit = Cast<AB_UnitBase>(deadUnit);
+	if (unit)
+	{
+		unit->OnUnitDieDelegate.RemoveDynamic(this, &UK_UnitListWidget::OnUnitDied);
+	}
+}
+
 UK_UnitSlotWiddget* UK_UnitListWidget::GetOrCreateUnitSlot(AActor* unitActor)
 {
 	if (!unitActor)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("unitActor is null!"));
 		return nullptr;
 	}
 	
 	//이미 존재하면 반환
 	if (unitSlotMap.Contains(unitActor))
 	{
+		UE_LOG(LogTemp, Log, TEXT("Slot already exists for %s"), *unitActor->GetName());
 		return unitSlotMap[unitActor];
 	}
 	
-	//새로 생성
+	UE_LOG(LogTemp, Warning, TEXT("unitSlotWidget is valid? %s"), unitSlotWidget ? TEXT("YES") : TEXT("NO"));
+	
+	//없으면 새로 생성
 	if (!unitSlotWidget)
 	{
-		return nullptr;
+		UE_LOG(LogTemp, Error, TEXT("unitSlotWidget is NULL! Cannot create slot."));
+        return nullptr;
 	}
 	
 	UK_UnitSlotWiddget* newSlot = CreateWidget<UK_UnitSlotWiddget>(GetWorld(), unitSlotWidget);
@@ -125,31 +160,11 @@ UK_UnitSlotWiddget* UK_UnitListWidget::GetOrCreateUnitSlot(AActor* unitActor)
 		unitSlotMap.Add(unitActor, newSlot);
 		AddUnitSlot(newSlot);
 		
-		//Death Delegate Subscribe
+		//유닛별 Death Delegate 구독
 		AB_UnitBase* unit = Cast<AB_UnitBase>(unitActor);
 		if (unit)
 		{
-			//TODO : Delegate 접근지정 해제후에 주석해제
-			// FDelegateHandle DeathHandle = unit->OnUnitDieDelegate.AddLambda([this], unitActor()
-			// {
-			// 	//Map 존재 확인
-			// 	if (unitSlotMap.Contains(unitActor))
-			// 	{
-			// 		UK_UnitSlotWiddget* unitSlot = unitSlotMap[unitActor];
-			// 		if (unitSlot)
-			// 		{
-			// 			unitSlot->SetSlotState(EUnitSlotState::DEAD);
-			// 		}
-			// 	}
-			// 	
-			// 	if (DeathDeleageMap.Contains(unitActor))
-			// 	{
-			// 		unit->OnUnitDieDelegate.Remove(DeathDeleageMap[unitActor]);
-			// 		DeathDeleageMap.Remove(unitActor);
-			// 	}
-			// 	
-			// 	DeathDeleageMap.Add(unitActor, DeathHandle);
-			// });
+			unit->OnUnitDieDelegate.AddDynamic(this, &UK_UnitListWidget::OnUnitDied);
 		}
 	}
 	
@@ -163,5 +178,9 @@ void UK_UnitListWidget::AddUnitSlot(UK_UnitSlotWiddget* newSlot)
 		return;
 	}
 	
-	UnitSlotList->AddChildToVerticalBox(newSlot);
+	UVerticalBoxSlot* childSlot = UnitSlotList->AddChildToVerticalBox(newSlot);
+	if (childSlot)
+	{
+		childSlot->SetPadding(FMargin(0,0,0,10.f));
+	}
 }

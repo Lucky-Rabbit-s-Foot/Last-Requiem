@@ -22,17 +22,21 @@ protected:
 private:
 	void OnUnitDetected(AActor* detectedUnit);
 	void OnUnitLostDetection(AActor* lostUnit);
+
+	UFUNCTION()
+	void OnUnitDied(AActor* deadUnit);
 	
 	UK_UnitSlotWiddget* GetOrCreateUnitSlot(AActor* unitActor);
-	
+
 public:
 	void AddUnitSlot(UK_UnitSlotWiddget* newSlot);
 
 private:
+	//드론용 델리게이트 핸들
 	FDelegateHandle DetectionDelegateHandle;
 	FDelegateHandle LostDetectionDelegateHandle;
-	TMap<AActor*, FDelegateHandle> DeathDeleageMap;
 	
+	//유닛-슬롯 맵핑
 	UPROPERTY()
 	TMap<AActor*, UK_UnitSlotWiddget*> unitSlotMap;
 	

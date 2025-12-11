@@ -51,7 +51,7 @@ void AK_Drone::BeginPlay()
 		UIManager->OpenUI<UK_UnitListWidget>(unitListWidget);
 	}
 	
-	//Scanning Timer Start
+	//타이머로 n초마다 UpdateDetectedUnits 호출
 	GetWorldTimerManager().SetTimer(
 		detectionTimerHandle,
 		this,
@@ -168,8 +168,8 @@ void AK_Drone::UpdateDetectedUnits()
 	FVector start = GetActorLocation();
 	FVector end = start;
 	
-	float capsuleRadius = 500.f;
-	float capsuleHalfHeight = 800.f;
+	float capsuleRadius = 200.f;
+	float capsuleHalfHeight = 700.f;
 	FCollisionShape capsuleShpae = FCollisionShape::MakeCapsule(capsuleRadius, capsuleHalfHeight);
 	
 	GetWorld()->SweepMultiByChannel(
@@ -179,6 +179,7 @@ void AK_Drone::UpdateDetectedUnits()
 		ECC_Pawn,
 		capsuleShpae);
 	
+
 	DrawDebugCapsule(
 		GetWorld(),
 		start,
@@ -187,7 +188,7 @@ void AK_Drone::UpdateDetectedUnits()
 		FQuat::Identity,
 		FColor::Green,
 		false,
-		3.0f, 0, 10.f
+		2.f, 0, 3.f
 		);
 	
 	//현재 탐지된 유닛 캐싱
@@ -204,15 +205,6 @@ void AK_Drone::UpdateDetectedUnits()
 			false,
 			5.f);
 		
-		DrawDebugLine(
-			GetWorld(),
-			hit.ImpactPoint,
-			hit.ImpactPoint+hit.ImpactNormal*100.f,
-			FColor::Green,
-			false,
-			5.0f,
-			0,
-			5.f);
 		
 		AActor* detectedActor = hit.GetActor();
 		AB_UnitBase* detectedUnit = Cast<AB_UnitBase>(detectedActor);
@@ -226,7 +218,7 @@ void AK_Drone::UpdateDetectedUnits()
 	}
 	
 	//이전 탐지되었으나 지금은 안된 유닛들 UNDETECTED로 변경
-	for (AActor* detectedActor : currentDetectedUnits)
+	for (AActor* detectedActor : previouslyDetectedUnits)
 	{
 		if (!currentDetectedUnits.Contains(detectedActor))
 		{

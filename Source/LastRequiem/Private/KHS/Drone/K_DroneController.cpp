@@ -42,6 +42,7 @@ void AK_DroneController::SetupInputComponent()
 void AK_DroneController::OnDroneLook(const FInputActionValue& value)
 {
 	FVector2D lookInput = value.Get<FVector2D>();
+	lookInput.Y *= -1.f; //요청으로 Y축 입력 반전.
 	
 	AddYawInput(lookInput.X);
 	
