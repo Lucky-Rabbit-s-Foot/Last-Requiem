@@ -188,7 +188,7 @@ void AK_Drone::UpdateDetectedUnits()
 		FQuat::Identity,
 		FColor::Green,
 		false,
-		3.0f, 0, 10.f
+		2.f, 0, 3.f
 		);
 	
 	//현재 탐지된 유닛 캐싱
@@ -218,7 +218,7 @@ void AK_Drone::UpdateDetectedUnits()
 	}
 	
 	//이전 탐지되었으나 지금은 안된 유닛들 UNDETECTED로 변경
-	for (AActor* detectedActor : currentDetectedUnits)
+	for (AActor* detectedActor : previouslyDetectedUnits)
 	{
 		if (!currentDetectedUnits.Contains(detectedActor))
 		{
