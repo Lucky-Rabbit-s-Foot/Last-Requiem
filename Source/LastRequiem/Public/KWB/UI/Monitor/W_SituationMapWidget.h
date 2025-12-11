@@ -24,6 +24,10 @@ class LASTREQUIEM_API UW_SituationMapWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
+public:
+	// 종민님 필요한 Getter
+	inline class UW_MapWidget* GetRenderedMap () const { return RenderedMap; }
+
 protected:
 	virtual void NativeConstruct () override;
 
@@ -67,7 +71,7 @@ public:
 
 protected:
 	UPROPERTY ( BlueprintReadOnly , Category = "Widget" , meta = (BindWidget) )
-	TObjectPtr<class UW_MapWidget> RenderedMap;
+	TObjectPtr<UW_MapWidget> RenderedMap;
 
 	UPROPERTY ( BlueprintReadOnly , Category = "Button" , meta = (BindWidget) )
 	TObjectPtr<class UButton> Exit = nullptr;
