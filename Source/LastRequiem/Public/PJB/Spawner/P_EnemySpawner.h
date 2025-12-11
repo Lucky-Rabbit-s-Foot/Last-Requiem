@@ -15,11 +15,15 @@ class LASTREQUIEM_API AP_EnemySpawner : public AActor
 public:	
 	AP_EnemySpawner();
 
+	void InitArrowComponentForFindSpawner ();
+
 	UFUNCTION ( BlueprintCallable , Category = "Factory" )
 	void SpawnEnemy ();
 
 protected:
 	virtual void BeginPlay() override;
+
+	void StartSpawnEnemy ();
 
 protected:
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
@@ -33,12 +37,11 @@ protected:
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
 	float SpawnInterval = 5.0f;
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
-	float SpawnRadius = 20.0f;
+	float SpawnRadius = 500.0f;
 
-	FTimerHandle SpawnTimerHandlde;
+	FTimerHandle SpawnTimerHandle;
 
 private:
 	UPROPERTY ( VisibleAnywhere , Category = "Visual" )
 	class UArrowComponent* ArrowComp = nullptr;
-
 };

@@ -28,7 +28,6 @@ AP_AIControllerEnemyBase::AP_AIControllerEnemyBase ()
 void AP_AIControllerEnemyBase::SetCachedFortress ()
 {
 	if (!GetWorld ()) return;
-	UE_LOG ( LogTemp , Warning , TEXT ( "SetCachedFortress called" ) );
 	if (AP_GameStateBase* GS = GetWorld ()->GetGameState<AP_GameStateBase> ())
 	{
 		CachedFortress = GS->GetFortress ();
@@ -77,7 +76,6 @@ void AP_AIControllerEnemyBase::OnPossess ( APawn* InPawn )
 {
 	Super::OnPossess ( InPawn );
 
-
 	SetCachedFortress ();
 	BindPerceptionUpdate ();
 	
@@ -118,12 +116,14 @@ void AP_AIControllerEnemyBase::UpdateBestTarget ()
 	if (ClosestUnit)
 	{
 		BB->SetValueAsObject ( TEXT ( "TargetActor" ), ClosestUnit );
+		BB->SetValueAsBool ( TEXT ( "bIsTargetUnit" ) , true );
 	}
 	else
 	{
 		if(CachedFortress.IsValid())
 		{
 			BB->SetValueAsObject ( TEXT ( "TargetActor" ) , CachedFortress.Get () );
+			BB->ClearValue ( TEXT ( "bIsTargetUnit" ) );
 		}
 		else
 		{
