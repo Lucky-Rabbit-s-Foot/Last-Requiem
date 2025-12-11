@@ -51,12 +51,16 @@ void AK_Drone::BeginPlay()
 		UIManager->OpenUI<UK_UnitListWidget>(unitListWidget);
 	}
 	
-	//타이머로 n초마다 UpdateDetectedUnits 호출
+	
+	//최초 UnitSlot 활성화 후
+	//타이머로 n초마다 UpdateDetectedUnitSlot 호출
+	InitializeDetectedUnitSlot();
+	
 	GetWorldTimerManager().SetTimer(
 		detectionTimerHandle,
 		this,
-		&AK_Drone::UpdateDetectedUnits,
-		2.0f,
+		&AK_Drone::UpdateDetectedUnitSlot,
+		1.0f,
 		true
 		);
 }
@@ -161,15 +165,74 @@ void AK_Drone::UpdateDroneRotation(float DeltaTime)
 	SetActorRotation(newRot);
 }
 
-void AK_Drone::UpdateDetectedUnits()
+void AK_Drone::InitializeDetectedUnitSlot()
 {
 	//CapsuleTrace로 유닛 탐지
 	TArray<FHitResult> hitResults;
 	FVector start = GetActorLocation();
 	FVector end = start;
 	
-	float capsuleRadius = 200.f;
+	float capsuleRadius = 2500.f;
 	float capsuleHalfHeight = 700.f;
+	FCollisionShape capsuleShpae = FCollisionShape::MakeCapsule(capsuleRadius, capsuleHalfHeight);
+	
+	GetWorld()->SweepMultiByChannel(
+		hitResults,
+		start, end,
+		FQuat::Identity,
+		ECC_Pawn,
+		capsuleShpae);
+	
+
+	DrawDebugCapsule(
+		GetWorld(),
+		start,
+		capsuleHalfHeight,
+		capsuleRadius,
+		FQuat::Identity,
+		FColor::Blue,
+		false,
+		1.f, 0, 3.f
+		);
+	
+	//현재 탐지된 유닛 캐싱
+	TSet<AActor*> currentDetectedUnits;
+	
+	//탐지결과 처리
+	for (const FHitResult& hit : hitResults)
+	{
+		DrawDebugPoint(
+			GetWorld(),
+			hit.ImpactPoint,
+			20.f,
+			FColor::Red,
+			false,
+			1.f);
+		
+		
+		AActor* detectedActor = hit.GetActor();
+		AB_UnitBase* detectedUnit = Cast<AB_UnitBase>(detectedActor);
+		
+		if (detectedUnit)
+		{
+			currentDetectedUnits.Add(detectedActor);
+			//broadcast
+			onUnitDetected.Broadcast(detectedActor);
+		}
+	}
+	
+	previouslyDetectedUnits = currentDetectedUnits;
+}
+
+void AK_Drone::UpdateDetectedUnitSlot()
+{
+	//CapsuleTrace로 유닛 탐지
+	TArray<FHitResult> hitResults;
+	FVector start = GetActorLocation();
+	FVector end = start;
+	
+	float capsuleRadius = 300.f;
+	float capsuleHalfHeight = 1000.f;
 	FCollisionShape capsuleShpae = FCollisionShape::MakeCapsule(capsuleRadius, capsuleHalfHeight);
 	
 	GetWorld()->SweepMultiByChannel(
@@ -188,7 +251,7 @@ void AK_Drone::UpdateDetectedUnits()
 		FQuat::Identity,
 		FColor::Green,
 		false,
-		2.f, 0, 3.f
+		1.f, 0, 3.f
 		);
 	
 	//현재 탐지된 유닛 캐싱

@@ -37,7 +37,8 @@ private:
 	void UpdateDroneMovement(float DeltaTime);
 	void UpdateDroneRotation(float DeltaTime);
 	
-	void UpdateDetectedUnits();
+	void InitializeDetectedUnitSlot();
+	void UpdateDetectedUnitSlot();
 	
 public:
 	void Move(const FVector2D& inputValue);
