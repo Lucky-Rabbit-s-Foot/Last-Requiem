@@ -92,9 +92,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Unit|Attack")
 	void UnitAttack(AActor* TargetActor);
 
+	FOnUnitDieDelegate OnUnitDieDelegate;
+
 private:
 	bool bIsAlive = true;
-	FOnUnitDieDelegate OnUnitDieDelegate;
 
 public:
 	UFUNCTION ( BlueprintCallable )
