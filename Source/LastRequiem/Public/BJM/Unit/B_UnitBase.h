@@ -10,7 +10,7 @@
 
 #include "B_UnitBase.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnUnitDieDelegate );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnUnitDieDelegate, AActor*, InUnit );
 
 class UB_UnitStatusComponent;
 
@@ -72,9 +72,23 @@ public:
 	void ProcessMoveCommand(float InX, float InY);
 
 
-	UFUNCTION ()
+	UFUNCTION ( BlueprintCallable , Category = "Unit|Command" )
 	void CommandMoveToLocation ( FVector TargetLocation );
 
+	UFUNCTION ( BlueprintCallable , Category = "Unit|Command" )
+	void CommandAttackMove ( FVector TargetLocation );
+
+	UFUNCTION ( BlueprintCallable , Category = "Unit|Command" )
+	void CommandStop ();
+	
+	UFUNCTION ( BlueprintCallable , Category = "Unit|Command" )
+	void CommandHold ();
+
+	UFUNCTION ( BlueprintCallable , Category = "Unit|Command" )
+	void CommandRetreat ();
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Data" )
+	FVector FortressLocation;
 
 public:
 
