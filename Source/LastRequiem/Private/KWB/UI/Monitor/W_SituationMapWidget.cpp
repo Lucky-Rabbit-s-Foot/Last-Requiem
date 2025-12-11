@@ -10,7 +10,7 @@ void UW_SituationMapWidget::NativeConstruct()
 
 	if (Exit)
 	{
-		Exit->OnClicked.AddDynamic ( this , &UW_SituationMapWidget::OnExitButtonClicked );
+		Exit->OnClicked.AddDynamic ( this , &UW_SituationMapWidget::HandleExitButtonClicked );
 	}
 	else
 	{
@@ -19,25 +19,34 @@ void UW_SituationMapWidget::NativeConstruct()
 
 	if (Attack)
 	{
-		Attack->OnClicked.AddDynamic ( this , &UW_SituationMapWidget::OnAttackButtonClicked );
+		Attack->OnClicked.AddDynamic ( this , &UW_SituationMapWidget::HandleAttackButtonClicked );
 	}
 	else
 	{
 		UE_LOG ( LogTemp , Error , TEXT ( "TObjectPtr<UButton> Attack이 존재하지 않습니다." ) );
 	}
 
-	if (Patrol)
+	if (Stop)
 	{
-		Patrol->OnClicked.AddDynamic ( this , &UW_SituationMapWidget::OnPatrolButtonClicked );
+		Stop->OnClicked.AddDynamic ( this , &UW_SituationMapWidget::HandleStopButtonClicked );
 	}
 	else
 	{
-		UE_LOG ( LogTemp , Error , TEXT ( "TObjectPtr<UButton> Patrol이 존재하지 않습니다." ) );
+		UE_LOG ( LogTemp , Error , TEXT ( "TObjectPtr<UButton> Stop이 존재하지 않습니다." ) );
+	}
+
+	if (Hold)
+	{
+		Hold->OnClicked.AddDynamic ( this , &UW_SituationMapWidget::HandleHoldButtonClicked );
+	}
+	else
+	{
+		UE_LOG ( LogTemp , Error , TEXT ( "TObjectPtr<UButton> Hold이 존재하지 않습니다." ) );
 	}
 
 	if (Retreat)
 	{
-		Retreat->OnClicked.AddDynamic ( this , &UW_SituationMapWidget::OnRetreatButtonClicked );
+		Retreat->OnClicked.AddDynamic ( this , &UW_SituationMapWidget::HandleRetreatButtonClicked );
 	}
 	else
 	{
@@ -45,58 +54,56 @@ void UW_SituationMapWidget::NativeConstruct()
 	}
 }
 
-void UW_SituationMapWidget::OnExitButtonClicked ()
+void UW_SituationMapWidget::HandleExitButtonClicked ()
 {
 	UE_LOG ( LogTemp , Log , TEXT ( "Exit Button Clicked." ) );
 	// Widget Hide / 해당 위젯에 해당하는 모든 기능 비활성화 => Not Touchable
 }
 
-void UW_SituationMapWidget::OnAttackButtonClicked ()
+void UW_SituationMapWidget::HandleAttackButtonClicked ()
 {
-	uint8 orderID = static_cast<uint8>(EOrderButtonType::Attack);
-	//HandleOrderButtonClicked ( orderID );
-	// TEST
-	uint8 TEMP_DelegateReturnVal = HandleOrderButtonClicked ( orderID );
+	OnAttackButtonClicked.Broadcast ();
+	UE_LOG ( LogTemp , Log , TEXT ( "Attack Button Clicked." ) );
 }
 
-void UW_SituationMapWidget::OnPatrolButtonClicked ()
+void UW_SituationMapWidget::HandleStopButtonClicked ()
 {
-	uint8 orderID = static_cast<uint8>(EOrderButtonType::Patrol);
-	//HandleOrderButtonClicked ( orderID );
-	// TEST
-	uint8 TEMP_DelegateReturnVal = HandleOrderButtonClicked ( orderID );
+	OnStopButtonClicked.Broadcast ();
+	UE_LOG ( LogTemp , Log , TEXT ( "Stop Button Clicked." ) );
 }
 
-void UW_SituationMapWidget::OnRetreatButtonClicked ()
+void UW_SituationMapWidget::HandleHoldButtonClicked ()
 {
-	uint8 orderID = static_cast<uint8>(EOrderButtonType::Retreat);
-	//HandleOrderButtonClicked ( orderID );
-	// TEST
-	uint8 TEMP_DelegateReturnVal = HandleOrderButtonClicked ( orderID );
+	OnHoldButtonClicked.Broadcast ();
+	UE_LOG ( LogTemp , Log , TEXT ( "Hold Button Clicked." ) );
 }
 
-// TEST : 실제 코드 리턴 타입은 void
-uint8 UW_SituationMapWidget::HandleOrderButtonClicked ( uint8 InOrderID)
+void UW_SituationMapWidget::HandleRetreatButtonClicked ()
 {
-	uint8 orderType;
-
-	switch (InOrderID)
-	{
-	case 0:
-		UE_LOG ( LogTemp , Log , TEXT ( "Attack Button Clicked." ) );
-		orderType = InOrderID;
-		break;
-	case 1:
-		UE_LOG ( LogTemp , Log , TEXT ( "Patrol Button Clicked." ) );
-		orderType = InOrderID;
-		break;
-	case 2:
-		UE_LOG ( LogTemp , Log , TEXT ( "Retreat Button Clicked." ) );
-		orderType = InOrderID;
-		break;
-	}
-
-	OnOrderButtonClicked.ExecuteIfBound(orderType);
-
-	return orderType;
+	OnRetreatButtonClicked.Broadcast ();
+	UE_LOG ( LogTemp , Log , TEXT ( "Retreat Button Clicked." ) );
 }
+
+//// 추후 시스템 변경 대응용
+//void UW_SituationMapWidget::HandleOrderButtonClicked ( uint8 InOrderID)
+//{
+//	uint8 orderType;
+//
+//	switch (InOrderID)
+//	{
+//	case 0:
+//		UE_LOG ( LogTemp , Log , TEXT ( "Attack Button Clicked." ) );
+//		orderType = InOrderID;
+//		break;
+//	case 1:
+//		UE_LOG ( LogTemp , Log , TEXT ( "Patrol Button Clicked." ) );
+//		orderType = InOrderID;
+//		break;
+//	case 2:
+//		UE_LOG ( LogTemp , Log , TEXT ( "Retreat Button Clicked." ) );
+//		orderType = InOrderID;
+//		break;
+//	}
+//
+//	OnOrderButtonClicked.ExecuteIfBound(orderType);
+//}
