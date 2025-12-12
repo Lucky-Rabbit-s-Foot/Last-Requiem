@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "DetourCrowdAIController.h"
 #include "Perception/AIPerceptionTypes.h"
 #include "GameplayTagContainer.h"
 
@@ -13,7 +14,7 @@ class UAISenseConfig_Damage;
 class UBehaviorTree;
 
 UCLASS()
-class LASTREQUIEM_API AP_AIControllerEnemyBase : public AAIController
+class LASTREQUIEM_API AP_AIControllerEnemyBase : public ADetourCrowdAIController
 {
 	GENERATED_BODY()
 	
