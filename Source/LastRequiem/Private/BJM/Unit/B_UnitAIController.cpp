@@ -124,6 +124,12 @@ void AB_UnitAIController::CheckNearbyEnemies ()
 		{
 			BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
 			ClearFocus ( EAIFocusPriority::Gameplay );
+
+			if (AB_UnitBase* MyUnit = Cast<AB_UnitBase> ( GetPawn () ))
+			{
+				MyUnit->SetCombatState_Unit ( false );
+			}
+
 			UE_LOG ( LogTemp , Warning , TEXT ( "타겟이 너무 멀어짐 -> 추격 포기" ) );
 		}
 		return;
@@ -184,6 +190,12 @@ void AB_UnitAIController::CheckNearbyEnemies ()
 	{
 		BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , ClosestEnemy );
 		SetFocus ( ClosestEnemy );
+
+		if (AB_UnitBase* MyUnit = Cast<AB_UnitBase> ( GetPawn () ))
+		{
+			MyUnit->SetCombatState_Unit ( true );
+		}
+
 		UE_LOG ( LogTemp , Warning , TEXT ( ">>> 최종 타겟 선정: %s <<<" ) , *ClosestEnemy->GetName () );
 
 	}
@@ -216,6 +228,11 @@ void AB_UnitAIController::OnTargetDetected(AActor* InActor, FAIStimulus InStimul
 
 		BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , InActor );
 		SetFocus ( InActor );
+
+		if (AB_UnitBase* MyUnit = Cast<AB_UnitBase> ( GetPawn () ))
+		{
+			MyUnit->SetCombatState_Unit ( true );
+		}
     }
     else
     {
@@ -226,6 +243,12 @@ void AB_UnitAIController::OnTargetDetected(AActor* InActor, FAIStimulus InStimul
 		{
 			BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
 			ClearFocus ( EAIFocusPriority::Gameplay );
+
+			if (AB_UnitBase* MyUnit = Cast<AB_UnitBase> ( GetPawn () ))
+			{
+				MyUnit->SetCombatState_Unit ( false );
+			}
+
 		}
     }
 }
@@ -241,12 +264,22 @@ void AB_UnitAIController::SetCommandState ( EUnitCommandType NewCommand , FVecto
 		if (NewCommand == EUnitCommandType::None || NewCommand == EUnitCommandType::Hold)
 		{
 			BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
+
+			if (AB_UnitBase* MyUnit = Cast<AB_UnitBase> ( GetPawn () ))
+			{
+				MyUnit->SetCombatState_Unit ( false );
+			}
 		}
-		if (NewCommand == EUnitCommandType::Stop ||  // <-- 추가!
-			NewCommand == EUnitCommandType::Move)    // <-- 추가! (이동 찍으면 기존 적 잊기)
+		if (NewCommand == EUnitCommandType::Stop || NewCommand == EUnitCommandType::Move)   
 		{
 			BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
 			ClearFocus ( EAIFocusPriority::Gameplay );
+
+			if (AB_UnitBase* MyUnit = Cast<AB_UnitBase> ( GetPawn () ))
+			{
+				MyUnit->SetCombatState_Unit ( false );
+			}
+
 		}
 	}
 
