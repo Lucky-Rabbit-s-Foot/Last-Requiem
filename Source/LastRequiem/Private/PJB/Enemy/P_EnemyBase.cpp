@@ -1,6 +1,7 @@
 ﻿#include "PJB/Enemy/P_EnemyBase.h"
 
 #include "Components/CapsuleComponent.h"
+#include "PaperSpriteComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "PJB/AI/P_AIControllerEnemyBase.h"
 #include "PJB/Component/P_CombatComponent.h"
@@ -12,11 +13,24 @@ AP_EnemyBase::AP_EnemyBase()
 	PrimaryActorTick.bCanEverTick = true;
 
 	CombatComp = CreateDefaultSubobject<UP_CombatComponent> ( TEXT ( "Combat Component" ) );
+	SpriteComp = CreateDefaultSubobject<UPaperSpriteComponent> ( TEXT ( "Sprite Component" ) );
+	InitSpriteComponent ();
 
 	static FGameplayTag EnemyTag = FGameplayTag::RequestGameplayTag ( FName ( "Enemy" ) );
 	GameplayTags.AddTag ( EnemyTag );
 
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+}
+
+void AP_EnemyBase::InitSpriteComponent ()
+{
+	SpriteComp->SetupAttachment ( GetRootComponent() );
+	SpriteComp->SetRelativeLocation ( FVector ( 0.0f , 0.0f , 1000.0f ) );
+	SpriteComp->SetRelativeRotation ( FRotator ( 0.0f , -90.0f , 0.0f ) );
+	SpriteComp->SetHiddenInGame ( true );
+	SpriteComp->SetCastShadow ( false );
+	SpriteComp->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
+	SpriteComp->SetGenerateOverlapEvents ( false );
 }
 
 void AP_EnemyBase::BeginPlay()

@@ -17,6 +17,8 @@ class LASTREQUIEM_API AP_EnemyBase : public ACharacter , public IGameplayTagAsse
 public:
 	AP_EnemyBase();
 
+	void InitSpriteComponent ();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -54,7 +56,9 @@ protected:
 	// Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Data|Components")
 	TObjectPtr<class UP_CombatComponent> CombatComp = nullptr;
-	
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Sprite" )
+	TObjectPtr<class UPaperSpriteComponent> SpriteComp = nullptr;
+
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
 	FGameplayTagContainer GameplayTags;
 
