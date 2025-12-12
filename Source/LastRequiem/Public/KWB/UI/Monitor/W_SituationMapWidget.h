@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "KHS/UI/K_BaseUIWidget.h"
 #include "W_SituationMapWidget.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnOrderButtonClicked );
@@ -20,7 +20,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnOrderButtonClicked );
  * 
  */
 UCLASS()
-class LASTREQUIEM_API UW_SituationMapWidget : public UUserWidget
+class LASTREQUIEM_API UW_SituationMapWidget : public UK_BaseUIWidget
 {
 	GENERATED_BODY()
 
