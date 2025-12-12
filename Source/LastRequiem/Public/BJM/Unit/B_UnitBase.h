@@ -11,6 +11,7 @@
 #include "B_UnitBase.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnUnitDieDelegate, AActor*, InUnit );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnCombatStateChangedDelegate , bool , bIsCombat );
 
 class UB_UnitStatusComponent;
 
@@ -123,6 +124,13 @@ public:
 	void UnitAttack(AActor* TargetActor);
 
 	FOnUnitDieDelegate OnUnitDieDelegate;
+
+	UPROPERTY ( BlueprintAssignable , Category = "Unit|Event" )
+	FOnCombatStateChangedDelegate OnCombatStateChanged;
+
+	
+	UFUNCTION ( BlueprintCallable , Category = "Unit|State" )
+	void SetCombatState_Unit ( bool bInCombat );
 
 private:
 	bool bIsAlive = true;
