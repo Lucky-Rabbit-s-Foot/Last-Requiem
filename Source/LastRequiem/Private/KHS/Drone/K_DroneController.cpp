@@ -2,7 +2,15 @@
 
 
 #include "KHS/Drone/K_DroneController.h"
-#include "KHS/DRone/K_Drone.h"
+#include "KHS/Drone/K_Drone.h"
+
+#include "KHS/UI/K_UIManagerSubsystem.h"
+#include "KHS/UI/K_BaseUIWidget.h"
+#include "KHS/UI/K_HUDWidget.h"
+#include "KHS/UI/K_UnitListWidget.h"
+
+#include "KWB/UI/Monitor/W_SituationMapWidget.h"
+
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 
@@ -32,9 +40,29 @@ void AK_DroneController::SetupInputComponent()
 		enhanced->BindAction(IA_UpDown, ETriggerEvent::Triggered, this, &AK_DroneController::OnDroneUpDown);
 		enhanced->BindAction(IA_UpDown, ETriggerEvent::Completed, this, &AK_DroneController::OnDroneDownReleased);
 		
-		enhanced->BindAction(IA_ModeChange, ETriggerEvent::Started, this, &AK_DroneController::OnDroneModeChange);
+		enhanced->BindAction(IA_ModeChange, ETriggerEvent::Started, this, &AK_DroneController::OnToggleSituationMapUI);
+		enhanced->BindAction(IA_Setting, ETriggerEvent::Started, this, &AK_DroneController::OnOpenSettingUI);
+		
 		enhanced->BindAction(IA_Skill01, ETriggerEvent::Started, this, &AK_DroneController::OnDroneUseSkill01);
 		enhanced->BindAction(IA_Skill02, ETriggerEvent::Started, this, &AK_DroneController::OnDroneUseSkill02);
+	}
+}
+
+void AK_DroneController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+	
+	InitializePersistentUI();
+}
+
+
+void AK_DroneController::InitializePersistentUI()
+{
+	UK_UIManagerSubsystem* UIManager = GetGameInstance()->GetSubsystem<UK_UIManagerSubsystem>();
+	if (UIManager)
+	{
+		UIManager->OpenUI<UK_HUDWidget>(hudWidget);
+		UIManager->OpenUI<UK_UnitListWidget>(unitListWidget);
 	}
 }
 
@@ -99,12 +127,36 @@ void AK_DroneController::OnDroneDownReleased(const FInputActionValue& value)
 	}
 }
 
-void AK_DroneController::OnDroneModeChange(const FInputActionValue& value)
+void AK_DroneController::OnToggleSituationMapUI(const FInputActionValue& value)
 {
-	AK_Drone* drone = Cast<AK_Drone>(GetPawn());
-	if (drone)
+	if (!mapWidget)
 	{
-		drone->ChangeMode();
+		return;
+	}
+	
+	auto* UIManger = GetGameInstance()->GetSubsystem<UK_UIManagerSubsystem>();
+	if (!UIManger)
+	{
+		return;
+	}
+	
+	auto* minimapUI = UIManger->GetOrCreateWidget<UW_SituationMapWidget>(mapWidget);
+	if (!minimapUI)
+	{
+		return;
+	}
+	
+	if (minimapUI->IsOpen())
+	{
+		//이미 열려있으면 닫고 델리게이트 구독 해제
+		UIManger->CloseUI<UW_SituationMapWidget>();
+		minimapUI->onCloseUIRequested.RemoveDynamic(this, &AK_DroneController::HandleUICloseReqeust);
+	}
+	else
+	{
+		//닫혀있으면 열고 델리게이트 구독
+		UIManger->OpenUI<UW_SituationMapWidget>(mapWidget);
+		minimapUI->onCloseUIRequested.AddDynamic(this, &AK_DroneController::HandleUICloseReqeust);
 	}
 }
 
@@ -125,3 +177,31 @@ void AK_DroneController::OnDroneUseSkill02(const FInputActionValue& value)
 		drone->UseSkill02();
 	}
 }
+
+void AK_DroneController::OnOpenSettingUI(const FInputActionValue& value)
+{
+	
+}
+
+
+void AK_DroneController::HandleUICloseReqeust(class UK_BaseUIWidget* requestWidget)
+{
+	if (!requestWidget)
+	{
+		return;
+	}
+	
+	auto* UIManager = GetGameInstance()->GetSubsystem<UK_UIManagerSubsystem>();
+	if (!UIManager)
+	{
+		return;
+	}
+	
+	//인스턴스로 직접 닫는 오버로딩 CloseUI함수 호출
+	UIManager->CloseUI(requestWidget);
+	
+	//델리게이트 구독 해제
+	requestWidget->onCloseUIRequested.RemoveDynamic(this, &AK_DroneController::HandleUICloseReqeust);
+}
+
+
