@@ -87,13 +87,29 @@ public:
 	UFUNCTION ( BlueprintCallable , Category = "Unit|Command" )
 	void CommandRetreat ();
 
+	UFUNCTION ()
+	void OnAttackButtonClicked_Unit ();  
+
+	UFUNCTION ()
+	void OnStopButtonClicked_Unit ();
+
+	UFUNCTION ()
+	void OnHoldButtonClicked_Unit ();
+
+	UFUNCTION ()
+	void OnRetreatButtonClicked_Unit ();
+
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Unit|State" )
+	bool bIsAttackMode = false;
+
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Data" )
 	FVector FortressLocation;
 
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Unit|Attack")
-	float AttackRange = 1000.0f;
+	float AttackRange = 700.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Unit|Attack")
 	float AttackDamage = 10.0f;

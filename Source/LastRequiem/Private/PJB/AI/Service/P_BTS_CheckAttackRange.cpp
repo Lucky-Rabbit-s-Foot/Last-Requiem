@@ -24,9 +24,9 @@ void UP_BTS_CheckAttackRange::TickNode ( UBehaviorTreeComponent& OwnerComp , uin
 	bool bInRange = false;
 	if (Target)
 	{
-		float Distance = OwnedPawn->GetDistanceTo ( Target );
-
-		bInRange = (Distance <= AttackRange);
+		float DistSq = OwnedPawn->GetSquaredDistanceTo ( Target );
+		float AttackRangeSq = AttackRange * AttackRange;
+		bInRange = (DistSq <= AttackRangeSq);
 	}
 	if (bInRange)
 	{

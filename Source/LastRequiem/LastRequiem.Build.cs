@@ -22,7 +22,8 @@ public class LastRequiem : ModuleRules
             "UMG",
             "Niagara",
             "NiagaraCore",
-            "VectorVM"
+            "VectorVM",
+            "Paper2D"
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] {  });
