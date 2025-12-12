@@ -9,53 +9,56 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Engine/OverlapResult.h"
 #include "PJB/System/P_GameStateBase.h"
+#include "PJB/Enemy/P_EnemyBase.h"
+#include "PJB/AI/P_AIControllerEnemyBase.h"
 
 UP_BTS_SelectTarget::UP_BTS_SelectTarget ()
 {
 	NodeName = TEXT ( "Select Target" );
 	Interval = 0.5f;
+
+	UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
+	ObstacleTag = FGameplayTag::RequestGameplayTag ( FName ( "Obstacle" ) );
+	FortressTag = FGameplayTag::RequestGameplayTag ( FName ( "Fortress" ) );
 }
 
 void UP_BTS_SelectTarget::TickNode ( UBehaviorTreeComponent& OwnerComp , uint8* NodeMemory , float DeltaSeconds )
 {
 	Super::TickNode ( OwnerComp , NodeMemory , DeltaSeconds );
 
-	AAIController* AIC = OwnerComp.GetAIOwner ();
+	AP_AIControllerEnemyBase* AIC = Cast<AP_AIControllerEnemyBase> ( OwnerComp.GetAIOwner () );
 	APawn* OwnedPawn = AIC ? AIC->GetPawn () : nullptr;
 	UBlackboardComponent* BB = OwnerComp.GetBlackboardComponent ();
 	if (!AIC || !OwnedPawn || !BB) return;
 
-	UAIPerceptionComponent* PerceptionComp = AIC->FindComponentByClass<UAIPerceptionComponent> ();
-
 	AActor* FinalTarget = nullptr;
+	int32 FinalTypeInt = 0;
 
-	// Unit Targetting
+	UAIPerceptionComponent* PerceptionComp = AIC->FindComponentByClass<UAIPerceptionComponent> ();
 	if (PerceptionComp)
 	{
 		TArray<AActor*> PerceivedActors;
 		PerceptionComp->GetKnownPerceivedActors ( nullptr , PerceivedActors ); // 시각+청각 등 모든 감각
 
 		float ClosestDistSq = FLT_MAX;
+		FVector OwnLocation = OwnedPawn->GetActorLocation ();
 
 		for (AActor* Actor : PerceivedActors)
 		{
-			if (HasGameplayTag ( Actor , UnitTag ))
+			if (!HasGameplayTag ( Actor , UnitTag )) continue;
+			
+			float DistSq = FVector::DistSquared ( OwnLocation , Actor->GetActorLocation () );
+			if (DistSq < ClosestDistSq)
 			{
-				float DistSq = OwnedPawn->GetSquaredDistanceTo ( Actor );
-				if (DistSq < ClosestDistSq)
-				{
-					ClosestDistSq = DistSq;
-					FinalTarget = Actor;
-					BB->SetValueAsInt ( TagKey.SelectedKeyName , 1 );
-				}
+				ClosestDistSq = DistSq;
+				FinalTarget = Actor;
+				FinalTypeInt = 1;
 			}
 		}
 	}
 
-	// Obstacle Targetting
-	if (FinalTarget == nullptr)
+	if (!FinalTarget)
 	{
-		// 내 주변 아주 가까운 곳(SearchRadius)에 장애물이 있는지 검사
 		TArray<FOverlapResult> Overlaps;
 		FCollisionQueryParams Params;
 		Params.AddIgnoredActor ( OwnedPawn );
@@ -71,42 +74,58 @@ void UP_BTS_SelectTarget::TickNode ( UBehaviorTreeComponent& OwnerComp , uint8* 
 
 		if (bHit)
 		{
+			float MinDistSq = FLT_MAX;
+			FVector OwnLocation = OwnedPawn->GetActorLocation ();
+
 			for (const FOverlapResult& Result : Overlaps)
 			{
 				AActor* Actor = Result.GetActor ();
-				if (HasGameplayTag ( Actor , ObstacleTag ))
+				if (!IsValid ( Actor ) || !HasGameplayTag ( Actor , ObstacleTag )) continue;
+			
+				float DistSq = FVector::DistSquared ( OwnLocation , Actor->GetActorLocation () );
+				if(DistSq < MinDistSq)
 				{
-					// 장애물 발견! (가장 먼저 걸린 놈 타겟)
+					MinDistSq = DistSq;
 					FinalTarget = Actor;
-					BB->SetValueAsInt ( TagKey.SelectedKeyName , 2 );
-					break;
+					FinalTypeInt = 2;
 				}
 			}
 		}
 	}
 
-	// Fortress Targetting
-	if (FinalTarget == nullptr)
+	if (!FinalTarget)
 	{
-		if (AP_GameStateBase* GS = GetWorld ()->GetGameState<AP_GameStateBase> ())
+		FinalTarget = AIC->GetCachedFortress ();
+		if (FinalTarget)
 		{
-			FinalTarget = GS->GetFortress ();
-			BB->SetValueAsInt ( TagKey.SelectedKeyName , 3 );
+			FinalTypeInt = 3;
 		}
 	}
 
 	BB->SetValueAsObject ( TargetActorKey.SelectedKeyName , FinalTarget );
+	if (FinalTarget)
+	{
+		BB->SetValueAsInt ( TagKey.SelectedKeyName , FinalTypeInt );
+	}
+	else
+	{
+		BB->ClearValue ( TagKey.SelectedKeyName );
+	}
 }
 
 bool UP_BTS_SelectTarget::HasGameplayTag ( AActor* Actor , FGameplayTag Tag ) const
 {
 	if (!Actor) return false;
 
+	const IGameplayTagAssetInterface* TagAsset = Cast<IGameplayTagAssetInterface> ( Actor );
+	if (TagAsset)
+	{
+		return TagAsset->HasMatchingGameplayTag ( Tag );
+	}
+
 	IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface> ( Actor );
 	if (!ASI) return false;
-
 	UAbilitySystemComponent* ASC = ASI->GetAbilitySystemComponent ();
 	if (!ASC) return false;
-
 	return ASC->HasMatchingGameplayTag ( Tag );
 }

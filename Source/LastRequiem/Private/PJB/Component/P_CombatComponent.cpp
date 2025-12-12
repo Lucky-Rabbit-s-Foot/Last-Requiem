@@ -7,14 +7,12 @@ UP_CombatComponent::UP_CombatComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
-
 void UP_CombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
 	InitPrimitiveValues();
 }
-
 
 void UP_CombatComponent::TakeDamage(float InDamage)
 {
@@ -28,10 +26,9 @@ void UP_CombatComponent::TakeDamage(float InDamage)
 
 void UP_CombatComponent::OnAttack(AActor* Target)
 {
+	if (!Target || !bIsAlive) return;
 	bIsCombat = true;
 	
-	UE_LOG ( LogTemp , Warning , TEXT ( "Attack Target: %s" ) , *Target->GetName () );
-
 	UGameplayStatics::ApplyDamage(
 		Target,
 		AttackPower,
@@ -43,7 +40,9 @@ void UP_CombatComponent::OnAttack(AActor* Target)
 
 void UP_CombatComponent::OnDie()
 {
+	if (!bIsAlive) return;
 	bIsAlive = false;
+	bIsCombat = false;
 }
 
 void UP_CombatComponent::InitPrimitiveValues ()

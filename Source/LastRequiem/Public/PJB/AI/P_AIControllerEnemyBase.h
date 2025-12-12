@@ -21,28 +21,17 @@ class LASTREQUIEM_API AP_AIControllerEnemyBase : public ADetourCrowdAIController
 public:
 	AP_AIControllerEnemyBase ();
 
+	void SetCachedFortressByGameState ();
+	AActor* GetCachedFortress () { return CachedFortress.Get (); }
+
 protected:
 	virtual void OnPossess ( APawn* InPawn ) override;
 
-	UFUNCTION()
-	void OnTargetPerceived ( AActor* InActor , FAIStimulus Stimulus );
-
-	void UpdateBestTarget ();
-	bool IsUnit ( AActor* TargetActor ) const;
+	void InitPerceptionComponent ();
 
 private:
 	void InitSightConfig ();
 	void InitDamageConfig ();
-	void InitGameplayTags ();
-
-	void SightRangeSetting ();
-	void SightDetectionSetting ();
-
-	void SetCachedFortress ();
-	void BindPerceptionUpdate ();
-
-	void FindClosestUnitOnDamaging ( APawn* PossedPawn , float& MinDistSq , AActor*& ClosestUnit );
-	void FindClosestUnitOnVisible ( APawn* PossedPawn , float& MinDistSq , AActor*& ClosestUnit );
 
 protected:
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|AI|Perception" )
@@ -55,13 +44,7 @@ protected:
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|AI" )
 	TObjectPtr<UBehaviorTree> BehaviorTree;
 
-	UPROPERTY ( EditDefaultsOnly , Category = "Data|AI|Tags" )
-	FGameplayTag UnitTag;
-	UPROPERTY ( EditDefaultsOnly , Category = "Data|AI|Tags" )
-	FGameplayTag ObstacleTag;
-	UPROPERTY ( EditDefaultsOnly , Category = "Data|AI|Tags" )
-	FGameplayTag FortressTag;
-	
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Cached Fortress" )
 	TWeakObjectPtr<AActor> CachedFortress;
 
 	UPROPERTY( EditAnywhere , BlueprintReadOnly , Category = "Data|AI|Perception")
