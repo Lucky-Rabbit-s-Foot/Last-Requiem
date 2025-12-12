@@ -1,5 +1,7 @@
 ﻿#include "PJB/Component/P_CombatComponent.h"
 
+#include "Kismet/GameplayStatics.h"
+
 UP_CombatComponent::UP_CombatComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
@@ -26,6 +28,17 @@ void UP_CombatComponent::TakeDamage(float InDamage)
 
 void UP_CombatComponent::OnAttack(AActor* Target)
 {
+	bIsCombat = true;
+	
+	UE_LOG ( LogTemp , Warning , TEXT ( "Attack Target: %s" ) , *Target->GetName () );
+
+	UGameplayStatics::ApplyDamage(
+		Target,
+		AttackPower,
+		GetOwner()->GetInstigatorController(),
+		GetOwner(),
+		UDamageType::StaticClass()
+	);
 }
 
 void UP_CombatComponent::OnDie()

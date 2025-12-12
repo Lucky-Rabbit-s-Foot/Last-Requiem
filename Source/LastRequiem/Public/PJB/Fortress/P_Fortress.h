@@ -2,20 +2,23 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GameplayTagContainer.h"
+#include "GameplayTagAssetInterface.h"
 
 #include "P_Fortress.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnFortressDamagedDelegate );
-DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnFortressBrokenDelegate );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnFortressDamagedDelegate , AActor* , InActor );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnFortressBrokenDelegate , AActor* , InActor );
 
 UCLASS()
-class LASTREQUIEM_API AP_Fortress : public AActor
+class LASTREQUIEM_API AP_Fortress : public AActor , public IGameplayTagAssetInterface
 {
 	GENERATED_BODY()
 	
 public:	
 	AP_Fortress();
 
+	virtual void GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const override;
 protected:
 	virtual void BeginPlay() override;
 
@@ -30,7 +33,17 @@ public:
 	);
 	void OnBroken ();
 
+public:
+	FOnFortressDamagedDelegate OnFortressDamagedDelegate;
+	FOnFortressBrokenDelegate OnFortressBrokenDelegate;
+
 protected:
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Components" )
+	TObjectPtr<UStaticMeshComponent> Mesh = nullptr;
+	
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
+	FGameplayTagContainer GameplayTags;
+
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Health" )
 	float MaxHealth = 300.0f;
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Health" )
@@ -38,7 +51,4 @@ protected:
 
 private:
 	bool bIsBroken = false;
-	FOnFortressDamagedDelegate OnFortressDamagedDelegate;
-	FOnFortressBrokenDelegate OnFortressBrokenDelegate;
-
 };

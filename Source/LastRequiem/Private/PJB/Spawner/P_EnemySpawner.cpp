@@ -1,0 +1,96 @@
+﻿#include "PJB/Spawner/P_EnemySpawner.h"
+
+#include "Components/ArrowComponent.h"
+#include "GameFramework/Character.h"
+#include "Kismet/GameplayStatics.h"
+#include "NavigationSystem.h"
+#include "PJB/Data/P_DataTableRows.h"
+
+
+AP_EnemySpawner::AP_EnemySpawner()
+{
+	PrimaryActorTick.bCanEverTick = false;
+
+	InitArrowComponentForFindSpawner ();
+}
+
+void AP_EnemySpawner::InitArrowComponentForFindSpawner ()
+{
+	ArrowComp = CreateDefaultSubobject<UArrowComponent> ( TEXT ( "ArrowComponent" ) );
+	SetRootComponent ( ArrowComp );
+	ArrowComp->ArrowColor = FColor::Red;
+	ArrowComp->ArrowSize = 2.0f;
+}
+
+void AP_EnemySpawner::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	StartSpawnEnemy ();
+}
+
+void AP_EnemySpawner::StartSpawnEnemy ()
+{
+	if (SpawnInterval <= 0.0f || !EnemyDataTable) return;
+
+	GetWorldTimerManager ().SetTimer (
+		SpawnTimerHandle ,
+		this ,
+		&AP_EnemySpawner::SpawnEnemy ,
+		SpawnInterval ,
+		true ,
+		SpawnDelay
+	);
+}
+
+
+void AP_EnemySpawner::SpawnEnemy ()
+{
+	if (!EnemyDataTable || !EnemyTagToSpawn.IsValid ()) return;
+
+	
+	FP_EnemySpawnRow* SelectedRow = nullptr;
+
+	static const FString ContextString ( TEXT ( "EnemySpawnContext" ) );
+	TArray<FP_EnemySpawnRow*> AllRows;
+	EnemyDataTable->GetAllRows<FP_EnemySpawnRow> ( ContextString , AllRows );
+
+	for(FP_EnemySpawnRow* Row : AllRows)
+	{
+		if (!Row || !Row->EnemyTag.MatchesTag ( EnemyTagToSpawn )) continue;
+
+		SelectedRow = Row;
+		if (!SelectedRow || !SelectedRow->EnemyClass) return;
+
+		FVector SpawnLocation = GetActorLocation ();
+		FTransform SpawnTransform = GetActorTransform ();
+
+		if (UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent ( GetWorld () ))
+		{
+			FNavLocation RandomNavLocation;
+			if (NavSys->GetRandomPointInNavigableRadius ( SpawnLocation , SpawnRadius , RandomNavLocation ))
+			{
+				SpawnLocation = RandomNavLocation.Location;
+				SpawnLocation.Z += 50.0f;
+			}
+		}
+		SpawnTransform.SetLocation ( SpawnLocation );
+
+		APawn* SpawnedEnemy = GetWorld ()->SpawnActorDeferred<APawn> (
+			SelectedRow->EnemyClass ,
+			SpawnTransform ,
+			nullptr ,
+			nullptr ,
+			ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn
+		);
+		
+		if (SpawnedEnemy)
+		{
+			UGameplayStatics::FinishSpawningActor ( SpawnedEnemy , SpawnTransform );
+			if (SpawnedEnemy->GetController () == nullptr)
+			{
+				SpawnedEnemy->SpawnDefaultController ();
+			}
+		}
+	}
+}
