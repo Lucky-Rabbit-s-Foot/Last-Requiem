@@ -4,6 +4,7 @@
 #include "NavigationSystem.h"
 #include "BJM/Unit/B_UnitStatusComponent.h"
 #include "BJM/Unit/B_UnitAIController.h"
+#include "PJB/Fortress/P_Fortress.h"
 #include "AIController.h" 
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -14,6 +15,7 @@
 #include "Perception/AISense_Damage.h"
 #include "TimerManager.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "GameplayTagsManager.h"
 
 // Sets default values
 AB_UnitBase::AB_UnitBase()
@@ -345,8 +347,7 @@ void AB_UnitBase::CommandStop ()
 
 		if (AIController->GetBlackboardComponent ())
 		{
-			// 상태를 Idle (없으면 Stop)로 변경
-			AIController->GetBlackboardComponent ()->SetValueAsEnum ( TEXT ( "Command" ) , (uint8)EUnitCommandType::None );
+			AIController->GetBlackboardComponent ()->SetValueAsEnum ( TEXT ( "Command" ) , (uint8)EUnitCommandType::Stop );
 		}
 	}
 }
@@ -360,7 +361,6 @@ void AB_UnitBase::CommandHold ()
 
 		if (AIController->GetBlackboardComponent ())
 		{
-			// 상태를 Hold로 변경
 			AIController->GetBlackboardComponent ()->SetValueAsEnum ( TEXT ( "Command" ) , (uint8)EUnitCommandType::Hold );
 		}
 	}
@@ -369,14 +369,60 @@ void AB_UnitBase::CommandHold ()
 void AB_UnitBase::CommandRetreat ()
 {
 	AAIController* AIController = Cast<AAIController> ( GetController () );
-	if (AIController && AIController->GetBlackboardComponent ())
+	if (!AIController) return;
+
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass ( GetWorld () , AP_Fortress::StaticClass () , FoundActors );
+
+	FVector RetreatLocation = FVector::ZeroVector;
+	bool bFoundFortress = false;
+
+	FGameplayTag FortressTag = FGameplayTag::RequestGameplayTag ( FName ( "Fortress" ) );
+
+	for (AActor* Actor : FoundActors)
 	{
-		// 본진 좌표 입력
-		AIController->GetBlackboardComponent ()->SetValueAsVector ( TEXT ( "TargetLocation" ) , FortressLocation );
-		// 상태를 Retreat으로 변경
+		AP_Fortress* Fortress = Cast<AP_Fortress> ( Actor );
+		if (Fortress)
+		{
+			FGameplayTagContainer FortressTags;
+			Fortress->GetOwnedGameplayTags ( FortressTags );
+
+			if (FortressTags.HasTag ( FortressTag ))
+			{
+				RetreatLocation = Fortress->GetActorLocation ();
+				bFoundFortress = true;
+				UE_LOG ( LogTemp , Warning , TEXT ( "요새 발견: %s" ) , *Fortress->GetName () );
+				break;
+			}
+		}
+	}
+
+	if (bFoundFortress && AIController->GetBlackboardComponent ())
+	{
+
+		AIController->GetBlackboardComponent ()->SetValueAsVector ( TEXT ( "TargetLocation" ) , RetreatLocation );
+
 		AIController->GetBlackboardComponent ()->SetValueAsEnum ( TEXT ( "Command" ) , (uint8)EUnitCommandType::Retreat );
 
+		AIController->GetBlackboardComponent ()->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
+		AIController->ClearFocus ( EAIFocusPriority::Gameplay );
+
+		UE_LOG ( LogTemp , Warning , TEXT ( "후퇴 시작" ) );
 	}
+	else
+	{
+		UE_LOG ( LogTemp , Error , TEXT ( "요새 발견 x" ) );
+	}
+
+
+	//if (AIController && AIController->GetBlackboardComponent ())
+	//{
+	//	// 본진 좌표 입력
+	//	AIController->GetBlackboardComponent ()->SetValueAsVector ( TEXT ( "TargetLocation" ) , FortressLocation );
+	//	// 상태를 Retreat으로 변경
+	//	AIController->GetBlackboardComponent ()->SetValueAsEnum ( TEXT ( "Command" ) , (uint8)EUnitCommandType::Retreat );
+
+	//}
 }
 
 void AB_UnitBase::OnAttackButtonClicked_Unit ()

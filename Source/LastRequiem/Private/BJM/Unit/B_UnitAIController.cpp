@@ -11,7 +11,7 @@
 #include "Perception/AISenseConfig_Sight.h"
 #include "Engine/OverlapResult.h"
 #include "Engine/EngineTypes.h"
-
+#include "PJB/Enemy/P_EnemyBase.h"
 
 AB_UnitAIController::AB_UnitAIController()
 {
@@ -83,6 +83,11 @@ void AB_UnitAIController::Tick(float DeltaTime)
 			);
 		}
 	}
+
+
+
+
+
 	CheckNearbyEnemies ();
 
 }
@@ -105,7 +110,8 @@ void AB_UnitAIController::CheckNearbyEnemies ()
 	if (!BlackboardComponent || !AIPerception) return;
 
 	EUnitCommandType CurrentCommand = (EUnitCommandType)BlackboardComponent->GetValueAsEnum ( TEXT ( "Command" ) );
-	if (CurrentCommand == EUnitCommandType::Move)
+
+	if (CurrentCommand == EUnitCommandType::Move || CurrentCommand == EUnitCommandType::Stop || CurrentCommand == EUnitCommandType::Retreat)
 	{
 		return;
 	}
@@ -118,30 +124,59 @@ void AB_UnitAIController::CheckNearbyEnemies ()
 		{
 			BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
 			ClearFocus ( EAIFocusPriority::Gameplay );
+			UE_LOG ( LogTemp , Warning , TEXT ( "타겟이 너무 멀어짐 -> 추격 포기" ) );
 		}
 		return;
 	}
 
-	TArray<AActor*> PerceivedActors;
-	AIPerception->GetKnownPerceivedActors ( nullptr , PerceivedActors );
+	APawn* MyPawn = GetPawn ();
+	if (!MyPawn) return;
+
+	float ScanRadius = 1000.0f; 
+
+	TArray<FOverlapResult> OverlapResults;
+	FCollisionQueryParams QueryParams ( NAME_None , false , MyPawn );
+
+	bool bResult = GetWorld ()->OverlapMultiByChannel (
+		OverlapResults ,
+		MyPawn->GetActorLocation () ,
+		FQuat::Identity ,
+		ECollisionChannel::ECC_Pawn ,
+		FCollisionShape::MakeSphere ( ScanRadius ) ,
+		QueryParams
+	);
 
 	AActor* ClosestEnemy = nullptr;
 	float MinDistance = FLT_MAX;
-	APawn* MyPawn = GetPawn ();
 
-	for (AActor* Actor : PerceivedActors)
+	for (auto const& OverlapResult : OverlapResults)
 	{
-		AB_UnitBase* EnemyUnit = Cast<AB_UnitBase> ( Actor );
+		AActor* HitActor = OverlapResult.GetActor ();
+		if (!HitActor) continue;
 
-		if (EnemyUnit && EnemyUnit != MyPawn && EnemyUnit->IsAlive ())
+		if (HitActor == MyPawn) continue;
+
+		AP_EnemyBase* EnemyUnit = Cast<AP_EnemyBase> ( HitActor );
+		if (EnemyUnit)
 		{
-			float Dist = FVector::Dist ( MyPawn->GetActorLocation () , EnemyUnit->GetActorLocation () );
-
-			if (Dist < MinDistance)
+			if (!EnemyUnit->IsAlive ())
 			{
-				MinDistance = Dist;
-				ClosestEnemy = EnemyUnit;
+				//UE_LOG ( LogTemp , Warning , TEXT ( "죽음감지: %s" ) , *HitActor->GetName () );
 			}
+			else
+			{
+				float Dist = FVector::Dist ( MyPawn->GetActorLocation () , EnemyUnit->GetActorLocation () );
+				//UE_LOG ( LogTemp , Warning , TEXT ( "감지: %s (거리: %.1f)" ) , *HitActor->GetName () , Dist );
+
+				if (Dist < MinDistance)
+				{
+					MinDistance = Dist;
+					ClosestEnemy = EnemyUnit;
+				}
+			}
+		}
+		else
+		{
 		}
 	}
 
@@ -149,8 +184,15 @@ void AB_UnitAIController::CheckNearbyEnemies ()
 	{
 		BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , ClosestEnemy );
 		SetFocus ( ClosestEnemy );
-		UE_LOG ( LogTemp , Warning , TEXT ( "시야 내 적 포착! 공격 개시: %s" ) , *ClosestEnemy->GetName () );
+		UE_LOG ( LogTemp , Warning , TEXT ( ">>> 최종 타겟 선정: %s <<<" ) , *ClosestEnemy->GetName () );
+
 	}
+	else
+	{
+		//UE_LOG ( LogTemp , Warning , TEXT ( "적없음." ) );
+	}
+
+
 }
 
 void AB_UnitAIController::OnTargetDetected(AActor* InActor, FAIStimulus InStimulus)
@@ -161,7 +203,7 @@ void AB_UnitAIController::OnTargetDetected(AActor* InActor, FAIStimulus InStimul
 
 	EUnitCommandType CurrentCommand = (EUnitCommandType)BlackboardComponent->GetValueAsEnum ( TEXT ( "Command" ) );
 
-	if (CurrentCommand == EUnitCommandType::Move)
+	if (CurrentCommand == EUnitCommandType::Move || CurrentCommand == EUnitCommandType::Stop || CurrentCommand == EUnitCommandType::Retreat)
 	{
 		return;
 	}
@@ -199,6 +241,12 @@ void AB_UnitAIController::SetCommandState ( EUnitCommandType NewCommand , FVecto
 		if (NewCommand == EUnitCommandType::None || NewCommand == EUnitCommandType::Hold)
 		{
 			BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
+		}
+		if (NewCommand == EUnitCommandType::Stop ||  // <-- 추가!
+			NewCommand == EUnitCommandType::Move)    // <-- 추가! (이동 찍으면 기존 적 잊기)
+		{
+			BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
+			ClearFocus ( EAIFocusPriority::Gameplay );
 		}
 	}
 
