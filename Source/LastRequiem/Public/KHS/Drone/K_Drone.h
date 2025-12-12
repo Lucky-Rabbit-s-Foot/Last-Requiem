@@ -33,17 +33,20 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 private:
-	void InitializeDefaultComponents();
+	void InitializeDefaultComponents(); //컴포넌트 초기화 내부 헬퍼 함수
 	void UpdateDroneMovement(float DeltaTime);
 	void UpdateDroneRotation(float DeltaTime);
 	
-	void InitializeDetectedUnitSlot();
-	void UpdateDetectedUnitSlot();
+	//Detection Helper
+	void InitializeDetectedUnitSlot(); //게임 시작시 맵 전체 유닛 스캔 헬퍼 함수
+	void UpdateDetectedUnitSlot(); //게임 진행 중 유닛 탐지 업데이트 헬퍼 함수
 	
 public:
+	//Movement
 	void Move(const FVector2D& inputValue);
 	void UpDown(float inputValue);
-	void ChangeMode();
+	
+	//Skill
 	void UseSkill01();
 	void UseSkill02();
 
@@ -54,11 +57,9 @@ private:
 	float upDownInputValue = 0.0f;
 	const float DRONE_MASS_WEIGHT = 5.0f;
 	
-	//Scanning
-	FTimerHandle detectionTimerHandle;
-	
-	//Detected Unit Set
-	TSet<AActor*> previouslyDetectedUnits;
+	//Detection
+	FTimerHandle detectionTimerHandle; 
+	TSet<AActor*> previouslyDetectedUnits; //Detected Unit Set
 
 protected:
 	//Components
@@ -81,13 +82,6 @@ protected:
 	//Anim
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Anim")
 	TObjectPtr<class UAnimMontage> flightMontage;
-	
-	//UI
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|UI")
-	TSubclassOf<class UK_HUDWidget> hudWidget;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|UI")
-	TSubclassOf<class UK_UnitListWidget> unitListWidget;
 	
 	//
 	////SFX

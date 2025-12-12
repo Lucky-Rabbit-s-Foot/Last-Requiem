@@ -1,5 +1,6 @@
 ﻿#include "PJB/AI/Service/P_BTS_SelectTarget.h"
 
+#include "LastRequiem.h"
 #include "AIController.h"
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
@@ -96,6 +97,7 @@ void UP_BTS_SelectTarget::TickNode ( UBehaviorTreeComponent& OwnerComp , uint8* 
 	if (!FinalTarget)
 	{
 		FinalTarget = AIC->GetCachedFortress ();
+		LOG_MESSAGE ( Warning , TEXT ( "Selecting Fortress as Target : %s" ) , FinalTarget ? *FinalTarget->GetName () : nullptr );
 		if (FinalTarget)
 		{
 			FinalTypeInt = 3;

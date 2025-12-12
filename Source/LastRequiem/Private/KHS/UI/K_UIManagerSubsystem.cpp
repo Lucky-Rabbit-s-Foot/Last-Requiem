@@ -60,9 +60,10 @@ void UK_UIManagerSubsystem::NotifyInputModeChange()
 	if (HasOpenPopupUI())
 	{
 		//popup있을떈 ui only모드
+		FInputModeGameAndUI inputModeGameAndUI;
 		FInputModeUIOnly inputMode;
 		inputMode.SetWidgetToFocus(popUpUIStack.Last()->TakeWidget());
-		pc->SetInputMode(inputMode);
+		pc->SetInputMode(inputModeGameAndUI);
 		pc->SetShowMouseCursor(true);
 	}
 	else
@@ -70,6 +71,45 @@ void UK_UIManagerSubsystem::NotifyInputModeChange()
 		pc->SetInputMode(FInputModeGameOnly());
 		pc->SetShowMouseCursor(false);
 	}
+}
+
+void UK_UIManagerSubsystem::CloseUIInternal(UK_BaseUIWidget* widget)
+{
+	if (!widget || !widget->IsOpen())
+	{
+		return;
+	}
+	
+	//Persistent 타입 UI일때
+	if (widget->UILayer == EUILayer::PERSISTENT)
+	{
+		widget->CloseUI();
+		widget->RemoveFromParent();
+		
+		TSubclassOf<UK_BaseUIWidget> widgetClass = widget->GetClass();
+		persitentUIMap.Remove(widgetClass);
+	}
+	else //PopUp 타입 UI일때
+	{
+		//스택에서 제거
+		int32 idx = popUpUIStack.Find(widget);
+		if (idx != INDEX_NONE)
+		{
+			popUpUIStack.RemoveAt(idx);
+			widget->CloseUI();
+			widget->RemoveFromParent();
+			
+			//새로운 Top Refresh
+			RefreshTopPopupUI();
+			NotifyInputModeChange();
+		}
+	}
+}
+
+void UK_UIManagerSubsystem::CloseUI(UK_BaseUIWidget* widget)
+{
+	//인스턴스 타입으로 닫을땐 내부 헬퍼함수로 위임
+	CloseUIInternal(widget);
 }
 
 void UK_UIManagerSubsystem::CloseTopPopupUI()
@@ -99,4 +139,10 @@ void UK_UIManagerSubsystem::CloseAllPopupUI()
 
 void UK_UIManagerSubsystem::RefreshTopPopupUI()
 {
+	//스택에 팝업이 남아있다면
+	if (popUpUIStack.Num() > 0)
+	{
+		//새로운 Top에게 Focus알림
+		popUpUIStack.Last()->OnFocusGained();
+	}
 }
