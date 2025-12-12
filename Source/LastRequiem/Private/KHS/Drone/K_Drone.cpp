@@ -232,7 +232,7 @@ void AK_Drone::UpdateDetectedUnitSlot()
 	FVector end = start;
 	
 	float capsuleRadius = 300.f;
-	float capsuleHalfHeight = 1000.f;
+	float capsuleHalfHeight = 2500.f;
 	FCollisionShape capsuleShpae = FCollisionShape::MakeCapsule(capsuleRadius, capsuleHalfHeight);
 	
 	GetWorld()->SweepMultiByChannel(

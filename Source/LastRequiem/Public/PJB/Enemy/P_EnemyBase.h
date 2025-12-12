@@ -2,13 +2,15 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "GameplayTagAssetInterface.h"
+#include "GameplayTagContainer.h"
 
 #include "P_EnemyBase.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnEnemyDieDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnemyDieDelegate, AActor*, InActor);
 
 UCLASS()
-class LASTREQUIEM_API AP_EnemyBase : public ACharacter
+class LASTREQUIEM_API AP_EnemyBase : public ACharacter , public IGameplayTagAssetInterface
 {
 	GENERATED_BODY()
 
@@ -22,6 +24,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	virtual void GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const override;
 
 public:
 	UFUNCTION(BlueprintCallable)
@@ -43,11 +47,17 @@ public:
 private:
 	void InitAnimInstance ();
 
+public:
+	FOnEnemyDieDelegate OnEnemyDieDelegate;
+
 protected:
 	// Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Data|Components")
 	TObjectPtr<class UP_CombatComponent> CombatComp = nullptr;
 	
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
+	FGameplayTagContainer GameplayTags;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Data|Speed")
 	float WalkSpeed = 300.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Data|Speed")
@@ -58,5 +68,4 @@ private:
 	TWeakObjectPtr<UAnimInstance> AnimInstance = nullptr;
 
 	bool bIsAlive = true;
-	FOnEnemyDieDelegate OnEnemyDieDelegate;
 };
