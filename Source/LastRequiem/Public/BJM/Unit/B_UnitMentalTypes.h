@@ -34,6 +34,7 @@ enum class EUnitCommandType : uint8
 	AttackMove  UMETA ( DisplayName = "AttackMove" ) ,
 	Hold        UMETA ( DisplayName = "Hold" ) ,
 	Retreat     UMETA ( DisplayName = "Retreat" ),
+	Stop		UMETA ( DisplayName = "Stop" ),
 };
 
 USTRUCT ( BlueprintType )
