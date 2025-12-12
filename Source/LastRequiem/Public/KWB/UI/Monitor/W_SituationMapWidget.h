@@ -8,14 +8,6 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnOrderButtonClicked );
 
-// 추후 시스템 변경 대응용
-//UENUM ( BlueprintType )
-//enum class EOrderButtonType : uint8
-//{
-//	Attack ,
-//	Patrol ,
-//	Retreat
-//};
 /**
  * 
  */
@@ -25,7 +17,6 @@ class LASTREQUIEM_API UW_SituationMapWidget : public UK_BaseUIWidget
 	GENERATED_BODY()
 
 public:
-	// 종민님 필요한 Getter
 	inline class UW_MapWidget* GetRenderedMap () const { return RenderedMap; }
 
 protected:
@@ -46,10 +37,6 @@ protected:
 	UFUNCTION ()
 	void HandleRetreatButtonClicked ();
 
-	// 추후 시스템 변경 대응용
-	//UFUNCTION ()
-	//void HandleOrderButtonClicked ( uint8 InOrderID );
-
 public:
 	// 공격(Attack) 버튼 클릭 시
 	UPROPERTY ( BlueprintAssignable , Category = "Unit|Event" )
@@ -66,8 +53,6 @@ public:
 	// 후퇴(Retreat) 버튼 클릭 시
 	UPROPERTY ( BlueprintAssignable , Category = "Unit|Event" )
 	FOnOrderButtonClicked OnRetreatButtonClicked;
-
-	// FOnOrderButtonClicked OnOrderButtonClicked; // HandleOrderButtonClicked 대응용
 
 protected:
 	UPROPERTY ( BlueprintReadOnly , Category = "Widget" , meta = (BindWidget) )
