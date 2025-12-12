@@ -22,6 +22,8 @@ void AP_Obstacle::BeginPlay()
 	
 	Health = MaxHealth;
 	OnTakeAnyDamage.AddDynamic ( this , &AP_Obstacle::OnTakeDamage );
+
+	Mesh->SetCanEverAffectNavigation ( false );
 }
 
 void AP_Obstacle::OnTakeDamage ( AActor* DamagedActor , float Damage , const UDamageType* DamageType , AController* InstigateBy , AActor* DamageCauser )
@@ -38,6 +40,6 @@ void AP_Obstacle::OnTakeDamage ( AActor* DamagedActor , float Damage , const UDa
 void AP_Obstacle::OnBroken ()
 {
 	bIsBroken = true;
-	OnObstacleBrokenDelegate.Broadcast ();
+	OnObstacleBrokenDelegate.Broadcast ( this );
 	Destroy ();
 }

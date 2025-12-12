@@ -5,7 +5,7 @@
 
 #include "P_EnemyBase.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnEnemyDieDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnemyDieDelegate, AActor*, InActor);
 
 UCLASS()
 class LASTREQUIEM_API AP_EnemyBase : public ACharacter
@@ -43,6 +43,9 @@ public:
 private:
 	void InitAnimInstance ();
 
+public:
+	FOnEnemyDieDelegate OnEnemyDieDelegate;
+
 protected:
 	// Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Data|Components")
@@ -58,5 +61,4 @@ private:
 	TWeakObjectPtr<UAnimInstance> AnimInstance = nullptr;
 
 	bool bIsAlive = true;
-	FOnEnemyDieDelegate OnEnemyDieDelegate;
 };

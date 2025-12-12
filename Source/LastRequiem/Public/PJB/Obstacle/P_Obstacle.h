@@ -7,7 +7,7 @@
 
 #include "P_Obstacle.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnObstacleBrokenDelegate );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnObstacleBrokenDelegate , AActor* , InActor );
 
 UCLASS()
 class LASTREQUIEM_API AP_Obstacle : public AActor, public IGameplayTagAssetInterface
@@ -33,6 +33,9 @@ public:
 	);
 	void OnBroken ();
 
+public:
+	FOnObstacleBrokenDelegate OnObstacleBrokenDelegate;
+
 protected:
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Components" )
 	TObjectPtr<UStaticMeshComponent> Mesh = nullptr;
@@ -47,5 +50,4 @@ protected:
 
 private:
 	bool bIsBroken = false;
-	FOnObstacleBrokenDelegate OnObstacleBrokenDelegate;
 };
