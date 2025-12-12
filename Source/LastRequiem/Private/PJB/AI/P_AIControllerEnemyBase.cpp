@@ -21,6 +21,8 @@ AP_AIControllerEnemyBase::AP_AIControllerEnemyBase ()
 
 	InitSightConfig ();
 	InitDamageConfig ();
+
+	InitPerceptionComponent ();
 }
 
 void AP_AIControllerEnemyBase::SetCachedFortressByGameState ()
@@ -36,12 +38,11 @@ void AP_AIControllerEnemyBase::OnPossess ( APawn* InPawn )
 {
 	Super::OnPossess ( InPawn );
 
-	InitPerceptionComponent ();
-
 	if (BehaviorTree)
 	{
 		RunBehaviorTree ( BehaviorTree );
 	}
+	SetCachedFortressByGameState ();
 }
 
 void AP_AIControllerEnemyBase::InitPerceptionComponent ()
