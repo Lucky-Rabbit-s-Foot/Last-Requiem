@@ -125,7 +125,6 @@ void UK_UIManagerSubsystem::CloseTopPopupUI()
 	topWidget->RemoveFromParent();
 	
 	RefreshTopPopupUI();
-	
 	NotifyInputModeChange();
 }
 
