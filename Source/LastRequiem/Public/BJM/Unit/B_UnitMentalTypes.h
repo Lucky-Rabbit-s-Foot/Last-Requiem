@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "UObject/ObjectMacros.h" 
+#include "UObject/ScriptMacros.h" 
 #include "B_UnitMentalTypes.generated.h"
 
 
