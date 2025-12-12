@@ -8,6 +8,9 @@ void UW_SituationMapWidget::NativeConstruct()
 {
 	Super::NativeConstruct ();
 
+	UILayer = EUILayer::POPUP;
+	zOrder = 0;
+
 	if (Exit)
 	{
 		Exit->OnClicked.AddDynamic ( this , &UW_SituationMapWidget::HandleExitButtonClicked );
