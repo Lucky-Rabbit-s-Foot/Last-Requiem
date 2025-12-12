@@ -9,6 +9,9 @@
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
+#include "Engine/OverlapResult.h"
+#include "Engine/EngineTypes.h"
+
 
 AB_UnitAIController::AB_UnitAIController()
 {
@@ -20,11 +23,11 @@ AB_UnitAIController::AB_UnitAIController()
 
 	if (SightConfig)
 	{
-		SightConfig->SightRadius = 1500.0f;
+		SightConfig->SightRadius = 1000.0f;
 		
-		SightConfig->LoseSightRadius = 2000.0f;
+		SightConfig->LoseSightRadius = 1100.0f;
 		
-		SightConfig->PeripheralVisionAngleDegrees = 60.0f;
+		SightConfig->PeripheralVisionAngleDegrees = 180.0f;
 
 		// 감지 대상 설정 (적, 아군, 중립 모두 감지)
 		SightConfig->DetectionByAffiliation.bDetectEnemies = true;
@@ -43,35 +46,44 @@ void AB_UnitAIController::Tick(float DeltaTime)
 {
 	Super::Tick ( DeltaTime );
 
-	APawn* MyPawn = GetPawn ();
-	if (MyPawn && SightConfig)
+	if (!BlackboardComponent) return;
+
+	EUnitCommandType CurrentCommand = (EUnitCommandType)BlackboardComponent->GetValueAsEnum ( TEXT ( "Command" ) );
+
+	// Move가 아닐 때만(Idle, AttackMove, Hold 등) 시야를 그림
+	if (CurrentCommand != EUnitCommandType::Move)
 	{
-		FVector Center = MyPawn->GetActorLocation ();
-		FVector Forward = MyPawn->GetActorForwardVector ();
-		Center.Z += 80.0f;
+		APawn* MyPawn = GetPawn ();
+		if (MyPawn && SightConfig)
+		{
+			FVector Center = MyPawn->GetActorLocation ();
+			FVector Forward = MyPawn->GetActorForwardVector ();
+			Center.Z += 80.0f;
 
 
-		float Radius = SightConfig->SightRadius;
-		float AngleDegree = SightConfig->PeripheralVisionAngleDegrees;
+			float Radius = SightConfig->SightRadius;
+			float AngleDegree = SightConfig->PeripheralVisionAngleDegrees;
 
-		float AngleRadian = FMath::DegreesToRadians(AngleDegree);
+			float AngleRadian = FMath::DegreesToRadians ( AngleDegree );
 
 
-		DrawDebugCone(
-			GetWorld(),
-			Center,
-			Forward,
-			Radius,
-			AngleRadian,
-			0.05f,      
-			32,
-			FColor::Green,
-			false,
-			-1.0f,
-			0,
-			2.0f
-		);
+			DrawDebugCone (
+				GetWorld () ,
+				Center ,
+				Forward ,
+				Radius ,
+				AngleRadian ,
+				0.05f ,
+				128 ,
+				FColor::Green ,
+				false ,
+				-1.0f ,
+				0 ,
+				2.0f
+			);
+		}
 	}
+	CheckNearbyEnemies ();
 
 }
 
@@ -88,10 +100,68 @@ void AB_UnitAIController::OnPossess(APawn* InPawn)
 	}
 }
 
+void AB_UnitAIController::CheckNearbyEnemies ()
+{
+	if (!BlackboardComponent || !AIPerception) return;
+
+	EUnitCommandType CurrentCommand = (EUnitCommandType)BlackboardComponent->GetValueAsEnum ( TEXT ( "Command" ) );
+	if (CurrentCommand == EUnitCommandType::Move)
+	{
+		return;
+	}
+
+	AActor* CurrentTarget = Cast<AActor> ( BlackboardComponent->GetValueAsObject ( TEXT ( "TargetEnemy" ) ) );
+	if (CurrentTarget)
+	{
+		float Dist = FVector::Dist ( GetPawn ()->GetActorLocation () , CurrentTarget->GetActorLocation () );
+		if (Dist > 1200.0f)
+		{
+			BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
+			ClearFocus ( EAIFocusPriority::Gameplay );
+		}
+		return;
+	}
+
+	TArray<AActor*> PerceivedActors;
+	AIPerception->GetKnownPerceivedActors ( nullptr , PerceivedActors );
+
+	AActor* ClosestEnemy = nullptr;
+	float MinDistance = FLT_MAX;
+	APawn* MyPawn = GetPawn ();
+
+	for (AActor* Actor : PerceivedActors)
+	{
+		AB_UnitBase* EnemyUnit = Cast<AB_UnitBase> ( Actor );
+
+		if (EnemyUnit && EnemyUnit != MyPawn && EnemyUnit->IsAlive ())
+		{
+			float Dist = FVector::Dist ( MyPawn->GetActorLocation () , EnemyUnit->GetActorLocation () );
+
+			if (Dist < MinDistance)
+			{
+				MinDistance = Dist;
+				ClosestEnemy = EnemyUnit;
+			}
+		}
+	}
+
+	if (ClosestEnemy)
+	{
+		BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , ClosestEnemy );
+		SetFocus ( ClosestEnemy );
+		UE_LOG ( LogTemp , Warning , TEXT ( "시야 내 적 포착! 공격 개시: %s" ) , *ClosestEnemy->GetName () );
+	}
+}
+
 void AB_UnitAIController::OnTargetDetected(AActor* InActor, FAIStimulus InStimulus)
 {
-    APawn* MyPawn = GetPawn();
-	if (MyPawn == nullptr)
+	APawn* MyPawn = GetPawn ();
+	if (!MyPawn || !BlackboardComponent) return;
+
+
+	EUnitCommandType CurrentCommand = (EUnitCommandType)BlackboardComponent->GetValueAsEnum ( TEXT ( "Command" ) );
+
+	if (CurrentCommand == EUnitCommandType::Move)
 	{
 		return;
 	}
@@ -99,33 +169,21 @@ void AB_UnitAIController::OnTargetDetected(AActor* InActor, FAIStimulus InStimul
     if (InStimulus.WasSuccessfullySensed())
     {
         
-        DrawDebugSphere(GetWorld(), InActor->GetActorLocation(), 30.0f, 12, FColor::Green, false, 2.0f);
+		DrawDebugSphere ( GetWorld () , InActor->GetActorLocation () , 30.0f , 12 , FColor::Green , false , 2.0f );
+		UE_LOG ( LogTemp , Warning , TEXT ( "시야: 적 발견 %s" ) , *InActor->GetName () );
 
-        DrawDebugString(GetWorld(), FVector(0,0,50), TEXT("Enemy Found!"), InActor, FColor::Green, 2.0f);
-
-        UE_LOG(LogTemp, Warning, TEXT("적 발견 : %s"), *InActor->GetName());
-        if(BlackboardComponent) 
-		{
-			BlackboardComponent->SetValueAsObject(TEXT("TargetEnemy"), InActor);
-			SetFocus ( InActor );
-		}
+		BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , InActor );
+		SetFocus ( InActor );
     }
     else
     {
-        DrawDebugSphere(GetWorld(), InActor->GetActorLocation(), 30.0f, 12, FColor::Red, false, 2.0f);
+		UE_LOG ( LogTemp , Warning , TEXT ( "시야: 적 놓침 %s" ) , *InActor->GetName () );
 
-        DrawDebugString(GetWorld(), FVector(0,0,50), TEXT("Lost Target..."), InActor, FColor::Red, 2.0f);
-
-        UE_LOG(LogTemp, Warning, TEXT("적 놓침 : %s"), *InActor->GetName());
-
-		if (BlackboardComponent)
+		UObject* CurrentTarget = BlackboardComponent->GetValueAsObject ( TEXT ( "TargetEnemy" ) );
+		if (CurrentTarget == InActor)
 		{
-			UObject* CurrentTarget = BlackboardComponent->GetValueAsObject ( TEXT ( "TargetEnemy" ) );
-			if (CurrentTarget == InActor)
-			{
-				BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
-				ClearFocus ( EAIFocusPriority::Gameplay );
-			}
+			BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
+			ClearFocus ( EAIFocusPriority::Gameplay );
 		}
     }
 }

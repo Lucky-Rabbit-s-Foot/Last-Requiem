@@ -32,6 +32,8 @@ protected:
 
 	virtual void OnPossess(APawn* InPawn) override;
 
+	void CheckNearbyEnemies ();
+
 public:
 
 	// 감각 시스템

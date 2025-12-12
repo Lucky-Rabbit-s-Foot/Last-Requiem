@@ -195,7 +195,7 @@ void AB_UnitBase::UnitMentalCheck_Move(float InX, float InY)
 			break;
 		case EUnitBehaviorState::Tense:
 			// 50퍼 확률로 명령 수행
-			if (FMath::RandRange(0, 100) > 50)
+			if (FMath::RandRange(0, 100) > 20)
 			{
 				bCanMove = true;
 			}
