@@ -39,7 +39,9 @@ public:
 protected:
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Components" )
 	TObjectPtr<UStaticMeshComponent> Mesh = nullptr;
-
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Components" )
+	TObjectPtr<class UBoxComponent> CollisionComp = nullptr;
+	
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
 	FGameplayTagContainer GameplayTags;
 
