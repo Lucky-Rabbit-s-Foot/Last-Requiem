@@ -17,15 +17,15 @@ void UK_BaseUIWidget::CloseUI()
 
 void UK_BaseUIWidget::RefreshUI()
 {
-	
+	//자식 클래스에서 오버라이드하여 데이터 갱신 로직 구현
 }
 
 void UK_BaseUIWidget::OnFocusGained()
 {
-	
+	//자식 클래스에서 오버라이드 하여 포커스 들어왔을때 로직 구현
 }
 
 void UK_BaseUIWidget::OnFocusLost()
 {
-	
+	//자식 클래스에서 오버라이드 하여 포커스 잃을때 로직 구현
 }
