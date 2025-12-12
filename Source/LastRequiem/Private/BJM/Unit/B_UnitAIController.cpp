@@ -12,6 +12,8 @@
 #include "Engine/OverlapResult.h"
 #include "Engine/EngineTypes.h"
 #include "PJB/Enemy/P_EnemyBase.h"
+#include "GameplayTagAssetInterface.h"
+#include "GameplayTagsManager.h"
 
 AB_UnitAIController::AB_UnitAIController()
 {
@@ -124,6 +126,12 @@ void AB_UnitAIController::CheckNearbyEnemies ()
 		{
 			BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
 			ClearFocus ( EAIFocusPriority::Gameplay );
+
+			if (AB_UnitBase* MyUnit = Cast<AB_UnitBase> ( GetPawn () ))
+			{
+				MyUnit->SetCombatState_Unit ( false );
+			}
+
 			UE_LOG ( LogTemp , Warning , TEXT ( "타겟이 너무 멀어짐 -> 추격 포기" ) );
 		}
 		return;
@@ -148,6 +156,8 @@ void AB_UnitAIController::CheckNearbyEnemies ()
 
 	AActor* ClosestEnemy = nullptr;
 	float MinDistance = FLT_MAX;
+	
+	FGameplayTag EnemyTag = FGameplayTag::RequestGameplayTag ( FName ( "Enemy" ) );
 
 	for (auto const& OverlapResult : OverlapResults)
 	{
@@ -155,36 +165,59 @@ void AB_UnitAIController::CheckNearbyEnemies ()
 		if (!HitActor) continue;
 
 		if (HitActor == MyPawn) continue;
+		IGameplayTagAssetInterface* TagInterface = Cast<IGameplayTagAssetInterface> ( HitActor );
 
-		AP_EnemyBase* EnemyUnit = Cast<AP_EnemyBase> ( HitActor );
-		if (EnemyUnit)
+		if (TagInterface)
 		{
-			if (!EnemyUnit->IsAlive ())
-			{
-				//UE_LOG ( LogTemp , Warning , TEXT ( "죽음감지: %s" ) , *HitActor->GetName () );
-			}
-			else
-			{
-				float Dist = FVector::Dist ( MyPawn->GetActorLocation () , EnemyUnit->GetActorLocation () );
-				//UE_LOG ( LogTemp , Warning , TEXT ( "감지: %s (거리: %.1f)" ) , *HitActor->GetName () , Dist );
+			FGameplayTagContainer OwnedTags;
+			TagInterface->GetOwnedGameplayTags ( OwnedTags );
 
+			if (OwnedTags.HasTag ( EnemyTag ))
+			{
+				float Dist = FVector::Dist ( MyPawn->GetActorLocation () , HitActor->GetActorLocation () );
 				if (Dist < MinDistance)
 				{
 					MinDistance = Dist;
-					ClosestEnemy = EnemyUnit;
+					ClosestEnemy = HitActor;
 				}
 			}
 		}
-		else
-		{
-		}
+
+		//AP_EnemyBase* EnemyUnit = Cast<AP_EnemyBase> ( HitActor );
+		//if (EnemyUnit)
+		//{
+		//	if (!EnemyUnit->IsAlive ())
+		//	{
+		//		//UE_LOG ( LogTemp , Warning , TEXT ( "죽음감지: %s" ) , *HitActor->GetName () );
+		//	}
+		//	else
+		//	{
+		//		float Dist = FVector::Dist ( MyPawn->GetActorLocation () , EnemyUnit->GetActorLocation () );
+		//		//UE_LOG ( LogTemp , Warning , TEXT ( "감지: %s (거리: %.1f)" ) , *HitActor->GetName () , Dist );
+
+		//		if (Dist < MinDistance)
+		//		{
+		//			MinDistance = Dist;
+		//			ClosestEnemy = EnemyUnit;
+		//		}
+		//	}
+		//}
+		//else
+		//{
+		//}
 	}
 
 	if (ClosestEnemy)
 	{
 		BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , ClosestEnemy );
 		SetFocus ( ClosestEnemy );
-		UE_LOG ( LogTemp , Warning , TEXT ( ">>> 최종 타겟 선정: %s <<<" ) , *ClosestEnemy->GetName () );
+
+		if (AB_UnitBase* MyUnit = Cast<AB_UnitBase> ( GetPawn () ))
+		{
+			MyUnit->SetCombatState_Unit ( true );
+		}
+
+		UE_LOG ( LogTemp , Warning , TEXT ( "최종 타겟 선정: %s" ) , *ClosestEnemy->GetName () );
 
 	}
 	else
@@ -210,12 +243,32 @@ void AB_UnitAIController::OnTargetDetected(AActor* InActor, FAIStimulus InStimul
 
     if (InStimulus.WasSuccessfullySensed())
     {
-        
+		IGameplayTagAssetInterface* TagInterface = Cast<IGameplayTagAssetInterface> ( InActor );
+		if (TagInterface)
+		{
+			FGameplayTagContainer OwnedTags;
+			TagInterface->GetOwnedGameplayTags ( OwnedTags );
+			FGameplayTag EnemyTag = FGameplayTag::RequestGameplayTag ( FName ( "Enemy" ) );
+
+			if (!OwnedTags.HasTag ( EnemyTag ))
+			{
+				return;
+			}
+		}
+		else
+		{
+			return;
+		}
 		DrawDebugSphere ( GetWorld () , InActor->GetActorLocation () , 30.0f , 12 , FColor::Green , false , 2.0f );
 		UE_LOG ( LogTemp , Warning , TEXT ( "시야: 적 발견 %s" ) , *InActor->GetName () );
 
 		BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , InActor );
 		SetFocus ( InActor );
+
+		if (AB_UnitBase* MyUnit = Cast<AB_UnitBase> ( GetPawn () ))
+		{
+			MyUnit->SetCombatState_Unit ( true );
+		}
     }
     else
     {
@@ -226,6 +279,12 @@ void AB_UnitAIController::OnTargetDetected(AActor* InActor, FAIStimulus InStimul
 		{
 			BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
 			ClearFocus ( EAIFocusPriority::Gameplay );
+
+			if (AB_UnitBase* MyUnit = Cast<AB_UnitBase> ( GetPawn () ))
+			{
+				MyUnit->SetCombatState_Unit ( false );
+			}
+
 		}
     }
 }
@@ -241,12 +300,22 @@ void AB_UnitAIController::SetCommandState ( EUnitCommandType NewCommand , FVecto
 		if (NewCommand == EUnitCommandType::None || NewCommand == EUnitCommandType::Hold)
 		{
 			BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
+
+			if (AB_UnitBase* MyUnit = Cast<AB_UnitBase> ( GetPawn () ))
+			{
+				MyUnit->SetCombatState_Unit ( false );
+			}
 		}
-		if (NewCommand == EUnitCommandType::Stop ||  // <-- 추가!
-			NewCommand == EUnitCommandType::Move)    // <-- 추가! (이동 찍으면 기존 적 잊기)
+		if (NewCommand == EUnitCommandType::Stop || NewCommand == EUnitCommandType::Move)   
 		{
 			BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
 			ClearFocus ( EAIFocusPriority::Gameplay );
+
+			if (AB_UnitBase* MyUnit = Cast<AB_UnitBase> ( GetPawn () ))
+			{
+				MyUnit->SetCombatState_Unit ( false );
+			}
+
 		}
 	}
 
