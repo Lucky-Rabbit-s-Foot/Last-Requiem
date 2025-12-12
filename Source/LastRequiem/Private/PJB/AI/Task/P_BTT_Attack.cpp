@@ -1,8 +1,10 @@
 ﻿#include "PJB/AI/Task/P_BTT_Attack.h"
 
+#include "LastRequiem.h"
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "PJB/Component/P_CombatComponent.h"
 
 UP_BTT_Attack::UP_BTT_Attack ()
 {
@@ -18,24 +20,25 @@ EBTNodeResult::Type UP_BTT_Attack::ExecuteTask ( UBehaviorTreeComponent& OwnerCo
 	if (!Attacker || !BB) return EBTNodeResult::Failed;
 
 	AActor* Target = Cast<AActor> ( BB->GetValueAsObject ( TargetActorKey.SelectedKeyName ) );
-
+	LOG_MESSAGE_SCREEN ( Log , TEXT ( "UP_BTT_Attack::ExecuteTask : Attacking Target : %s" ) , Target ? *Target->GetName () : TEXT ( "None" ) );
 	if (Target)
 	{
-		UE_LOG(LogTemp, Log, TEXT ( "%s attacks %s for %f damage." ) ,
-			*Attacker->GetName () ,
-			*Target->GetName () ,
-			DamageAmount
-		);
-		UGameplayStatics::ApplyDamage (
-			Target ,
-			DamageAmount ,
-			AIC ,           
-			Attacker ,      
-			UDamageType::StaticClass ()
-		);
-
+		UP_CombatComponent* CombatComp = Attacker->FindComponentByClass<UP_CombatComponent> ();
+		if(CombatComp)
+		{
+			CombatComp->OnAttack(Target);
+		}
+		else
+		{
+			UGameplayStatics::ApplyDamage (
+				Target ,
+				DamageAmount ,
+				AIC ,
+				Attacker ,
+				UDamageType::StaticClass ()
+			);
+		}
 		return EBTNodeResult::Succeeded;
 	}
-
 	return EBTNodeResult::Failed;
 }
