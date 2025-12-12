@@ -13,6 +13,9 @@ AP_EnemyBase::AP_EnemyBase()
 
 	CombatComp = CreateDefaultSubobject<UP_CombatComponent> ( TEXT ( "Combat Component" ) );
 
+	static FGameplayTag EnemyTag = FGameplayTag::RequestGameplayTag ( FName ( "Enemy" ) );
+	GameplayTags.AddTag ( EnemyTag );
+
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 }
 
@@ -53,6 +56,11 @@ void AP_EnemyBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+void AP_EnemyBase::GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const
+{
+	TagContainer = GameplayTags;
 }
 
 void AP_EnemyBase::OnTakeDamage ( AActor* DamagedActor , float Damage , const UDamageType* DamageType , AController* InstigateBy , AActor* DamageCauser )
