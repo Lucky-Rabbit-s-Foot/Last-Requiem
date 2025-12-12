@@ -42,6 +42,7 @@ void AP_AIControllerEnemyBase::OnPossess ( APawn* InPawn )
 	{
 		RunBehaviorTree ( BehaviorTree );
 	}
+	SetCachedFortressByGameState ();
 }
 
 void AP_AIControllerEnemyBase::InitPerceptionComponent ()
