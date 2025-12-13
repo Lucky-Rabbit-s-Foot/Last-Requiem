@@ -65,7 +65,7 @@ public:
 
 
 	UFUNCTION (BlueprintCallable, Category = "Unit|Logic")
-	void TakeDamage (float InDamage);
+	void ReduceHP ( float InDamage );
 
 	UFUNCTION (BlueprintCallable, Category = "Unit|Logic")
 	void ModifySanity (float InAmount);

@@ -16,6 +16,7 @@
 #include "TimerManager.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "GameplayTagsManager.h"
+#include "Components/CapsuleComponent.h"
 
 // Sets default values
 AB_UnitBase::AB_UnitBase()
@@ -528,15 +529,45 @@ void AB_UnitBase::OnTakeDamage_Unit ( AActor* DamagedActor , float Damage , cons
 {
 	if (!bIsAlive) return;
 
-	StatusComponent->TakeDamage(Damage);
-	if (!IsAlive ())
+	if (StatusComponent)
 	{
-		OnDie_Unit ();
+		StatusComponent->ReduceHP ( Damage );
+
+		if (StatusComponent->CurrentHP <= 0.0f)
+		{
+			OnDie_Unit ();
+		}
 	}
 }
 
 void AB_UnitBase::OnDie_Unit ()
 {
+	if (!bIsAlive)
+	{
+		return;
+	}
 	bIsAlive = false;
-	OnUnitDieDelegate.Broadcast (this);
+
+	OnUnitDieDelegate.Broadcast ( this );
+
+	// 택 제거
+	FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
+	GameplayTags.RemoveTag ( UnitTag );
+
+	// 이동 뺌
+	if (AAIController* AIController = Cast<AAIController> ( GetController () ))
+	{
+		AIController->StopMovement ();
+		AIController->UnPossess ();
+	}
+
+	GetCapsuleComponent ()->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
+	GetCapsuleComponent ()->SetCollisionResponseToAllChannels ( ECR_Ignore );
+
+	GetMesh ()->SetCollisionProfileName ( TEXT ( "Ragdoll" ) );
+	GetMesh ()->SetSimulatePhysics ( true );
+
+	SetLifeSpan ( 5.0f );
+
+	UE_LOG ( LogTemp , Warning , TEXT ( "%s 사망! 태그 제거됨." ) , *GetName () );
 }
