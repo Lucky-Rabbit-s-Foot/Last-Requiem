@@ -34,6 +34,9 @@ AB_UnitBase::AB_UnitBase()
 	static FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
 	GameplayTags.AddTag ( UnitTag );
 
+	MyUnitName = FText::FromString ( TEXT ( "Unknown Unit" ) );
+	MyProfileImage = nullptr;
+
 }
 
 void AB_UnitBase::GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const
@@ -174,6 +177,31 @@ FUnitProfileData AB_UnitBase::GetUnitProfileData ()
 	Data.bIsAlive = bIsAlive;
 
 	return Data;
+}
+
+void AB_UnitBase::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction ( Transform );
+
+	if (!UnitDataTable)
+	{
+		return;
+	}
+
+	const UEnum* UnitTypeEnum = StaticEnum<EUnitType> ();
+	if (UnitTypeEnum)
+	{
+		FName RowName = FName ( *UnitTypeEnum->GetNameStringByValue ( (int64)UnitType ) );
+
+		FUnitDataTableRow* UnitData = UnitDataTable->FindRow<FUnitDataTableRow> ( RowName , TEXT ( "UnitDataInit" ) );
+
+		if (UnitData)
+		{
+			MyUnitName = UnitData->UnitName;
+			MyProfileImage = UnitData->ProfileImage;
+
+		}
+	}
 }
 
 void AB_UnitBase::UnitMentalCheck_Move(float InX, float InY)
