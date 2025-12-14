@@ -77,7 +77,12 @@ protected:
 	FTimerHandle CombatTimerHandle;
 	void ResetCombatState ();
 
+protected:
+	FTimerHandle CombatSanityTimerHandle;
+
+	void ReduceSanityInCombat ();
+		
 private:
 	void UpdateBehaviorState ();
-		
+
 };

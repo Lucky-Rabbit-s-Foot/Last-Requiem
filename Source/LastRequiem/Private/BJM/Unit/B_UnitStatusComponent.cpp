@@ -19,9 +19,18 @@ void UB_UnitStatusComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 스탯 초기설정
 	CurrentHP = MaxHP;
 	CurrentSanity = MaxSanity;
+
+	if (OnHPChanged.IsBound ())
+	{
+		OnHPChanged.Broadcast ( CurrentHP , MaxHP );
+	}
+
+	if (OnSanityChanged.IsBound ())
+	{
+		OnSanityChanged.Broadcast ( CurrentSanity , MaxSanity );
+	}
 
 	UpdateBehaviorState ();
 
@@ -65,12 +74,14 @@ void UB_UnitStatusComponent::ModifySanity (float InAmount)
 
 void UB_UnitStatusComponent::SetCombatState(bool bNewState)
 {
+
+	if (bIsInCombat == bNewState) return;
 	bIsInCombat = bNewState;
 
 	if (bIsInCombat)
 	{
+		// 전투 종료 타이머
 		GetWorld()->GetTimerManager().ClearTimer(CombatTimerHandle);
-
 		GetWorld()->GetTimerManager().SetTimer(
 			CombatTimerHandle,
 			this,
@@ -78,15 +89,35 @@ void UB_UnitStatusComponent::SetCombatState(bool bNewState)
 			5.0f,
 			false
 		);
+		// 전투 중 정신력 감소 타이머
+		GetWorld ()->GetTimerManager ().SetTimer (
+			CombatSanityTimerHandle ,
+			this ,
+			&UB_UnitStatusComponent::ReduceSanityInCombat ,
+			1.0f ,
+			true
+		);
 
 		 UE_LOG(LogTemp, Warning, TEXT("전투 모드 활성화"));
 	}
+	else
+	{
+		// 전투 끝나면 정신력 감소 타이머도 끔
+		GetWorld ()->GetTimerManager ().ClearTimer ( CombatSanityTimerHandle );
+		UE_LOG ( LogTemp , Warning , TEXT ( "전투 종료: 정신력 감소 중지" ) );
+	}
+
 }
 
 void UB_UnitStatusComponent::ResetCombatState()
 {
 	bIsInCombat = false;
 	UE_LOG(LogTemp, Warning, TEXT("전투 모드 비활성화"));
+}
+
+void UB_UnitStatusComponent::ReduceSanityInCombat ()
+{
+	ModifySanity ( -1.0f );
 }
 
 void UB_UnitStatusComponent::UpdateBehaviorState ()
@@ -131,6 +162,8 @@ void UB_UnitStatusComponent::UpdateBehaviorState ()
 	}
 
 }
+
+
 
 
 

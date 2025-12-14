@@ -17,6 +17,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "GameplayTagsManager.h"
 #include "Components/CapsuleComponent.h"
+#include "Engine/OverlapResult.h"
 
 // Sets default values
 AB_UnitBase::AB_UnitBase()
@@ -575,6 +576,51 @@ void AB_UnitBase::OnDie_Unit ()
 		return;
 	}
 	bIsAlive = false;
+
+	float ShockRadius = 1500.0f;
+	float DeathPenalty = -10.0f; 
+
+	TArray<FOverlapResult> OverlapResults;
+	FCollisionShape CollisionShape;
+	CollisionShape.SetSphere ( ShockRadius );
+
+	bool bResult = GetWorld ()->OverlapMultiByChannel (
+		OverlapResults ,
+		GetActorLocation () ,
+		FQuat::Identity ,
+		ECollisionChannel::ECC_Pawn ,
+		CollisionShape
+	);
+
+	if (bResult)
+	{
+		DrawDebugSphere ( GetWorld () , GetActorLocation () , ShockRadius , 24 , FColor::Red , false , 2.0f );
+
+		for (auto const& Overlap : OverlapResults)
+		{
+			AActor* OverlapActor = Overlap.GetActor ();
+
+			// 나 제외
+			if (OverlapActor == this) continue;
+
+			// 아군 확인1
+			AB_UnitBase* FellowUnit = Cast<AB_UnitBase> ( OverlapActor );
+			if (FellowUnit && FellowUnit->IsAlive ())
+			{
+				// 아군확인2
+				FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
+				if (FellowUnit->GameplayTags.HasTag ( UnitTag ))
+				{
+					if (FellowUnit->StatusComponent)
+					{
+						FellowUnit->StatusComponent->ModifySanity ( DeathPenalty );
+						UE_LOG ( LogTemp , Warning , TEXT ( "%s가 %s의 죽음을 목격! 정신력 하락" ) , *FellowUnit->GetName () , *GetName () );
+					}
+				}
+			}
+		}
+	}
+
 
 	OnUnitDieDelegate.Broadcast ( this );
 

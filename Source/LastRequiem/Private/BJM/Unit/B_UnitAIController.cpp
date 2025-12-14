@@ -109,6 +109,14 @@ void AB_UnitAIController::OnPossess(APawn* InPawn)
 
 void AB_UnitAIController::CheckNearbyEnemies ()
 {
+	// 1. [가장 중요] 내 몸(Pawn)이 있는지 제일 먼저 확인!
+	// 이게 없으면 위치고 뭐고 아무것도 못 하니까 바로 리턴해야 해.
+	APawn* MyPawn = GetPawn ();
+	if (!IsValid ( MyPawn ))
+	{
+		return;
+	}
+
 	if (!BlackboardComponent || !AIPerception) return;
 
 	EUnitCommandType CurrentCommand = (EUnitCommandType)BlackboardComponent->GetValueAsEnum ( TEXT ( "Command" ) );
@@ -119,15 +127,19 @@ void AB_UnitAIController::CheckNearbyEnemies ()
 	}
 
 	AActor* CurrentTarget = Cast<AActor> ( BlackboardComponent->GetValueAsObject ( TEXT ( "TargetEnemy" ) ) );
-	if (CurrentTarget)
+
+	// TargetEnemy가 있는지 확인할 때도 IsValid를 쓰는 게 더 안전해 (삭제 대기 중인 액터 거르기 위해)
+	if (IsValid ( CurrentTarget ))
 	{
-		float Dist = FVector::Dist ( GetPawn ()->GetActorLocation () , CurrentTarget->GetActorLocation () );
+		// [수정] 위에서 구한 MyPawn 변수를 안전하게 사용
+		float Dist = FVector::Dist ( MyPawn->GetActorLocation () , CurrentTarget->GetActorLocation () );
+
 		if (Dist > 1200.0f)
 		{
 			BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
 			ClearFocus ( EAIFocusPriority::Gameplay );
 
-			if (AB_UnitBase* MyUnit = Cast<AB_UnitBase> ( GetPawn () ))
+			if (AB_UnitBase* MyUnit = Cast<AB_UnitBase> ( MyPawn ))
 			{
 				MyUnit->SetCombatState_Unit ( false );
 			}
@@ -137,14 +149,14 @@ void AB_UnitAIController::CheckNearbyEnemies ()
 		return;
 	}
 
-	APawn* MyPawn = GetPawn ();
-	if (!MyPawn) return;
+	// [삭제됨] 원래 여기에 있던 APawn* MyPawn = GetPawn(); 코드는 맨 위로 올렸으니까 지워도 돼!
 
-	float ScanRadius = 1000.0f; 
+	float ScanRadius = 1000.0f;
 
 	TArray<FOverlapResult> OverlapResults;
 	FCollisionQueryParams QueryParams ( NAME_None , false , MyPawn );
 
+	// [수정] MyPawn 변수 사용
 	bool bResult = GetWorld ()->OverlapMultiByChannel (
 		OverlapResults ,
 		MyPawn->GetActorLocation () ,
@@ -156,7 +168,7 @@ void AB_UnitAIController::CheckNearbyEnemies ()
 
 	AActor* ClosestEnemy = nullptr;
 	float MinDistance = FLT_MAX;
-	
+
 	FGameplayTag EnemyTag = FGameplayTag::RequestGameplayTag ( FName ( "Enemy" ) );
 
 	for (auto const& OverlapResult : OverlapResults)
@@ -174,6 +186,7 @@ void AB_UnitAIController::CheckNearbyEnemies ()
 
 			if (OwnedTags.HasTag ( EnemyTag ))
 			{
+				// [수정] MyPawn 변수 사용
 				float Dist = FVector::Dist ( MyPawn->GetActorLocation () , HitActor->GetActorLocation () );
 				if (Dist < MinDistance)
 				{
@@ -182,29 +195,6 @@ void AB_UnitAIController::CheckNearbyEnemies ()
 				}
 			}
 		}
-
-		//AP_EnemyBase* EnemyUnit = Cast<AP_EnemyBase> ( HitActor );
-		//if (EnemyUnit)
-		//{
-		//	if (!EnemyUnit->IsAlive ())
-		//	{
-		//		//UE_LOG ( LogTemp , Warning , TEXT ( "죽음감지: %s" ) , *HitActor->GetName () );
-		//	}
-		//	else
-		//	{
-		//		float Dist = FVector::Dist ( MyPawn->GetActorLocation () , EnemyUnit->GetActorLocation () );
-		//		//UE_LOG ( LogTemp , Warning , TEXT ( "감지: %s (거리: %.1f)" ) , *HitActor->GetName () , Dist );
-
-		//		if (Dist < MinDistance)
-		//		{
-		//			MinDistance = Dist;
-		//			ClosestEnemy = EnemyUnit;
-		//		}
-		//	}
-		//}
-		//else
-		//{
-		//}
 	}
 
 	if (ClosestEnemy)
@@ -212,18 +202,111 @@ void AB_UnitAIController::CheckNearbyEnemies ()
 		BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , ClosestEnemy );
 		SetFocus ( ClosestEnemy );
 
-		if (AB_UnitBase* MyUnit = Cast<AB_UnitBase> ( GetPawn () ))
+		if (AB_UnitBase* MyUnit = Cast<AB_UnitBase> ( MyPawn ))
 		{
 			MyUnit->SetCombatState_Unit ( true );
 		}
 
 		UE_LOG ( LogTemp , Warning , TEXT ( "최종 타겟 선정: %s" ) , *ClosestEnemy->GetName () );
+	}
 
-	}
-	else
-	{
-		//UE_LOG ( LogTemp , Warning , TEXT ( "적없음." ) );
-	}
+
+//APawn* MyPawn = GetPawn();
+//	if (!IsValid(MyPawn)) 
+//	{
+//		return;
+//	};
+//
+//	if (!BlackboardComponent || !AIPerception) return;
+//
+//	EUnitCommandType CurrentCommand = (EUnitCommandType)BlackboardComponent->GetValueAsEnum ( TEXT ( "Command" ) );
+//
+//	if (CurrentCommand == EUnitCommandType::Move || CurrentCommand == EUnitCommandType::Stop || CurrentCommand == EUnitCommandType::Retreat)
+//	{
+//		return;
+//	}
+//
+//	AActor* CurrentTarget = Cast<AActor> ( BlackboardComponent->GetValueAsObject ( TEXT ( "TargetEnemy" ) ) );
+//	if (CurrentTarget)
+//	{
+//		float Dist = FVector::Dist ( GetPawn ()->GetActorLocation () , CurrentTarget->GetActorLocation () );
+//		if (Dist > 1200.0f)
+//		{
+//			BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
+//			ClearFocus ( EAIFocusPriority::Gameplay );
+//
+//			if (AB_UnitBase* MyUnit = Cast<AB_UnitBase> ( GetPawn () ))
+//			{
+//				MyUnit->SetCombatState_Unit ( false );
+//			}
+//
+//			UE_LOG ( LogTemp , Warning , TEXT ( "타겟이 너무 멀어짐 -> 추격 포기" ) );
+//		}
+//		return;
+//	}
+//
+//	float ScanRadius = 1000.0f; 
+//
+//	TArray<FOverlapResult> OverlapResults;
+//	FCollisionQueryParams QueryParams ( NAME_None , false , MyPawn );
+//
+//	bool bResult = GetWorld ()->OverlapMultiByChannel (
+//		OverlapResults ,
+//		MyPawn->GetActorLocation () ,
+//		FQuat::Identity ,
+//		ECollisionChannel::ECC_Pawn ,
+//		FCollisionShape::MakeSphere ( ScanRadius ) ,
+//		QueryParams
+//	);
+//
+//	AActor* ClosestEnemy = nullptr;
+//	float MinDistance = FLT_MAX;
+//	
+//	FGameplayTag EnemyTag = FGameplayTag::RequestGameplayTag ( FName ( "Enemy" ) );
+//
+//	for (auto const& OverlapResult : OverlapResults)
+//	{
+//		AActor* HitActor = OverlapResult.GetActor ();
+//		if (!HitActor) continue;
+//
+//		if (HitActor == MyPawn) continue;
+//		IGameplayTagAssetInterface* TagInterface = Cast<IGameplayTagAssetInterface> ( HitActor );
+//
+//		if (TagInterface)
+//		{
+//			FGameplayTagContainer OwnedTags;
+//			TagInterface->GetOwnedGameplayTags ( OwnedTags );
+//
+//			if (OwnedTags.HasTag ( EnemyTag ))
+//			{
+//				float Dist = FVector::Dist ( MyPawn->GetActorLocation () , HitActor->GetActorLocation () );
+//				if (Dist < MinDistance)
+//				{
+//					MinDistance = Dist;
+//					ClosestEnemy = HitActor;
+//				}
+//			}
+//		}
+//
+//	}
+//
+//	if (ClosestEnemy)
+//	{
+//		BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , ClosestEnemy );
+//		SetFocus ( ClosestEnemy );
+//
+//		if (AB_UnitBase* MyUnit = Cast<AB_UnitBase> ( GetPawn () ))
+//		{
+//			MyUnit->SetCombatState_Unit ( true );
+//		}
+//
+//		UE_LOG ( LogTemp , Warning , TEXT ( "최종 타겟 선정: %s" ) , *ClosestEnemy->GetName () );
+//
+//	}
+//	else
+//	{
+//		//UE_LOG ( LogTemp , Warning , TEXT ( "적없음." ) );
+//	}
 
 
 }
