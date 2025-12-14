@@ -20,7 +20,7 @@ void UB_UnitStatusComponent::BeginPlay()
 	Super::BeginPlay();
 
 	CurrentHP = MaxHP;
-	CurrentSanity = MaxSanity;
+	CurrentSanity = StartSanity;
 
 	if (OnHPChanged.IsBound ())
 	{

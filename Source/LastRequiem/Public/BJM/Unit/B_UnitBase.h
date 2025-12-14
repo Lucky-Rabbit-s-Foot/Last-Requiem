@@ -51,6 +51,13 @@ public:
 	UFUNCTION ()
 	void FindMapWidgetLoop ();
 
+protected:
+	float OriginalAttackDamage;
+	float OriginalAttackRange;
+
+	UFUNCTION ()
+	void OnBehaviorStateChanged_Unit ( EUnitBehaviorState NewState );
+
 public:
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Data" )
 	UTexture2D* MyProfileImage = nullptr;

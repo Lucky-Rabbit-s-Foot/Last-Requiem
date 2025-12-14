@@ -40,6 +40,8 @@ public:
 	// 정신력
 	UPROPERTY (EditAnywhere, BlueprintReadWrite, Category = "Unit|Stat")
 	float MaxSanity = 100.0f;
+	UPROPERTY (EditAnywhere, BlueprintReadWrite, Category = "Unit|Stat")
+	float StartSanity = 80.0f;
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Stat")
 	float CurrentSanity;
 
