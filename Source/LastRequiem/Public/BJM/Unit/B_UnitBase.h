@@ -51,6 +51,13 @@ public:
 	UFUNCTION ()
 	void FindMapWidgetLoop ();
 
+protected:
+	float OriginalAttackDamage;
+	float OriginalAttackRange;
+
+	UFUNCTION ()
+	void OnBehaviorStateChanged_Unit ( EUnitBehaviorState NewState );
+
 public:
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Data" )
 	UTexture2D* MyProfileImage = nullptr;
@@ -58,9 +65,16 @@ public:
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Data" )
 	FText MyUnitName;
 
-	// 유닛 프로필 데이터
 	UFUNCTION ( BlueprintCallable , Category = "Unit|Data" )
 	FUnitProfileData GetUnitProfileData ();
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Setting" )
+	EUnitType UnitType;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Setting" )
+	UDataTable* UnitDataTable;
+
+	virtual void OnConstruction ( const FTransform& Transform ) override;
 
 
 public:
