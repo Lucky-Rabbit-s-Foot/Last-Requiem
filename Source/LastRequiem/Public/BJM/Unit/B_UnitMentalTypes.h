@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Engine/DataTable.h"
 #include "CoreMinimal.h"
 #include "UObject/ObjectMacros.h" 
 #include "UObject/ScriptMacros.h" 
@@ -75,5 +76,31 @@ public:
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Profile" )
 	bool bIsSpeaking;
 
+
+};
+
+UENUM ( BlueprintType )
+enum class EUnitType : uint8
+{
+	Jack	UMETA ( DisplayName = "Jack" ) ,
+	James	UMETA ( DisplayName = "James" ) ,
+	Bruno   UMETA ( DisplayName = "Bruno" ) ,
+	Silas   UMETA ( DisplayName = "Silas" ) ,
+	Viper   UMETA ( DisplayName = "Viper" ) ,
+	Hans	UMETA ( DisplayName = "Hans" ) ,
+
+};
+
+USTRUCT ( BlueprintType )
+struct FUnitDataTableRow : public FTableRowBase
+{
+	GENERATED_BODY ()
+
+public:
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite )
+	FText UnitName;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite )
+	UTexture2D* ProfileImage;
 
 };
