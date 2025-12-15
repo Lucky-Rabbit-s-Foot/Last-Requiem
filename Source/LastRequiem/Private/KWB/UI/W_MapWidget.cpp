@@ -2,6 +2,11 @@
 
 
 #include "KWB/UI/W_MapWidget.h"
+#include "Engine/World.h"
+#include "Engine/Engine.h"
+#include "Input/Events.h"
+#include "Engine/OverlapResult.h"
+#include "BJM/Unit/B_UnitBase.h"
 
 void UW_MapWidget::NativeConstruct ()
 {
@@ -13,6 +18,13 @@ void UW_MapWidget::NativeConstruct ()
 		GetOwningPlayer ()->bShowMouseCursor = true;
 	}
 }
+
+// FIX : 함수 이름 수정 필요 여기까지 하던 중
+//void UW_MapWidget::ClearSelection ()
+//{
+//	SelectedActor = nullptr;
+//	OnMinimapUnitSelected.Broadcast ( nullptr );
+//}
 
 FReply UW_MapWidget::NativeOnMouseButtonDown ( const FGeometry& InGeometry , const FPointerEvent& InMouseEvent )
 {
@@ -86,13 +98,6 @@ FReply UW_MapWidget::NativeOnMouseButtonDown ( const FGeometry& InGeometry , con
 	return FReply::Handled ();
 }
 
-FVector UW_MapWidget::WidgetPosToWorldPos ( FVector InWidgetLocation )
-{
-	
-
-	return ClickedWorldLocation;
-}
-
 FVector UW_MapWidget::MapUVToWorld ( float U , float V ) const
 {
 	// 1. 맵 로컬 기준 오프셋 계산
@@ -113,4 +118,9 @@ FVector UW_MapWidget::MapUVToWorld ( float U , float V ) const
 	WorldPos.Z = GroundZ;
 
 	return WorldPos;
+}
+
+AActor* UW_MapWidget::FindClosestUnitNear ( const FVector& ClickWorld ) const
+{
+	return nullptr;
 }
