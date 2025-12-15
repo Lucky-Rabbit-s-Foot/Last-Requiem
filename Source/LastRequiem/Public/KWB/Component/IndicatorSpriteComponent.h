@@ -28,6 +28,7 @@ public:
 
 	virtual void BeginPlay () override;
 	virtual void TickComponent ( float DeltaTime , ELevelTick TickType , FActorComponentTickFunction* ThisTickFunction ) override;
+	virtual void OnRegister () override;
 
 	// --- 각 액터에서 사용할 API ---
 
@@ -40,7 +41,7 @@ public:
 	// Glow 강제 종료
 	void StopGlow ();
 
-	EIndicatorSpriteState GetIndicatorState () const { return CurrentState; }
+	FORCEINLINE EIndicatorSpriteState GetIndicatorState () const { return CurrentState; }
 
 protected:
 	// Sprite 세팅 : 필요 없는 건 nullptr 로 두면 됨
@@ -53,7 +54,7 @@ protected:
 	UPROPERTY ( EditAnywhere , Category = "Data|Sprite" )
 	TObjectPtr<UPaperSprite> SpirteDead = nullptr;
 
-	// 시작 상태 (드론은 Normal, 적군은 Normal, 유닛도 Normal 정도가 기본일 듯)
+	// 시작 상태 (모든 액터 기본 Normal로 세팅)
 	UPROPERTY ( EditAnywhere , Category = "Data|Sprite" )
 	EIndicatorSpriteState InitialState = EIndicatorSpriteState::Normal;
 
@@ -75,7 +76,9 @@ protected:
 	UPROPERTY ( EditAnywhere , Category = "Minimap|Transform" )
 	bool bApplyDefaultTransform = true;
 
-	virtual void OnRegister () override;
+	// 에디터/게임 뷰포트에는 보이지 않고 SceneCapture 에서만 보이도록 할지 여부
+	UPROPERTY ( EditAnywhere , Category = "Indicator|Visibility" )
+	bool bVisibleOnlyInSceneCapture = true;
 
 private:
 	// 현재 상태
@@ -97,6 +100,5 @@ private:
 	void InitializeSpritesIfNeeded ();
 	void UpdateSpriteForState ();
 	void UpdateGlow ( float DeltaTime );
-
 	void HandleGlowFinished ();
 };
