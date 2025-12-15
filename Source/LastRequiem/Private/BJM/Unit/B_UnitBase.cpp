@@ -18,6 +18,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "GameplayTagsManager.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SpotLightComponent.h"
 #include "Engine/OverlapResult.h"
 
 // Sets default values
@@ -29,6 +30,16 @@ AB_UnitBase::AB_UnitBase()
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent> ( TEXT ( "WeaponMesh" ) );
 	WeaponMesh->SetupAttachment ( GetMesh () , FName ( "WeaponSocket" ) );
 	WeaponMesh->SetCollisionProfileName ( TEXT ( "NoCollision" ) );
+
+	GunFlashlight = CreateDefaultSubobject<USpotLightComponent> ( TEXT ( "GunFlashlight" ) );
+	GunFlashlight->SetupAttachment ( WeaponMesh , FName ( "Flash" ) );
+	GunFlashlight->SetIntensity ( 3000.0f );       // 밝기 
+	GunFlashlight->SetOuterConeAngle ( 25.0f );    // 각도
+	GunFlashlight->SetAttenuationRadius ( 2000.0f ); // 거리
+	GunFlashlight->SetLightColor ( FLinearColor ( 1.0f , 0.95f , 0.8f ) );
+
+	// 그림자
+	GunFlashlight->SetCastShadows ( true );
 
 
 	StatusComponent = CreateDefaultSubobject<UB_UnitStatusComponent>(TEXT("StatusComponent"));

@@ -42,6 +42,9 @@ public:
 	UPROPERTY ( VisibleAnywhere , BlueprintReadWrite , Category = "Unit|Visual" )
 	USkeletalMeshComponent* WeaponMesh;
 
+	UPROPERTY ( VisibleAnywhere , BlueprintReadWrite , Category = "Unit|Visual" )
+	class USpotLightComponent* GunFlashlight;
+
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Unit|Component" )
 	UB_UnitStatusComponent* StatusComponent;
 
