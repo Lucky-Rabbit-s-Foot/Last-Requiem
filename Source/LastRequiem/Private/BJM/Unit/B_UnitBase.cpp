@@ -630,8 +630,7 @@ void AB_UnitBase::OnDie_Unit ()
 					if (FellowUnit->StatusComponent)
 					{
 						FellowUnit->StatusComponent->ModifySanity ( DeathPenalty );
-						UE_LOG ( LogTemp , Warning , TEXT ( "%s가 %s의 죽음을 목격! 정신력 하락" ) , *FellowUnit->GetName () , *GetName () );
-					}
+						UE_LOG ( LogTemp , Warning , TEXT ( "%s가 %s의 죽음 목격" ) , *FellowUnit->GetName () , *GetName () );		}
 				}
 			}
 		}
