@@ -3,6 +3,9 @@
 
 #include "KHS/UI/K_UnitSlotWiddget.h"
 
+#include <string>
+
+#include "KHS/Util/K_LoggingSystem.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
 #include "Components/ProgressBar.h"
@@ -104,6 +107,10 @@ void UK_UnitSlotWiddget::UpdateUnitData(const FUnitProfileData& newData)
 	{
 		SetSlotState(EUnitSlotState::DEAD);
 	}
+	
+	const FString state = (newData.bIsAlive == true? TEXT("Alive") : TEXT("Dead"));
+	KHS_SCREEN_INFO(TEXT("UpdateUnitData Called - HP : %f / %f, SP : %f / %f, State - %s"), 
+		currentDisplayedHP, targetDisplayedHP, currentDisplayedSP, targetDisplayedSP, *state);	
 }
 
 
