@@ -13,8 +13,8 @@ UIndicatorSpriteComponent::UIndicatorSpriteComponent ()
 
 	// Default Transform
 	DefaultRelativeTransform = FTransform (
-		FRotator ( -90.f , 0.f , 0.f ) ,
-		FVector ( 0.f , 0.f , 300.f ) ,	// TEMP : 레벨 구성 완료 후 결정
+		FRotator ( 0.f , 0.f , -90.f ) ,	// 기준 순서 : Pitch, Yaw, Roll | 엔진에서는 Roll, Pitch, Yaw
+		FVector ( 0.f , 0.f , 300.f ) ,		// TEMP : 레벨 구성 완료 후 결정
 		FVector ( 0.35f , 0.35f , 0.35f )   // TEMP : 알파 게임 플레이 후 결정
 	);
 
