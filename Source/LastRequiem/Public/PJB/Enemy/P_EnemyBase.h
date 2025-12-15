@@ -25,6 +25,8 @@ protected:
 public:	
 	virtual void Tick(float DeltaTime) override;
 
+	void AIPathVisualization ();
+
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual void GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const override;
@@ -57,7 +59,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Data|Components")
 	TObjectPtr<class UP_CombatComponent> CombatComp = nullptr;
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Sprite" )
-	TObjectPtr<class UPaperSpriteComponent> SpriteComp = nullptr;
+	TObjectPtr<class UIndicatorSpriteComponent> SpriteComp = nullptr;
+
 
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
 	FGameplayTagContainer GameplayTags;
