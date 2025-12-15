@@ -78,6 +78,10 @@ public:
 	UFUNCTION ( BlueprintCallable , Category = "Unit|Data" )
 	FUnitProfileData GetUnitProfileData ();
 
+
+	FUnitProfileData UnitUpdateData;
+	
+
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Setting" )
 	EUnitType UnitType;
 
@@ -86,6 +90,8 @@ public:
 
 	virtual void OnConstruction ( const FTransform& Transform ) override;
 
+protected:
+	void UnitDataUpdate ();
 
 public:
 
@@ -173,5 +179,14 @@ public:
 	);
 
 	void OnDie_Unit ();
+
+protected:
+
+	UFUNCTION ()
+	void OnHPChanged_Wrapper ( float InCurrentHP , float InMaxHP );
+	
+	UFUNCTION ()
+	void OnSanityChanged_Wrapper ( float InCurrentSanity , float InMaxSanity );
+
 
 };

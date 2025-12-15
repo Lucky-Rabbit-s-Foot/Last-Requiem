@@ -34,10 +34,9 @@ AB_UnitBase::AB_UnitBase()
 	GunFlashlight = CreateDefaultSubobject<USpotLightComponent> ( TEXT ( "GunFlashlight" ) );
 	GunFlashlight->SetupAttachment ( WeaponMesh , FName ( "Flash" ) );
 	GunFlashlight->SetIntensity ( 3000.0f );       // 밝기 
-	GunFlashlight->SetOuterConeAngle ( 25.0f );    // 각도
-	GunFlashlight->SetAttenuationRadius ( 2000.0f ); // 거리
+	GunFlashlight->SetOuterConeAngle ( 15.0f );    // 각도
+	GunFlashlight->SetAttenuationRadius ( 1000.0f ); // 거리
 	GunFlashlight->SetLightColor ( FLinearColor ( 1.0f , 0.95f , 0.8f ) );
-
 	// 그림자
 	GunFlashlight->SetCastShadows ( true );
 
@@ -51,9 +50,6 @@ AB_UnitBase::AB_UnitBase()
 
 	static FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
 	GameplayTags.AddTag ( UnitTag );
-
-	MyUnitName = FText::FromString ( TEXT ( "Unknown Unit" ) );
-	MyProfileImage = nullptr;
 
 	// 우빈님 추가
 	IndicatorSprite = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "IndicatorSprite" ) );
@@ -88,7 +84,11 @@ void AB_UnitBase::BeginPlay()
 	if (StatusComponent)
 	{
 		StatusComponent->OnStateChanged.AddDynamic ( this , &AB_UnitBase::OnBehaviorStateChanged_Unit );
+		StatusComponent->OnHPChanged.AddDynamic ( this , &AB_UnitBase::OnHPChanged_Wrapper );
+		StatusComponent->OnSanityChanged.AddDynamic ( this , &AB_UnitBase::OnSanityChanged_Wrapper );
 	}
+
+	UnitDataUpdate ();
 
 }
 
@@ -96,6 +96,8 @@ void AB_UnitBase::BeginPlay()
 void AB_UnitBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	//UnitDataUpdate ();
 
 }
 
@@ -140,7 +142,7 @@ void AB_UnitBase::FindMapWidgetLoop ()
 
 			// 4. 타이머 해제
 			GetWorld ()->GetTimerManager ().ClearTimer ( FindWidgetTimerHandle );
-		}
+		} 
 	}
 	else
 	{
@@ -152,28 +154,28 @@ void AB_UnitBase::FindMapWidgetLoop ()
 
 FUnitProfileData AB_UnitBase::GetUnitProfileData ()
 {
-	FUnitProfileData Data;
+	//FUnitProfileData Data;
 
-	// 고정정보
-	Data.ProfileImage = MyProfileImage;
-	Data.UnitName = MyUnitName;
+	//// 고정정보
+	//Data.ProfileImage = MyProfileImage;
+	//Data.UnitName = MyUnitName;
 
-	// 변동정보
-	if (StatusComponent)
-	{
-		Data.MaxHP = StatusComponent->MaxHP;
-		Data.CurrentHP = StatusComponent->CurrentHP;
+	//// 변동정보
+	//if (StatusComponent)
+	//{
+	//	Data.MaxHP = StatusComponent->MaxHP;
+	//	Data.CurrentHP = StatusComponent->CurrentHP;
 
-		Data.MaxSanity = StatusComponent->MaxSanity;
-		Data.CurrentSanity = StatusComponent->CurrentSanity;
+	//	Data.MaxSanity = StatusComponent->MaxSanity;
+	//	Data.CurrentSanity = StatusComponent->CurrentSanity;
 
-		Data.bIsInCombat = StatusComponent->bIsInCombat;
-		Data.bIsSpeaking = StatusComponent->bIsSpeaking;
-	}
+	//	Data.bIsInCombat = StatusComponent->bIsInCombat;
+	//	Data.bIsSpeaking = StatusComponent->bIsSpeaking;
+	//}
 
-	Data.bIsAlive = bIsAlive;
+	//Data.bIsAlive = bIsAlive;
 
-	return Data;
+	return UnitUpdateData;
 }
 
 void AB_UnitBase::OnConstruction(const FTransform& Transform)
@@ -199,6 +201,20 @@ void AB_UnitBase::OnConstruction(const FTransform& Transform)
 
 		}
 	}
+}
+
+void AB_UnitBase::UnitDataUpdate ()
+{
+
+	UnitUpdateData.ProfileImage = MyProfileImage;
+	UnitUpdateData.UnitName = MyUnitName;
+	UnitUpdateData.CurrentHP = StatusComponent->CurrentHP;
+	UnitUpdateData.MaxHP = StatusComponent->MaxHP;
+	UnitUpdateData.CurrentSanity = StatusComponent->CurrentSanity;
+	UnitUpdateData.MaxSanity = StatusComponent->MaxSanity;
+	UnitUpdateData.bIsInCombat = StatusComponent->bIsInCombat;
+	UnitUpdateData.bIsAlive = bIsAlive;
+	UnitUpdateData.bIsSpeaking = StatusComponent->bIsSpeaking;
 }
 
 void AB_UnitBase::UnitMentalCheck_Move(float InX, float InY)
@@ -279,6 +295,7 @@ void AB_UnitBase::OnBehaviorStateChanged_Unit ( EUnitBehaviorState NewState )
 		UE_LOG ( LogTemp , Warning , TEXT ( "광기 / 팀킬 시작" ) );
 		break;
 	}
+	UnitDataUpdate ();
 }
 
 void AB_UnitBase::ProcessMoveCommand(float InX, float InY)
@@ -578,6 +595,7 @@ void AB_UnitBase::SetCombatState_Unit ( bool bInCombat )
 	{
 		StatusComponent->bIsInCombat = bInCombat;
 
+		UnitDataUpdate ();
 		OnCombatStateChanged.Broadcast ( bInCombat );
 
 		if (bInCombat)
@@ -615,6 +633,8 @@ void AB_UnitBase::OnTakeDamage_Unit ( AActor* DamagedActor , float Damage , cons
 	if (StatusComponent)
 	{
 		StatusComponent->ReduceHP ( Damage );
+
+		UnitDataUpdate ();
 
 		if (StatusComponent->CurrentHP <= 0.0f)
 		{
@@ -705,4 +725,14 @@ void AB_UnitBase::OnDie_Unit ()
 	SetLifeSpan ( 5.0f );
 
 	UE_LOG ( LogTemp , Warning , TEXT ( "%s 사망! 태그 제거됨." ) , *GetName () );
+}
+
+void AB_UnitBase::OnHPChanged_Wrapper ( float InCurrentHP , float InMaxHP )
+{
+	UnitDataUpdate ();
+}
+
+void AB_UnitBase::OnSanityChanged_Wrapper ( float InCurrentSanity , float InMaxSanity )
+{
+	UnitDataUpdate ();
 }
