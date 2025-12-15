@@ -103,6 +103,8 @@ void AP_EnemyBase::OnDie ()
 
 void AP_EnemyBase::OnDeactivate()
 {
+	GameplayTags.RemoveTag ( FGameplayTag::RequestGameplayTag ( FName ( "Enemy" ) ) );
+
 	AP_AIControllerEnemyBase* AIC = Cast<AP_AIControllerEnemyBase>(GetController());
 	if (AIC)
 	{
