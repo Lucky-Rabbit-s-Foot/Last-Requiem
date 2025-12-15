@@ -24,7 +24,7 @@ enum class EKLogLevel : uint8
 #define KHS_COMPILE_TIME_MIN_LEVEL EKLogLevel::Trace
 #endif
 
-#define KHS_LEVEL_ENABLED(Level) (static_cast<uint8>(Level) >= KHS_COMPILE_TIME_MIN_LEVEL)
+#define KHS_LEVEL_ENABLED(Level) (static_cast<uint8>(Level) >= static_cast<int32>(KHS_COMPILE_TIME_MIN_LEVEL))
 
 #define KHS_LOG_INTERNAL(Category, Level, Format, ...)														  \
 	do {																									  \
