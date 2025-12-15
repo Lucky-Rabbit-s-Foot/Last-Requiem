@@ -14,25 +14,27 @@ UIndicatorSpriteComponent::UIndicatorSpriteComponent ()
 	// Default Transform
 	DefaultRelativeTransform = FTransform (
 		FRotator ( -90.f , 0.f , 0.f ) ,
-		FVector ( 0.f , 0.f , 3000.f ) ,	// TEMP : 레벨 구성 완료 후 결정
+		FVector ( 0.f , 0.f , 300.f ) ,	// TEMP : 레벨 구성 완료 후 결정
 		FVector ( 0.35f , 0.35f , 0.35f )   // TEMP : 알파 게임 플레이 후 결정
 	);
 
 	// 상태/Glow 기본값
-	CurrentState = InitialState;
+	CurrentState = EIndicatorSpriteState::Normal;
 	bSpritesInitialized = false;
 
+	DynamicMID = nullptr;
 	bGlowActive = false;
 	GlowTime = 0.0f;
 
-	// 스프라이트 설정
-	SetCollisionEnabled ( ECollisionEnabled::NoCollision );
-	SetCastShadow ( false );
-	SetReceivesDecals ( false );
+	//// 스프라이트 설정
+	//SetCollisionEnabled ( ECollisionEnabled::NoCollision );
+	//SetCastShadow ( false );
+	//SetReceivesDecals ( false );
 
-	bVisibleInSceneCaptureOnly = true;	// SceneCapture에서만 표시
-	bHiddenInGame = false;				// TEMP : 게임 카메라에는 안 보이지만 SceneCapture에는 보이게 / 설정 바꿔가면서 더 편한 것으로 결정 예정
-	SetVisibility ( true , true );
+	//// TEMP : 디버그용으로 잠시 꺼둠
+	////bVisibleInSceneCaptureOnly = true;	// SceneCapture에서만 표시
+	//bHiddenInGame = false;				// TEMP : 게임 카메라에는 안 보이지만 SceneCapture에는 보이게 / 설정 바꿔가면서 더 편한 것으로 결정 예정
+	//SetVisibility ( true , true );
 }
 
 void UIndicatorSpriteComponent::BeginPlay ()
@@ -54,16 +56,6 @@ void UIndicatorSpriteComponent::BeginPlay ()
 	UpdateSpriteForState ();
 }
 
-void UIndicatorSpriteComponent::TickComponent ( float DeltaTime , ELevelTick TickType , FActorComponentTickFunction* ThisTickFunction )
-{
-	Super::TickComponent ( DeltaTime , TickType , ThisTickFunction );
-
-	if (bGlowActive)
-	{
-		UpdateGlow ( DeltaTime );
-	}
-}
-
 void UIndicatorSpriteComponent::OnRegister ()
 {
 	Super::OnRegister ();
@@ -72,6 +64,24 @@ void UIndicatorSpriteComponent::OnRegister ()
 	{
 		// Default Transform 세팅
 		SetRelativeTransform ( DefaultRelativeTransform );
+	}
+
+	// SceneCapture 에서만 보이게 옵션이 켜져 있으면 적용
+	if (bVisibleOnlyInSceneCapture)
+	{
+		bVisibleInSceneCaptureOnly = true;  // UPrimitiveComponent 플래그
+		bHiddenInGame = false;
+		SetVisibility ( true , true );
+	}
+}
+
+void UIndicatorSpriteComponent::TickComponent ( float DeltaTime , ELevelTick TickType , FActorComponentTickFunction* ThisTickFunction )
+{
+	Super::TickComponent ( DeltaTime , TickType , ThisTickFunction );
+
+	if (bGlowActive)
+	{
+		UpdateGlow ( DeltaTime );
 	}
 }
 
