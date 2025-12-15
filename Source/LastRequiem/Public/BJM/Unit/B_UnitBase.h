@@ -14,6 +14,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnUnitDieDelegate, AActor*, InUni
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnCombatStateChangedDelegate , bool , bIsCombat );
 
 class UB_UnitStatusComponent;
+class UIndicatorSpriteComponent;
 
 
 UCLASS()
@@ -50,6 +51,9 @@ public:
 	// 위젯 찾게 돌리는거
 	UFUNCTION ()
 	void FindMapWidgetLoop ();
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Unit|Component" )
+	UIndicatorSpriteComponent* IndicatorSprite = nullptr;
 
 protected:
 	float OriginalAttackDamage;
