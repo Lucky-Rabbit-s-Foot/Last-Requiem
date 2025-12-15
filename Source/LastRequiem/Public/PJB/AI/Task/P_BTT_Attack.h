@@ -17,12 +17,6 @@ public:
 	virtual void TickTask ( UBehaviorTreeComponent& OwnerComp , uint8* NodeMemory , float DeltaSeconds ) override;
 
 protected:
-	void ApplyDamageToTarget ( APawn* Attacker , AActor* Target , AController* Controller );
-
-protected:
-	UPROPERTY ( EditAnywhere , Category = "Data|AI|Attack" )
-	float DamageAmount = 10.0f;
-
 	UPROPERTY ( EditANywhere , Category = "Data|AI|Blackboard" )
 	FBlackboardKeySelector TargetActorKey;
 };
