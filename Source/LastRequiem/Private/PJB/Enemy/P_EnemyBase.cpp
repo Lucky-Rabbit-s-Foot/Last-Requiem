@@ -5,6 +5,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "PJB/AI/P_AIControllerEnemyBase.h"
 #include "PJB/Component/P_CombatComponent.h"
+#include "KWB/Component/IndicatorSpriteComponent.h"
 
 #include "Navigation/PathFollowingComponent.h"
 
@@ -13,7 +14,7 @@ AP_EnemyBase::AP_EnemyBase()
 	PrimaryActorTick.bCanEverTick = true;
 
 	CombatComp = CreateDefaultSubobject<UP_CombatComponent> ( TEXT ( "Combat Component" ) );
-	SpriteComp = CreateDefaultSubobject<UPaperSpriteComponent> ( TEXT ( "Sprite Component" ) );
+	SpriteComp = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "Sprite Component" ) );
 	InitSpriteComponent ();
 
 	static FGameplayTag EnemyTag = FGameplayTag::RequestGameplayTag ( FName ( "Enemy" ) );
@@ -25,12 +26,10 @@ AP_EnemyBase::AP_EnemyBase()
 void AP_EnemyBase::InitSpriteComponent ()
 {
 	SpriteComp->SetupAttachment ( GetRootComponent() );
-	SpriteComp->SetRelativeLocation ( FVector ( 0.0f , 0.0f , 1000.0f ) );
-	SpriteComp->SetRelativeRotation ( FRotator ( 0.0f , -90.0f , 0.0f ) );
-	SpriteComp->SetHiddenInGame ( true );
+	SpriteComp->SetRelativeLocation ( FVector ( 0.0f , 0.0f , 300.0f ) );
+	SpriteComp->SetRelativeRotation ( FRotator ( -90.0f , 0.0f , 0.0f ) );
 	SpriteComp->SetCastShadow ( false );
 	SpriteComp->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
-	SpriteComp->SetGenerateOverlapEvents ( false );
 }
 
 void AP_EnemyBase::BeginPlay()
@@ -46,9 +45,14 @@ void AP_EnemyBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
+	AIPathVisualization ();
+}
+
+void AP_EnemyBase::AIPathVisualization ()
+{
 	// AI 경로 시각화
 	AAIController* AIC = Cast<AAIController> ( GetController () );
-	if ( AIC->GetPathFollowingComponent () && AIC->GetPathFollowingComponent ()->GetPath ().IsValid ())
+	if (AIC->GetPathFollowingComponent () && AIC->GetPathFollowingComponent ()->GetPath ().IsValid ())
 	{
 		const TArray<FNavPathPoint>& PathPoints = AIC->GetPathFollowingComponent ()->GetPath ()->GetPathPoints ();
 
@@ -104,6 +108,12 @@ void AP_EnemyBase::OnDie ()
 void AP_EnemyBase::OnDeactivate()
 {
 	GameplayTags.RemoveTag ( FGameplayTag::RequestGameplayTag ( FName ( "Enemy" ) ) );
+
+	if (SpriteComp)
+	{
+		SpriteComp->SetIndicatorState ( EIndicatorSpriteState::Dead );
+		SpriteComp->StopGlow ();
+	}
 
 	AP_AIControllerEnemyBase* AIC = Cast<AP_AIControllerEnemyBase>(GetController());
 	if (AIC)
