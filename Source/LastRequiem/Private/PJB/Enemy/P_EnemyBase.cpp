@@ -3,10 +3,12 @@
 #include "Components/CapsuleComponent.h"
 #include "PaperSpriteComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "PJB/AI/P_AIControllerEnemyBase.h"
 #include "PJB/Component/P_CombatComponent.h"
 #include "PJB/Data/P_EnemyDataAsset.h"
 #include "KWB/Component/IndicatorSpriteComponent.h"
+
 
 #include "Navigation/PathFollowingComponent.h"
 
@@ -91,6 +93,21 @@ void AP_EnemyBase::InitEnemyData(UP_EnemyDataAsset* InData)
 	if (CombatComp)
 	{
 		CombatComp->InitStats ( InData->MaxHealth , InData->AttackRange , InData->AttackPower );
+	}
+}
+
+void AP_EnemyBase::OnAttack ()
+{
+	if (AP_AIControllerEnemyBase* AIC = Cast<AP_AIControllerEnemyBase> ( GetController () ))
+	{
+		if (UBlackboardComponent* BB = AIC->GetBlackboardComponent ())
+		{
+			AActor* TargetActor = Cast<AActor> ( BB->GetValueAsObject ( FName ( "TargetActor" ) ) );
+			if (TargetActor)
+			{
+				CombatComp->OnAttack ( TargetActor );
+			}
+		}
 	}
 }
 

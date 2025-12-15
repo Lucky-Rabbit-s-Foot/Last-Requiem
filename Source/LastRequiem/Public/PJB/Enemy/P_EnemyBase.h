@@ -30,6 +30,9 @@ public:
 	void InitEnemyData ( class UP_EnemyDataAsset* InData );
 
 	UFUNCTION()
+	void OnAttack ();
+
+	UFUNCTION()
 	void OnTakeDamage(
 		AActor* DamagedActor,
 		float Damage,
