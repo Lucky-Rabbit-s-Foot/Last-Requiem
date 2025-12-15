@@ -2,6 +2,7 @@
 
 
 #include "KHS/UI/K_UIManagerSubsystem.h"
+#include "KHS/Util/K_LoggingSystem.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 
 void UK_UIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -77,6 +78,7 @@ void UK_UIManagerSubsystem::CloseUIInternal(UK_BaseUIWidget* widget)
 {
 	if (!widget || !widget->IsOpen())
 	{
+		KHS_INFO(TEXT("CloseUIInternal에 widget이 들어오지 않았음"));
 		return;
 	}
 	
@@ -117,6 +119,7 @@ void UK_UIManagerSubsystem::CloseTopPopupUI()
 	//팝업 스택이 없으면 리턴
 	if (popUpUIStack.Num() == 0)
 	{
+		KHS_INFO(TEXT("마지막 팝업 스택"));
 		return;
 	}
 	
@@ -125,7 +128,6 @@ void UK_UIManagerSubsystem::CloseTopPopupUI()
 	topWidget->RemoveFromParent();
 	
 	RefreshTopPopupUI();
-	
 	NotifyInputModeChange();
 }
 

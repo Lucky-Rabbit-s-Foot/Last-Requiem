@@ -172,7 +172,7 @@ void AK_Drone::InitializeDetectedUnitSlot()
 		ECC_Pawn,
 		capsuleShpae);
 	
-
+#if WITH_EDITOR
 	DrawDebugCapsule(
 		GetWorld(),
 		start,
@@ -183,6 +183,7 @@ void AK_Drone::InitializeDetectedUnitSlot()
 		false,
 		1.f, 0, 3.f
 		);
+#endif
 	
 	//현재 탐지된 유닛 캐싱
 	TSet<AActor*> currentDetectedUnits;
@@ -231,7 +232,7 @@ void AK_Drone::UpdateDetectedUnitSlot()
 		ECC_Pawn,
 		capsuleShpae);
 	
-
+#if WITH_EDITOR
 	DrawDebugCapsule(
 		GetWorld(),
 		start,
@@ -242,6 +243,7 @@ void AK_Drone::UpdateDetectedUnitSlot()
 		false,
 		1.f, 0, 3.f
 		);
+#endif
 	
 	//현재 탐지된 유닛 캐싱
 	TSet<AActor*> currentDetectedUnits;

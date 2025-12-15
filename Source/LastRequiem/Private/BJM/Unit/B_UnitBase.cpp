@@ -503,6 +503,27 @@ void AB_UnitBase::UnitAttack(AActor* TargetActor)
 
 }
 
+void AB_UnitBase::SetCombatState_Unit ( bool bInCombat )
+{
+	if (!StatusComponent) return;
+
+	if (StatusComponent->bIsInCombat != bInCombat)
+	{
+		StatusComponent->bIsInCombat = bInCombat;
+
+		OnCombatStateChanged.Broadcast ( bInCombat );
+
+		if (bInCombat)
+		{
+			UE_LOG ( LogTemp , Warning , TEXT ( "[%s] 전투 돌입" ) , *GetName () );
+		}
+		else
+		{
+			UE_LOG ( LogTemp , Warning , TEXT ( "[%s] 전투 해제" ) , *GetName () );
+		}
+	}
+}
+
 void AB_UnitBase::OnTakeDamage_Unit ( AActor* DamagedActor , float Damage , const UDamageType* DamageType , AController* InstigateBy , AActor* DamageCauser )
 {
 	if (!bIsAlive) return;
