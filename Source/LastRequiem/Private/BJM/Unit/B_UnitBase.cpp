@@ -12,6 +12,7 @@
 #include "DrawDebugHelpers.h"
 #include "KWB/UI/Monitor/W_SituationMapWidget.h"
 #include "KWB/UI/W_MapWidget.h"
+#include "KWB/Component/IndicatorSpriteComponent.h"
 #include "Perception/AISense_Damage.h"
 #include "TimerManager.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -37,6 +38,10 @@ AB_UnitBase::AB_UnitBase()
 
 	MyUnitName = FText::FromString ( TEXT ( "Unknown Unit" ) );
 	MyProfileImage = nullptr;
+
+	// 우빈님 추가
+	IndicatorSprite = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "IndicatorSprite" ) );
+	IndicatorSprite->SetupAttachment ( RootComponent );
 
 }
 
@@ -253,8 +258,8 @@ void AB_UnitBase::OnBehaviorStateChanged_Unit ( EUnitBehaviorState NewState )
 		break;
 
 	case EUnitBehaviorState::Madness:
-		GameplayTags.RemoveTag ( UnitTag );
-		GameplayTags.AddTag ( EnemyTag );
+		//GameplayTags.RemoveTag ( UnitTag );
+		//GameplayTags.AddTag ( EnemyTag );
 		UE_LOG ( LogTemp , Warning , TEXT ( "광기 / 팀킬 시작" ) );
 		break;
 	}
@@ -568,6 +573,23 @@ void AB_UnitBase::SetCombatState_Unit ( bool bInCombat )
 			UE_LOG ( LogTemp , Warning , TEXT ( "[%s] 전투 해제" ) , *GetName () );
 		}
 	}
+
+	// 우빈님 추가
+	if (IndicatorSprite)
+	{
+		IndicatorSprite->SetIndicatorState (
+			bInCombat ? EIndicatorSpriteState::Combat : EIndicatorSpriteState::Normal );
+
+		if (bInCombat)
+		{
+			IndicatorSprite->StartGlow (); // 무한
+		}
+		else
+		{
+			IndicatorSprite->StopGlow ();
+		}
+	}
+
 }
 
 void AB_UnitBase::OnTakeDamage_Unit ( AActor* DamagedActor , float Damage , const UDamageType* DamageType , AController* InstigateBy , AActor* DamageCauser )
@@ -592,6 +614,14 @@ void AB_UnitBase::OnDie_Unit ()
 		return;
 	}
 	bIsAlive = false;
+
+	// 우빈님 추가
+	if (IndicatorSprite)
+	{
+		IndicatorSprite->SetIndicatorState ( EIndicatorSpriteState::Dead );
+		IndicatorSprite->StopGlow ();
+	}
+
 
 	float ShockRadius = 1500.0f;
 	float DeathPenalty = -10.0f; 
