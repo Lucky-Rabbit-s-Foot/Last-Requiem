@@ -39,11 +39,13 @@ bool UK_UnitSlotWiddget::CanUpdateUIData(float TimeDelta)
 {
 	if (currentState != EUnitSlotState::DETECTED)
 	{
+		bIsActive = false;
+		
 		return false;
 	}
 	
-	//HP, SP bar 보간
-	if (bIsActive && FMath::Abs(currentDisplayedHP - targetDisplayedHP) > 0.1f)
+	//HP, SP bar 보간 (Active일때만 업데이트 작동)
+	if (bIsActive)
 	{
 		currentDisplayedHP = FMath::FInterpTo(currentDisplayedHP, targetDisplayedHP, TimeDelta, UI_INTERP_SPEED);
 		
@@ -51,23 +53,17 @@ bool UK_UnitSlotWiddget::CanUpdateUIData(float TimeDelta)
 		{
 			float percent = cachedUnitData.MaxHP > 0? currentDisplayedHP / cachedUnitData.MaxHP : 0.f;
 			HPBar->SetPercent(percent);
-			
-			KHS_SCREEN_INFO(TEXT("CanUpdatUIData Called - HP %f Percent %f "), currentDisplayedHP, percent);
 		}
-	}
-	
-	if (bIsActive && FMath::Abs(currentDisplayedSP - targetDisplayedSP) > 0.1f)
-	{
+		
 		currentDisplayedSP = FMath::FInterpTo(currentDisplayedSP, targetDisplayedSP, currentDisplayedSP, TimeDelta);
 		
 		if (SPBar)
 		{
 			float percent = cachedUnitData.MaxSanity > 0? currentDisplayedSP / cachedUnitData.MaxSanity : 0.f;
 			SPBar->SetPercent(percent);
-			
-			KHS_SCREEN_INFO(TEXT("CanUpdatUIData Called - SP %f Percent %f "), currentDisplayedSP, percent);
 		}
 	}
+	
 	return true;
 }
 
@@ -95,25 +91,32 @@ void UK_UnitSlotWiddget::UpdateUnitData(const FUnitProfileData& newData)
 {
 	cachedUnitData = newData;
 	
+	bIsActive = true;
+	
 	//목표값은 Unit의 가장 최신 수치 반영
 	targetDisplayedHP = newData.CurrentHP;
 	targetDisplayedSP = newData.CurrentSanity;
 	
 	//첫 초기화 시에만 즉시 설정
-	if (currentDisplayedHP == 0.0f && currentDisplayedSP == 0.0f)
+	if (currentDisplayedHP == 0.0f)
 	{
 		currentDisplayedHP = targetDisplayedHP;
+	}
+	
+	if (currentDisplayedSP == 0.0f)
+	{
 		currentDisplayedSP = targetDisplayedSP;
 	}
+
 	
 	if (!newData.bIsAlive)
 	{
 		SetSlotState(EUnitSlotState::DEAD);
 	}
 	
-	const FString state = (newData.bIsAlive == true? TEXT("Alive") : TEXT("Dead"));
-	KHS_SCREEN_INFO(TEXT("UpdateUnitData Called - HP : %f -> %f, SP : %f -> %f, State - %s"), 
-		currentDisplayedHP, targetDisplayedHP, currentDisplayedSP, targetDisplayedSP, *state);	
+	// const FString state = (newData.bIsAlive == true? TEXT("Alive") : TEXT("Dead"));
+	// KHS_SCREEN_INFO(TEXT("UpdateUnitData Called - HP : %f -> %f, SP : %f -> %f, State - %s"), 
+	// 	currentDisplayedHP, targetDisplayedHP, currentDisplayedSP, targetDisplayedSP, *state);	
 }
 
 
