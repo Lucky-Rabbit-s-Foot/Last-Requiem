@@ -26,6 +26,11 @@ AB_UnitBase::AB_UnitBase()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent> ( TEXT ( "WeaponMesh" ) );
+	WeaponMesh->SetupAttachment ( GetMesh () , FName ( "WeaponSocket" ) );
+	WeaponMesh->SetCollisionProfileName ( TEXT ( "NoCollision" ) );
+
+
 	StatusComponent = CreateDefaultSubobject<UB_UnitStatusComponent>(TEXT("StatusComponent"));
 
 	AIControllerClass = AB_UnitAIController::StaticClass ();

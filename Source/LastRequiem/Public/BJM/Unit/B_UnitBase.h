@@ -39,8 +39,14 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	UPROPERTY ( VisibleAnywhere , BlueprintReadWrite , Category = "Unit|Visual" )
+	USkeletalMeshComponent* WeaponMesh;
+
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Unit|Component" )
 	UB_UnitStatusComponent* StatusComponent;
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Unit|Component" )
+	UIndicatorSpriteComponent* IndicatorSprite = nullptr;
 
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
 	FGameplayTagContainer GameplayTags;
@@ -51,9 +57,6 @@ public:
 	// 위젯 찾게 돌리는거
 	UFUNCTION ()
 	void FindMapWidgetLoop ();
-
-	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Unit|Component" )
-	UIndicatorSpriteComponent* IndicatorSprite = nullptr;
 
 protected:
 	float OriginalAttackDamage;
