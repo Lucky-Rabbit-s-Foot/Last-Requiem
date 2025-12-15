@@ -1,11 +1,16 @@
 ﻿#include "PJB/Obstacle/P_Obstacle.h"
 
+#include "Components/BoxComponent.h"
+
 AP_Obstacle::AP_Obstacle()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent> ( TEXT ( "Mesh" ) );
 	SetRootComponent ( Mesh );
+
+	CollisionComp = CreateDefaultSubobject<UBoxComponent> ( TEXT ( "CollisionComp" ) );
+	CollisionComp->SetupAttachment ( Mesh );
 
 	static FGameplayTag ObstacleTag = FGameplayTag::RequestGameplayTag ( FName ( "Obstacle" ) );
 	GameplayTags.AddTag ( ObstacleTag );
