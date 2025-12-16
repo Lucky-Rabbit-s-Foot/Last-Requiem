@@ -2,16 +2,18 @@
 
 
 #include "KHS/Drone/K_Drone.h"
+#include "KHS/Data/K_DroneData.h"
 
 #include "BJM/Unit/B_UnitBase.h"
 #include "BJM/Unit/B_UnitMentalTypes.h"
-#include "KHS/Data/K_DroneData.h"
+
+#include "KWB/Component/IndicatorSpriteComponent.h"
 
 #include "Camera/CameraComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-
+#include "KWB/Component/IndicatorSpriteComponent.h"
 
 
 // Sets default values
@@ -102,6 +104,10 @@ void AK_Drone::InitializeDefaultComponents()
 	//mesh
 	meshComp = CreateDefaultSubobject<USkeletalMeshComponent>("meshComp");
 	meshComp->SetupAttachment(RootComponent);
+	
+	//indicator
+	indicatorComp = CreateDefaultSubobject<UIndicatorSpriteComponent>("indicatorComp");
+	indicatorComp->SetupAttachment(RootComponent);
 }
 
 void AK_Drone::UpdateDroneMovement(float DeltaTime)

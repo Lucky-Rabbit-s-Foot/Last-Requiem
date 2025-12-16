@@ -74,14 +74,14 @@ enum class EKLogLevel : uint8
 
 #if WITH_EDITOR
 
-#define LR_SCREEN_INFO(Format, ...) \
+#define KHS_SCREEN_INFO(Format, ...) \
 do \
 { \
 const FString DebugMessage = FString::Printf(Format, ##__VA_ARGS__); \
 KHS_INFO(TEXT("SCREEN: %s"), *DebugMessage); \
 if (GEngine) \
 { \
-GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, DebugMessage); \
+GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Blue, DebugMessage); \
 } \
 } while(0)
 

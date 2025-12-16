@@ -14,11 +14,9 @@ public:
 	UP_BTT_Attack ();
 	
 	virtual EBTNodeResult::Type ExecuteTask ( UBehaviorTreeComponent& OwnerComp , uint8* NodeMemory ) override;
+	virtual void TickTask ( UBehaviorTreeComponent& OwnerComp , uint8* NodeMemory , float DeltaSeconds ) override;
 
 protected:
-	UPROPERTY ( EditAnywhere , Category = "Data|AI|Attack" )
-	float DamageAmount = 10.0f;
-
 	UPROPERTY ( EditANywhere , Category = "Data|AI|Blackboard" )
 	FBlackboardKeySelector TargetActorKey;
 };
