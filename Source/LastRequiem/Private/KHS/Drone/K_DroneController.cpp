@@ -106,8 +106,8 @@ void AK_DroneController::BindSituaionMapUIDelegates(class UW_SituationMapWidget*
 	//맵 델리게이트 연결
 	if (cachedMapWidget)
 	{
-		// cachedMapWidget->OnMapUnitSelected.AddDynamic(this, &AK_DroneController::HandleUnitSelected);
-		// cachedMapWidget->OnMapmoveCommand.AddDynamic(this, &AK_DroneController::HandleMapMoveCommand);
+		cachedMapWidget->OnMapUnitSelected.AddDynamic(this, &AK_DroneController::HandleUnitSelected);
+		cachedMapWidget->OnMapMoveCommand.AddDynamic(this, &AK_DroneController::HandleMapMoveCommand);
 	}
 	
 	bPersistentUIBound = true;
@@ -150,9 +150,8 @@ void AK_DroneController::UnbindSituationMapUIDelegates()
 	//맵 델리게이트 연결
 	if (cachedMapWidget)
 	{
-		//TODO : 우빈이쪽 구현되면 주석해제
-		// cachedMapWidget->OnMapUnitSelected.RemoveDynamic(this, &AK_DroneController::HandleUnitSelected);
-		// cachedMapWidget->OnMapmoveCommand.RemoveDynamic(this, &AK_DroneController::HandleMapMoveCommand);
+		cachedMapWidget->OnMapUnitSelected.RemoveDynamic(this, &AK_DroneController::HandleUnitSelected);
+		cachedMapWidget->OnMapMoveCommand.RemoveDynamic(this, &AK_DroneController::HandleMapMoveCommand);
 	}
 	
 	cachedSituationUI = nullptr;
@@ -316,8 +315,7 @@ void AK_DroneController::HandleUnitSelected(AActor* selectedActor)
 		
 		if (cachedMapWidget)
 		{
-			//TODO : 우빈이쪽 구현되면 주석해제
-			//cachedMapWidget->SetSelectedUnit(unit);
+			cachedMapWidget->SetSelectedUnit(unit);
 		}
 		
 		KHS_SCREEN_INFO(TEXT("Unit Selected : %s"), *unit->GetName());
@@ -329,8 +327,7 @@ void AK_DroneController::HandleUnitSelected(AActor* selectedActor)
 		selectedUnit = nullptr;
 		if (cachedMapWidget)
 		{
-			//TODO : 우빈이쪽 구현되면 주석해제
-			//cachedMapWidget->SetSelectedUnit(nullptr);
+			cachedMapWidget->SetSelectedUnit(nullptr);
 		}
 	}
 }
