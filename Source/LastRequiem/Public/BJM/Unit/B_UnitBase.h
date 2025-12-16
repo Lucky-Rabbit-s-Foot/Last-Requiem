@@ -154,7 +154,7 @@ public:
 	void UnitAttack(AActor* TargetActor);
 
 	UFUNCTION(BlueprintCallable, Category = "Unit|Attack")
-	void OnAttackHit_Unit ();
+	virtual void OnAttackHit_Unit ();
 
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Animation" )
 	UAnimMontage* AttackMontage;
