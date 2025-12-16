@@ -81,7 +81,7 @@ const FString DebugMessage = FString::Printf(Format, ##__VA_ARGS__); \
 KHS_INFO(TEXT("SCREEN: %s"), *DebugMessage); \
 if (GEngine) \
 { \
-GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Blue, DebugMessage); \
+GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, DebugMessage); \
 } \
 } while(0)
 
