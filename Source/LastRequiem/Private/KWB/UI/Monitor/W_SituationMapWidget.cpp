@@ -60,7 +60,7 @@ void UW_SituationMapWidget::NativeConstruct()
 void UW_SituationMapWidget::HandleExitButtonClicked ()
 {
 	UE_LOG ( LogTemp , Log , TEXT ( "Exit Button Clicked." ) );
-	//OnCloseUIRequested.BroadCast ()
+	onCloseUIRequested.Broadcast ( this );
 }
 
 void UW_SituationMapWidget::HandleAttackButtonClicked ()
