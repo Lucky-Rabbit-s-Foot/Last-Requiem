@@ -48,8 +48,8 @@ AB_UnitBase::AB_UnitBase()
 	bUseControllerRotationYaw = false; 
 	GetCharacterMovement()->bOrientRotationToMovement = true; 
 
-	static FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
-	GameplayTags.AddTag ( UnitTag );
+	//static FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
+	//GameplayTags.AddTag ( UnitTag );
 
 	// 우빈님 추가
 	IndicatorSprite = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "IndicatorSprite" ) );
@@ -77,6 +77,9 @@ void AB_UnitBase::BeginPlay()
 	//);
 
 	//UE_LOG ( LogTemp , Warning , TEXT ( "위젯 찾기 시작" ) );
+
+	FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
+	GameplayTags.AddTag ( UnitTag );
 
 	OriginalAttackDamage = AttackDamage;
 	OriginalAttackRange = AttackRange;
