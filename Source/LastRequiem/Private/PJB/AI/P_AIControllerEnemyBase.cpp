@@ -6,6 +6,7 @@
 #include "Perception/AISense_Sight.h"
 #include "Perception/AISense_Damage.h"
 
+#include "Navigation/PathFollowingComponent.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "GameplayTagAssetInterface.h"
@@ -31,6 +32,35 @@ void AP_AIControllerEnemyBase::SetCachedFortressByGameState ()
 	if(AP_GameStateBase* GS = GetWorld ()->GetGameState<AP_GameStateBase> ())
 	{
 		CachedFortress = GS->GetFortress ();
+	}
+}
+
+void AP_AIControllerEnemyBase::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	if(GetMoveStatus() == EPathFollowingStatus::Moving)
+	{
+		APawn* MyPawn = GetPawn();
+		if (!MyPawn) return;
+
+		FVector CurrentLocation = GetPawn ()->GetActorLocation ();
+		float DistSq = FVector::DistSquared ( LastLocation , CurrentLocation );
+		if (DistSq <= StuckDistSq)
+		{
+			StuckTimer += DeltaSeconds;
+		}
+		else
+		{
+			StuckTimer = 0.0f;
+		}
+		LastLocation = CurrentLocation;
+
+		if (StuckTimer > StuckThresholdTime)
+		{
+			StuckTimer = 0.0f;
+			StopMovement();
+		}
 	}
 }
 
@@ -70,6 +100,4 @@ void AP_AIControllerEnemyBase::InitSightConfig ()
 void AP_AIControllerEnemyBase::InitDamageConfig ()
 {
 	if (!DamageConfig) return;
-	//DamageConfig->SetImplementation(UAISense_Damage::StaticClass());
-
 }

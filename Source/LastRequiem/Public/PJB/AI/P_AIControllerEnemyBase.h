@@ -25,6 +25,7 @@ public:
 	AActor* GetCachedFortress () { return CachedFortress.Get (); }
 
 protected:
+	virtual void Tick ( float DeltaSeconds ) override;
 	virtual void OnPossess ( APawn* InPawn ) override;
 
 	void InitPerceptionComponent ();
@@ -53,4 +54,11 @@ protected:
 	float LoseSightRadius = 2000.0f;
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|AI|Perception" )
 	float ViewAngleDegree = 90.0f;
+
+	float StuckTimer = 0.0f;
+	FVector LastLocation;
+
+	UPROPERTY ( EditDefaultsOnly )
+	float StuckThresholdTime = 3.0f;
+	float StuckDistSq = 10.0f * 10.0f;
 };
