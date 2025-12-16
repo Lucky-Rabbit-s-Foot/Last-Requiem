@@ -68,13 +68,13 @@ void AB_UnitBase::BeginPlay()
 	Super::BeginPlay();
 
 	
-	GetWorld ()->GetTimerManager ().SetTimer (
-		FindWidgetTimerHandle ,
-		this ,
-		&AB_UnitBase::FindMapWidgetLoop ,
-		0.5f ,
-		true
-	);
+	//GetWorld ()->GetTimerManager ().SetTimer (
+	//	FindWidgetTimerHandle ,
+	//	this ,
+	//	&AB_UnitBase::FindMapWidgetLoop ,
+	//	0.5f ,
+	//	true
+	//);
 
 	UE_LOG ( LogTemp , Warning , TEXT ( "위젯 찾기 시작" ) );
 
