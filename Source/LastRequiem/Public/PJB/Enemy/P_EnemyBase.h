@@ -47,6 +47,7 @@ public:
 	float GetAttackRange () const { return CachedAttackRange; }
 	UFUNCTION ( BlueprintPure , Category = "Combat" )
 	UAnimMontage* GetAttackMontage () const { return CachedAttackMontage; }
+	void SetCombatState ( bool bNewIsCombat );
 
 private:
 	void InitSpriteComponent ();
@@ -55,8 +56,6 @@ private:
 
 	void OnDie ();
 	void OnDeactivate ();
-
-	void AIPathVisualization ();
 
 public:
 	FOnEnemyDieDelegate OnEnemyDieDelegate;
@@ -69,11 +68,16 @@ protected:
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
 	FGameplayTagContainer GameplayTags;
 
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Movement" )
+	float BaseMoveSpeed = 100.0f;
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Movement" )
+	float CombatMoveSpeed = 100.0f;
+
 	// Cached combat data
 	float CachedAttackRange = 100.0f;
 	UPROPERTY ()
 	UAnimMontage* CachedAttackMontage = nullptr;
 
-private:
+	bool bIsCombat = false;
 	bool bIsAlive = true;
 };

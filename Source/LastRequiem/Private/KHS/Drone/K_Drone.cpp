@@ -167,7 +167,7 @@ void AK_Drone::InitializeDetectedUnitSlot()
 	FVector start = GetActorLocation();
 	FVector end = start;
 	
-	float capsuleRadius = 3000.f;
+	float capsuleRadius = 10000.f;
 	float capsuleHalfHeight = 700.f;
 	FCollisionShape capsuleShpae = FCollisionShape::MakeCapsule(capsuleRadius, capsuleHalfHeight);
 	
@@ -227,7 +227,7 @@ void AK_Drone::UpdateDetectedUnitSlot()
 	FVector start = GetActorLocation();
 	FVector end = start;
 	
-	float capsuleRadius = 300.f;
+	float capsuleRadius = 800.f;
 	float capsuleHalfHeight = 2500.f;
 	FCollisionShape capsuleShpae = FCollisionShape::MakeCapsule(capsuleRadius, capsuleHalfHeight);
 	
