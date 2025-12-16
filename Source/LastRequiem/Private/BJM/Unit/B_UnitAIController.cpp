@@ -3,6 +3,7 @@
 
 #include "BJM/Unit/B_UnitAIController.h"
 #include "BJM/Unit/B_UnitBase.h"
+#include "BJM/Unit/B_UnitStatusComponent.h"
 #include "DrawDebugHelpers.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -75,8 +76,8 @@ void AB_UnitAIController::Tick(float DeltaTime)
 				Forward ,
 				Radius ,
 				AngleRadian ,
-				0.05f ,
-				128 ,
+				0.005f ,
+				50 ,
 				FColor::Green ,
 				false ,
 				-1.0f ,
@@ -85,9 +86,6 @@ void AB_UnitAIController::Tick(float DeltaTime)
 			);
 		}
 	}
-
-
-
 
 
 	CheckNearbyEnemies ();
@@ -201,7 +199,7 @@ void AB_UnitAIController::CheckNearbyEnemies ()
 				bIsValidTarget = true;
 			}
 
-			// 타겟으로 판정되면 거리 계산해서 제일 가까운 놈 찾기
+			// 제일 가까운 놈 찾기
 			if (bIsValidTarget)
 			{
 				float Dist = FVector::Dist ( MyPawn->GetActorLocation () , HitActor->GetActorLocation () );
@@ -342,10 +340,8 @@ void AB_UnitAIController::SetCommandState ( EUnitCommandType NewCommand , FVecto
 			{
 				MyUnit->SetCombatState_Unit ( false );
 			}
-
 		}
 	}
-
 }
 
 

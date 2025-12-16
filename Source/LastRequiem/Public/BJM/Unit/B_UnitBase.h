@@ -55,11 +55,11 @@ public:
 	FGameplayTagContainer GameplayTags;
 
 	// 위젯 찾으려고 타이머 설정한거(위젯찾으면 사라짐)
-	FTimerHandle FindWidgetTimerHandle;
+	//FTimerHandle FindWidgetTimerHandle;
 
 	// 위젯 찾게 돌리는거
-	UFUNCTION ()
-	void FindMapWidgetLoop ();
+	//UFUNCTION ()
+	//void FindMapWidgetLoop ();
 
 protected:
 	float OriginalAttackDamage;
@@ -152,6 +152,18 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Unit|Attack")
 	void UnitAttack(AActor* TargetActor);
+
+	UFUNCTION(BlueprintCallable, Category = "Unit|Attack")
+	virtual void OnAttackHit_Unit ();
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Animation" )
+	UAnimMontage* AttackMontage;
+
+protected:
+	UPROPERTY ()
+	AActor* CurrentAttackTarget;
+
+public:
 
 	FOnUnitDieDelegate OnUnitDieDelegate;
 

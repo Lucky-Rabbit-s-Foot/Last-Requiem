@@ -127,23 +127,23 @@ void UB_UnitStatusComponent::UpdateBehaviorState ()
 	EUnitBehaviorState NewState = EUnitBehaviorState::Normal;
 
 
-	if (CurrentSanity < 1.0f) 
+	if (CurrentSanity <= 1.0f) 
 	{
 		NewState = EUnitBehaviorState::Madness;  
 	}
-	else if (CurrentSanity < 10.0f)  
+	else if (CurrentSanity <= 10.0f)  
 	{
 		NewState = EUnitBehaviorState::Panic;     
 	}
-	else if (CurrentSanity < 20.0f)  
+	else if (CurrentSanity <= 20.0f)  
 	{
 		NewState = EUnitBehaviorState::Fear;     
 	}
-	else if (CurrentSanity < 40.0f)  
+	else if (CurrentSanity <= 40.0f)  
 	{
 		NewState = EUnitBehaviorState::Tense;  
 	}
-	else if (CurrentSanity < 80.0f)  
+	else if (CurrentSanity <= 80.0f)  
 	{
 		NewState = EUnitBehaviorState::Normal;   
 	}

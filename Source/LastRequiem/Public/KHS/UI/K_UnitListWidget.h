@@ -7,9 +7,9 @@
 #include "KHS/UI/K_BaseUIWidget.h"
 #include "K_UnitListWidget.generated.h"
 
-/**
- * 
- */
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUnitListSelected, AActor*, selectedUnit);
+
 UCLASS()
 class LASTREQUIEM_API UK_UnitListWidget : public UK_BaseUIWidget
 {
@@ -25,6 +25,9 @@ private:
 
 	UFUNCTION()
 	void OnUnitDied(AActor* deadUnit);
+	
+	UFUNCTION()
+	void OnUnitListClicked(AActor* selectedUnit);
 	
 	UK_UnitSlotWiddget* GetOrCreateUnitSlot(AActor* unitActor);
 
@@ -46,5 +49,9 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "LR|UI")
 	TSubclassOf<class UK_UnitSlotWiddget> unitSlotWidget;
+	
+public:
+	UPROPERTY(BlueprintAssignable, Category = "LR|Event")
+	FOnUnitListSelected onUnitListSelectedDel;
 	
 };

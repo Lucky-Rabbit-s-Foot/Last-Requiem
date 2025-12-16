@@ -4,12 +4,15 @@
 #include "KWB/UI/Monitor/W_SituationMapWidget.h"
 #include "Components/Button.h"
 
+UW_SituationMapWidget::UW_SituationMapWidget ()
+{
+	UILayer = EUILayer::POPUP;
+	zOrder = 0;
+}
+
 void UW_SituationMapWidget::NativeConstruct()
 {
 	Super::NativeConstruct ();
-
-	UILayer = EUILayer::POPUP;
-	zOrder = 0;
 
 	if (Exit)
 	{
@@ -60,7 +63,7 @@ void UW_SituationMapWidget::NativeConstruct()
 void UW_SituationMapWidget::HandleExitButtonClicked ()
 {
 	UE_LOG ( LogTemp , Log , TEXT ( "Exit Button Clicked." ) );
-	//OnCloseUIRequested.BroadCast ()
+	onCloseUIRequested.Broadcast ( this );
 }
 
 void UW_SituationMapWidget::HandleAttackButtonClicked ()

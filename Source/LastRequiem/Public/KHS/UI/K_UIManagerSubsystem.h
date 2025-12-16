@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "K_BaseUIWidget.h"
+#include "KHS/Util/K_LoggingSystem.h"
 #include "K_UIManagerSubsystem.generated.h"
 
 /*
@@ -44,14 +45,15 @@ public:
 	T* GetOrCreateWidget(TSubclassOf<T> widgetClass);
 	
 	template<typename T>
-	void CloseUI();
+	void CloseUI(TSubclassOf<T> targetClass);
 	
 	void CloseUI(UK_BaseUIWidget* widget);
 	void CloseTopPopupUI();
 	void CloseAllPopupUI();
 	void RefreshTopPopupUI();
 	
-	bool HasOpenPopupUI() const { return popUpUIStack.Num() > 0; }
+	FORCEINLINE bool HasOpenPopupUI() const { return popUpUIStack.Num() > 0; }
+	FORCEINLINE int GetPopupStackSize() const { return popUpUIStack.Num(); }
 	
 private:
 	//현재 열려있는 Persistent UI들의 맵 (클래스 -> 인스턴스)
@@ -155,17 +157,22 @@ T* UK_UIManagerSubsystem::OpenUI(TSubclassOf<T> targetClass)
 
 
 template<typename T>
-void UK_UIManagerSubsystem::CloseUI()
+void UK_UIManagerSubsystem::CloseUI(TSubclassOf<T> targetClass)
 {
-	TSubclassOf<T> targetClass = T::StaticClass();
-	
-	// 캐싱중인 UI라면 리턴
-	if (!cachedWidgets.Contains(targetClass))
+	if (!targetClass)
 	{
 		return;
 	}
 	
-	UK_BaseUIWidget* widget = cachedWidgets[targetClass];
+	TSubclassOf<UK_BaseUIWidget> baseClass = targetClass;
+	
+	// 캐싱중인 UI라면 리턴
+	if (!cachedWidgets.Contains(baseClass))
+	{
+		return;
+	}
+	
+	UK_BaseUIWidget* widget = cachedWidgets[baseClass];
 	
 	//실제 닫기 로직은 내부 헬퍼함수 호출
 	CloseUIInternal(widget);

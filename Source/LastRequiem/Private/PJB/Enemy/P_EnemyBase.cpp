@@ -7,8 +7,9 @@
 #include "PJB/AI/P_AIControllerEnemyBase.h"
 #include "PJB/Component/P_CombatComponent.h"
 #include "PJB/Data/P_EnemyDataAsset.h"
+#include "PJB/Enemy/P_AnimInstanceEnemyBase.h"
 #include "KWB/Component/IndicatorSpriteComponent.h"
-
+#include "BrainComponent.h"
 
 #include "Navigation/PathFollowingComponent.h"
 
@@ -37,8 +38,6 @@ void AP_EnemyBase::BeginPlay()
 void AP_EnemyBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
-	AIPathVisualization ();
 }
 
 void AP_EnemyBase::InitSpriteComponent ()
@@ -86,6 +85,8 @@ void AP_EnemyBase::InitEnemyData(UP_EnemyDataAsset* InData)
 	}
 		
 	GetCharacterMovement ()->MaxWalkSpeed = InData->BaseSpeed;
+	BaseMoveSpeed = InData->BaseSpeed;
+	CombatMoveSpeed = InData->CombatSpeed;
 
 	CachedAttackRange = InData->AttackRange;
 	CachedAttackMontage = InData->AttackMontage;
@@ -146,8 +147,9 @@ void AP_EnemyBase::OnDeactivate()
 	}
 
 	AP_AIControllerEnemyBase* AIC = Cast<AP_AIControllerEnemyBase>(GetController());
-	if (AIC)
+	if (AIC && AIC->GetBrainComponent())
 	{
+		AIC->GetBrainComponent ()->StopLogic ( TEXT ( "Enemy Dead" ) );
 		AIC->StopMovement();
 	}
 
@@ -161,25 +163,37 @@ void AP_EnemyBase::OnDeactivate()
 	GetCharacterMovement()->DisableMovement();	
 	GetCharacterMovement ()->SetComponentTickEnabled ( false );
 
+	if(USkeletalMeshComponent* SkeletalMeshComp = GetMesh())
+	{
+		if(UP_AnimInstanceEnemyBase* AnimInst = Cast<UP_AnimInstanceEnemyBase>(SkeletalMeshComp->GetAnimInstance()))
+		{
+			AnimInst->SetDeadState ( true );
+		}
+	}
+
 	SetLifeSpan ( 5.0f );
 }
 
-void AP_EnemyBase::AIPathVisualization ()
+void AP_EnemyBase::SetCombatState ( bool bNewIsCombat )
 {
-	AAIController* AIC = Cast<AAIController> ( GetController () );
-	if (AIC->GetPathFollowingComponent () && AIC->GetPathFollowingComponent ()->GetPath ().IsValid ())
-	{
-		const TArray<FNavPathPoint>& PathPoints = AIC->GetPathFollowingComponent ()->GetPath ()->GetPathPoints ();
+	if (bIsCombat == bNewIsCombat) return;
+	bIsCombat = bNewIsCombat;
 
-		for (int32 i = 0; i < PathPoints.Num () - 1; ++i)
+	if (!CombatComp) return;
+	if (bIsCombat)
+	{
+		GetCharacterMovement ()->MaxWalkSpeed = CombatMoveSpeed;
+	}
+	else
+	{
+		GetCharacterMovement ()->MaxWalkSpeed = BaseMoveSpeed;
+	}
+
+	if (USkeletalMeshComponent* SkeletalMeshComp = GetMesh ())
+	{
+		if (UP_AnimInstanceEnemyBase* AnimInst = Cast<UP_AnimInstanceEnemyBase> ( SkeletalMeshComp->GetAnimInstance () ))
 		{
-			DrawDebugLine (
-				GetWorld () ,
-				PathPoints[i].Location ,
-				PathPoints[i + 1].Location ,
-				FColor::Green ,
-				false , -1.0f , 0 , 3.0f
-			);
+			AnimInst->SetCombatState ( bIsCombat );
 		}
 	}
 }
