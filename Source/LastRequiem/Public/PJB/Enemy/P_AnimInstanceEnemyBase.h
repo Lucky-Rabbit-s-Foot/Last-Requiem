@@ -13,7 +13,8 @@ class LASTREQUIEM_API UP_AnimInstanceEnemyBase : public UAnimInstance
 public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
-	
+	void SetCombatState ( bool bNewIsCombat ) { bIsCombat = bNewIsCombat; }
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Data|Speed")
 	float Speed = 0.0f;

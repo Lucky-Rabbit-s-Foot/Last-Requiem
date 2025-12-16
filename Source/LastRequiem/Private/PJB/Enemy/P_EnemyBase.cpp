@@ -7,6 +7,7 @@
 #include "PJB/AI/P_AIControllerEnemyBase.h"
 #include "PJB/Component/P_CombatComponent.h"
 #include "PJB/Data/P_EnemyDataAsset.h"
+#include "PJB/Enemy/P_AnimInstanceEnemyBase.h"
 #include "KWB/Component/IndicatorSpriteComponent.h"
 
 
@@ -86,6 +87,8 @@ void AP_EnemyBase::InitEnemyData(UP_EnemyDataAsset* InData)
 	}
 		
 	GetCharacterMovement ()->MaxWalkSpeed = InData->BaseSpeed;
+	BaseMoveSpeed = InData->BaseSpeed;
+	CombatMoveSpeed = InData->CombatSpeed;
 
 	CachedAttackRange = InData->AttackRange;
 	CachedAttackMontage = InData->AttackMontage;
@@ -162,6 +165,30 @@ void AP_EnemyBase::OnDeactivate()
 	GetCharacterMovement ()->SetComponentTickEnabled ( false );
 
 	SetLifeSpan ( 5.0f );
+}
+
+void AP_EnemyBase::SetCombatState ( bool bNewIsCombat )
+{
+	if (bIsCombat == bNewIsCombat) return;
+	bIsCombat = bNewIsCombat;
+
+	if (!CombatComp) return;
+	if (bIsCombat)
+	{
+		GetCharacterMovement ()->MaxWalkSpeed = CombatMoveSpeed;
+	}
+	else
+	{
+		GetCharacterMovement ()->MaxWalkSpeed = BaseMoveSpeed;
+	}
+
+	if (USkeletalMeshComponent* SkeletalMeshComp = GetMesh ())
+	{
+		if (UP_AnimInstanceEnemyBase* AnimInst = Cast<UP_AnimInstanceEnemyBase> ( SkeletalMeshComp->GetAnimInstance () ))
+		{
+			AnimInst->SetCombatState ( bIsCombat );
+		}
+	}
 }
 
 void AP_EnemyBase::AIPathVisualization ()
