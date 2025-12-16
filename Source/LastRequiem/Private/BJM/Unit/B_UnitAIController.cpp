@@ -70,20 +70,20 @@ void AB_UnitAIController::Tick(float DeltaTime)
 			float AngleRadian = FMath::DegreesToRadians ( AngleDegree );
 
 
-			DrawDebugCone (
-				GetWorld () ,
-				Center ,
-				Forward ,
-				Radius ,
-				AngleRadian ,
-				0.005f ,
-				50 ,
-				FColor::Green ,
-				false ,
-				-1.0f ,
-				0 ,
-				2.0f
-			);
+			//DrawDebugCone (
+			//	GetWorld () ,
+			//	Center ,
+			//	Forward ,
+			//	Radius ,
+			//	AngleRadian ,
+			//	0.005f ,
+			//	50 ,
+			//	FColor::Green ,
+			//	false ,
+			//	-1.0f ,
+			//	0 ,
+			//	2.0f
+			//);
 		}
 	}
 
