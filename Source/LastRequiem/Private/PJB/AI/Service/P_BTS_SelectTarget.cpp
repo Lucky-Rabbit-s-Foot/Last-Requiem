@@ -12,6 +12,7 @@
 #include "PJB/System/P_GameStateBase.h"
 #include "PJB/Enemy/P_EnemyBase.h"
 #include "PJB/AI/P_AIControllerEnemyBase.h"
+#include "PJB/Obstacle/P_Obstacle.h"
 
 UP_BTS_SelectTarget::UP_BTS_SelectTarget ()
 {
@@ -47,7 +48,7 @@ void UP_BTS_SelectTarget::TickNode ( UBehaviorTreeComponent& OwnerComp , uint8* 
 		for (AActor* Actor : PerceivedActors)
 		{
 			if (!HasGameplayTag ( Actor , UnitTag )) continue;
-			
+
 			float DistSq = FVector::DistSquared ( OwnLocation , Actor->GetActorLocation () );
 			if (DistSq < ClosestDistSq)
 			{
@@ -82,7 +83,12 @@ void UP_BTS_SelectTarget::TickNode ( UBehaviorTreeComponent& OwnerComp , uint8* 
 			{
 				AActor* Actor = Result.GetActor ();
 				if (!IsValid ( Actor ) || !HasGameplayTag ( Actor , ObstacleTag )) continue;
-			
+				
+				if (AP_Obstacle* Obstacle = Cast<AP_Obstacle> ( Actor ))
+				{
+					if (Obstacle->IsBroken ()) continue;
+				}
+
 				float DistSq = FVector::DistSquared ( OwnLocation , Actor->GetActorLocation () );
 				if(DistSq < MinDistSq)
 				{
@@ -97,7 +103,6 @@ void UP_BTS_SelectTarget::TickNode ( UBehaviorTreeComponent& OwnerComp , uint8* 
 	if (!FinalTarget)
 	{
 		FinalTarget = AIC->GetCachedFortress ();
-		//LOG_MESSAGE ( Warning , TEXT ( "Selecting Fortress as Target : %s" ) , FinalTarget ? *FinalTarget->GetName () : nullptr );
 		if (FinalTarget)
 		{
 			FinalTypeInt = 3;

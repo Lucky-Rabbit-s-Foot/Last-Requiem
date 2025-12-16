@@ -19,6 +19,8 @@ public:
 	AP_Fortress();
 
 	virtual void GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const override;
+
+	bool IsBroken () const { return bIsBroken; }
 protected:
 	virtual void BeginPlay() override;
 

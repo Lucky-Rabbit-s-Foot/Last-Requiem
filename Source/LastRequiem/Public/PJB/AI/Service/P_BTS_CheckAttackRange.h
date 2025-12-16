@@ -18,9 +18,6 @@ protected:
 
 public:
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "AI|Attack" )
-	float AttackRange = 200.0f;
-
-	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "AI|Attack" )
 	FBlackboardKeySelector TargetActorKey;
 
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "AI|Attack" )
