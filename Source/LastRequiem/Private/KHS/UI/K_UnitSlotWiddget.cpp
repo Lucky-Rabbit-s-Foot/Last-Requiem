@@ -5,11 +5,13 @@
 
 #include <string>
 
+#include "BJM/Unit/B_UnitBase.h"
 #include "KHS/Util/K_LoggingSystem.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "Dataflow/DataflowMathNodes.h"
 #include "KHS/UI/K_UIManagerSubsystem.h"
 
 void UK_UnitSlotWiddget::NativeConstruct()
@@ -75,16 +77,27 @@ void UK_UnitSlotWiddget::OnSlotClicked()
 		return;
 	}
 	
-	UK_UIManagerSubsystem* uiManager = GetGameInstance()->GetSubsystem<UK_UIManagerSubsystem>();
-	if (uiManager && unitDetailPopupUI)
+	//연결된 유닛이 있을때 클릭 델리게이트 브로드캐스트
+	if (linkedUnit.IsValid())
 	{
-		UK_BaseUIWidget* detailPopUpUI = uiManager->OpenUI<UK_BaseUIWidget>(unitDetailPopupUI);
-		
-		if (detailPopUpUI)
+		AB_UnitBase* unit = Cast<AB_UnitBase>(linkedUnit.Get());
+		if (unit && unit->IsAlive())
 		{
-			//detailPopupUI->SetUnitData
+			onSlotClickedDel.Broadcast(linkedUnit.Get());
 		}
 	}
+	
+	//TODO : 상세 팝업UI를 만들어서 유닛별 상태 보여주기 추가 구현 시 
+	// UK_UIManagerSubsystem* uiManager = GetGameInstance()->GetSubsystem<UK_UIManagerSubsystem>();
+	// if (uiManager && unitDetailPopupUI)
+	// {
+	// 	UK_BaseUIWidget* detailPopUpUI = uiManager->OpenUI<UK_BaseUIWidget>(unitDetailPopupUI);
+	// 	
+	// 	if (detailPopUpUI)
+	// 	{
+	// 		//detailPopupUI->SetUnitData
+	// 	}
+	// }
 }
 
 void UK_UnitSlotWiddget::UpdateUnitData(const FUnitProfileData& newData)
@@ -92,6 +105,16 @@ void UK_UnitSlotWiddget::UpdateUnitData(const FUnitProfileData& newData)
 	cachedUnitData = newData;
 	
 	bIsActive = true;
+	
+	if (UnitName)
+	{
+		UnitName->SetText(newData.UnitName);
+	}
+	
+	if (ProfileImage && newData.ProfileImage)
+	{
+		ProfileImage->SetBrushFromTexture(newData.ProfileImage);
+	}
 	
 	//목표값은 Unit의 가장 최신 수치 반영
 	targetDisplayedHP = newData.CurrentHP;
@@ -107,26 +130,27 @@ void UK_UnitSlotWiddget::UpdateUnitData(const FUnitProfileData& newData)
 	{
 		currentDisplayedSP = targetDisplayedSP;
 	}
-
 	
 	if (!newData.bIsAlive)
 	{
 		SetSlotState(EUnitSlotState::DEAD);
 	}
-	
-	// const FString state = (newData.bIsAlive == true? TEXT("Alive") : TEXT("Dead"));
-	// KHS_SCREEN_INFO(TEXT("UpdateUnitData Called - HP : %f -> %f, SP : %f -> %f, State - %s"), 
-	// 	currentDisplayedHP, targetDisplayedHP, currentDisplayedSP, targetDisplayedSP, *state);	
 }
 
 
 void UK_UnitSlotWiddget::SetSlotState(EUnitSlotState newState)
 {
 	currentState = newState;
-	UpdateVisualState();
+	
+	UpdateSlotVisualState();
 }
 
-void UK_UnitSlotWiddget::UpdateVisualState()
+void UK_UnitSlotWiddget::SetLinkedUnit(AActor* targetUnit)
+{
+	linkedUnit = targetUnit;
+}
+
+void UK_UnitSlotWiddget::UpdateSlotVisualState()
 {
 	if (!BackgroundImg)
 	{
@@ -138,40 +162,39 @@ void UK_UnitSlotWiddget::UpdateVisualState()
 	{
 		case EUnitSlotState::DETECTED:
 		{
-			BackgroundImg->SetColorAndOpacity(FLinearColor(0.0f, 0.0f, 1.0f, 0.5f)); 
-			if (DeadText)
-			{
-				DeadText->SetVisibility(ESlateVisibility::Hidden);
-			}
+			SetSlotVisualState(FLinearColor(0.0f, 0.0f, 1.0f, 0.5f), ESlateVisibility::Hidden, true);
 		}
 		break;
 	case EUnitSlotState::UNDETECTED:
 		{
-			BackgroundImg->SetColorAndOpacity(FLinearColor(0.3f, 0.3f, 0.3f, 0.5f)); 
-			if (DeadText)
-			{
-				DeadText->SetVisibility(ESlateVisibility::Hidden);
-			}
+			SetSlotVisualState(FLinearColor(0.3f, 0.3f, 0.3f, 0.5f), ESlateVisibility::Hidden, true);
 		}
 		break;
 	case EUnitSlotState::DEAD:
 		{
-			BackgroundImg->SetColorAndOpacity(FLinearColor(0.5f, 0.0f, 0.0f, 0.5f)); 
-			if (DeadText)
-			{
-				DeadText->SetVisibility(ESlateVisibility::Visible);
-			}
+			SetSlotVisualState(FLinearColor(0.5f, 0.0f, 0.0f, 0.5f), ESlateVisibility::Visible, false);
 		}
 		break;
 		
 	default:
 		{
-			BackgroundImg->SetColorAndOpacity(FLinearColor(0.3f, 0.3f, 0.3f, 0.5f)); 
-			if (DeadText)
-			{
-				DeadText->SetVisibility(ESlateVisibility::Hidden);
-			}
+			SetSlotVisualState(FLinearColor(0.3f, 0.3f, 0.3f, 0.5f), ESlateVisibility::Hidden, false);
 		}
 		break;
+	}
+}
+
+void UK_UnitSlotWiddget::SetSlotVisualState(FLinearColor color, ESlateVisibility visibility, bool bIsEnable)
+{
+	BackgroundImg->SetColorAndOpacity(color); 
+	
+	if (DeadText)
+	{
+		DeadText->SetVisibility(visibility);
+	}
+	
+	if (SlotButton)
+	{
+		SlotButton->SetIsEnabled(bIsEnable);	
 	}
 }

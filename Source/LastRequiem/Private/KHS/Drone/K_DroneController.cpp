@@ -10,9 +10,12 @@
 #include "KHS/UI/K_UnitListWidget.h"
 
 #include "KWB/UI/Monitor/W_SituationMapWidget.h"
+#include "KWB/UI/W_MapWidget.h"
 
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "BJM/Unit/B_UnitBase.h"
+#include "KHS/Util/K_LoggingSystem.h"
 
 void AK_DroneController::BeginPlay()
 {
@@ -62,8 +65,98 @@ void AK_DroneController::InitializePersistentUI()
 	if (UIManager)
 	{
 		UIManager->OpenUI<UK_HUDWidget>(hudWidget);
-		UIManager->OpenUI<UK_UnitListWidget>(unitListWidget);
+		cachedUnitListUI = UIManager->OpenUI<UK_UnitListWidget>(unitListWidget);
+		
+		BindPersistentUIDelegates();
 	}
+}
+
+void AK_DroneController::BindPersistentUIDelegates()
+{
+	if (bPersistentUIBound)
+	{
+		return;
+	}
+	
+	//캐싱된 UnitList UI의 유닛 선택 델리게이트 구독
+	if (cachedUnitListUI)
+	{
+		cachedUnitListUI->onUnitListSelectedDel.AddDynamic(this, &AK_DroneController::HandleUnitSelected);
+	}
+	
+	bPersistentUIBound = true;
+}
+
+void AK_DroneController::BindSituaionMapUIDelegates(class UW_SituationMapWidget* situationUI)
+{
+	if (!situationUI || bSituationMapUIBound)
+	{
+		return;
+	}
+	
+	cachedSituationUI = situationUI;
+	cachedMapWidget =situationUI->GetRenderedMap();
+	
+	//버튼 델리게이트 연결
+	situationUI->OnAttackButtonClicked.AddDynamic(this, &AK_DroneController::HandleAttackButtonClicked);
+	situationUI->OnStopButtonClicked.AddDynamic(this, &AK_DroneController::HandleStopButtonClicked);
+	situationUI->OnHoldButtonClicked.AddDynamic(this, &AK_DroneController::HandleHoldButtonClicked);
+	situationUI->OnRetreatButtonClicked.AddDynamic(this, &AK_DroneController::HandleRetreatButtonClicked);
+	
+	//맵 델리게이트 연결
+	if (cachedMapWidget)
+	{
+		cachedMapWidget->OnMapUnitSelected.AddDynamic(this, &AK_DroneController::HandleUnitSelected);
+		cachedMapWidget->OnMapMoveCommand.AddDynamic(this, &AK_DroneController::HandleMapMoveCommand);
+	}
+	
+	bPersistentUIBound = true;
+}
+
+void AK_DroneController::UnbindPersistentUIDelegates()
+{
+	if (!bPersistentUIBound)
+	{
+		return;
+	}
+	
+	//캐싱된 UnitList UI의 유닛 선택 델리게이트 구독 해제
+	if (cachedUnitListUI)
+	{
+		cachedUnitListUI->onUnitListSelectedDel.RemoveDynamic(this, &AK_DroneController::HandleUnitSelected);
+	}
+	
+	cachedUnitListUI = nullptr;
+	bPersistentUIBound = false;
+}
+
+void AK_DroneController::UnbindSituationMapUIDelegates()
+{
+	if (!bSituationMapUIBound)
+	{
+		return;
+	}
+	
+	//버튼 델리게이트 연결
+	if (cachedSituationUI)
+	{
+		cachedSituationUI->OnAttackButtonClicked.RemoveDynamic(this, &AK_DroneController::HandleAttackButtonClicked);
+		cachedSituationUI->OnStopButtonClicked.RemoveDynamic(this, &AK_DroneController::HandleStopButtonClicked);
+		cachedSituationUI->OnHoldButtonClicked.RemoveDynamic(this, &AK_DroneController::HandleHoldButtonClicked);
+		cachedSituationUI->OnRetreatButtonClicked.RemoveDynamic(this, &AK_DroneController::HandleRetreatButtonClicked);
+	}
+	
+	
+	//맵 델리게이트 연결
+	if (cachedMapWidget)
+	{
+		cachedMapWidget->OnMapUnitSelected.RemoveDynamic(this, &AK_DroneController::HandleUnitSelected);
+		cachedMapWidget->OnMapMoveCommand.RemoveDynamic(this, &AK_DroneController::HandleMapMoveCommand);
+	}
+	
+	cachedSituationUI = nullptr;
+	cachedMapWidget = nullptr;
+	bPersistentUIBound = false;
 }
 
 
@@ -149,6 +242,7 @@ void AK_DroneController::OnToggleSituationMapUI(const FInputActionValue& value)
 	if (minimapUI->IsOpen())
 	{
 		//이미 열려있으면 닫고 델리게이트 구독 해제
+		UnbindSituationMapUIDelegates();
 		UIManger->CloseUI<UW_SituationMapWidget>();
 		minimapUI->onCloseUIRequested.RemoveDynamic(this, &AK_DroneController::HandleUICloseReqeust);
 	}
@@ -157,6 +251,7 @@ void AK_DroneController::OnToggleSituationMapUI(const FInputActionValue& value)
 		//닫혀있으면 열고 델리게이트 구독
 		UIManger->OpenUI<UW_SituationMapWidget>(mapWidget);
 		minimapUI->onCloseUIRequested.AddDynamic(this, &AK_DroneController::HandleUICloseReqeust);
+		BindSituaionMapUIDelegates(minimapUI);
 	}
 }
 
@@ -197,11 +292,104 @@ void AK_DroneController::HandleUICloseReqeust(class UK_BaseUIWidget* requestWidg
 		return;
 	}
 	
+	//SituaionMap인 경우엔 별도로 델리게이트 구독해제 작업
+	UW_SituationMapWidget* situationUi = Cast<UW_SituationMapWidget>(requestWidget);
+	if (situationUi)
+	{
+		UnbindSituationMapUIDelegates();
+	}
+	
 	//인스턴스로 직접 닫는 오버로딩 CloseUI함수 호출
 	UIManager->CloseUI(requestWidget);
 	
 	//델리게이트 구독 해제
 	requestWidget->onCloseUIRequested.RemoveDynamic(this, &AK_DroneController::HandleUICloseReqeust);
+}
+
+void AK_DroneController::HandleUnitSelected(AActor* selectedActor)
+{
+	AB_UnitBase* unit = Cast<AB_UnitBase>(selectedActor);
+	if (unit && unit->IsAlive())
+	{
+		selectedUnit = unit;
+		
+		if (cachedMapWidget)
+		{
+			cachedMapWidget->SetSelectedUnit(unit);
+		}
+		
+		KHS_SCREEN_INFO(TEXT("Unit Selected : %s"), *unit->GetName());
+		
+		//TODO : 선택 피드백 - 하이라이트,  UI업데이트..
+	}
+	else
+	{
+		selectedUnit = nullptr;
+		if (cachedMapWidget)
+		{
+			cachedMapWidget->SetSelectedUnit(nullptr);
+		}
+	}
+}
+
+void AK_DroneController::HandleMapMoveCommand(AActor* targetUnit, FVector dest)
+{
+	AB_UnitBase* unit = Cast<AB_UnitBase>(targetUnit);
+	if (!unit || !unit->IsAlive())
+	{
+		return;
+	}
+	
+	unit->CommandMoveToLocation(dest);
+	KHS_SCREEN_INFO(TEXT("Move Command : %s to %s"), *unit->GetName(), *dest.ToString());
+}
+
+void AK_DroneController::HandleAttackButtonClicked()
+{
+	AB_UnitBase* unit = selectedUnit.Get();
+	if (!unit || !unit->IsAlive())
+	{
+		KHS_WARN(TEXT("Attack : No Valid Unit Selected"));
+		return;
+	}
+	
+	unit->OnAttackButtonClicked_Unit();
+}
+
+void AK_DroneController::HandleStopButtonClicked()
+{
+	AB_UnitBase* unit = selectedUnit.Get();
+	if (!unit || !unit->IsAlive())
+	{
+		KHS_WARN(TEXT("Stop : No Valid Unit Selected"));
+		return;
+	}
+	
+	unit->OnStopButtonClicked_Unit();
+}
+
+void AK_DroneController::HandleHoldButtonClicked()
+{
+	AB_UnitBase* unit = selectedUnit.Get();
+	if (!unit || !unit->IsAlive())
+	{
+		KHS_WARN(TEXT("Hold : No Valid Unit Selected"));
+		return;
+	}
+	
+	unit->OnHoldButtonClicked_Unit();
+}
+
+void AK_DroneController::HandleRetreatButtonClicked()
+{
+	AB_UnitBase* unit = selectedUnit.Get();
+	if (!unit || !unit->IsAlive())
+	{
+		KHS_WARN(TEXT("Retreat : No Valid Unit Selected"));
+		return;
+	}
+	
+	unit->OnRetreatButtonClicked_Unit();
 }
 
 
