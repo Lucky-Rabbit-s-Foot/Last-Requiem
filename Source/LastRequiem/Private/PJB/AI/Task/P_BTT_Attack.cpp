@@ -26,6 +26,7 @@ EBTNodeResult::Type UP_BTT_Attack::ExecuteTask ( UBehaviorTreeComponent& OwnerCo
 	if (AttackMontage)
 	{
 		Attacker->PlayAnimMontage ( AttackMontage );
+
 		return EBTNodeResult::InProgress;
 	}
 	return EBTNodeResult::Failed;

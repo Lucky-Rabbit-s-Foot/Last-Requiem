@@ -1,5 +1,6 @@
 ﻿#include "PJB/Component/P_CombatComponent.h"
 
+#include "LastRequiem.h"
 #include "Kismet/GameplayStatics.h"
 
 UP_CombatComponent::UP_CombatComponent()
@@ -44,6 +45,13 @@ void UP_CombatComponent::OnAttack(AActor* Target)
 		GetOwner(),
 		UDamageType::StaticClass()
 	);
+
+	//LOG_MESSAGE ( Log , TEXT ( "ApplyDamage: Target=%s, Damage=%.2f, Instigator=%s, Causer=%s" ) ,
+	//	*GetNameSafe ( Target ) ,
+	//	AttackPower ,
+	//	*GetNameSafe ( GetOwner ()->GetInstigatorController () ) ,
+	//	*GetNameSafe ( GetOwner () )
+	//);
 }
 
 void UP_CombatComponent::OnDie()
