@@ -10,6 +10,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam (FOnStateChanged, EUnitBehaviorState, NewState );
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams (FOnStatChanged, float, Current, float, Max );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnCombatStateChanged , bool , bInCombat );
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -65,6 +66,8 @@ public:
 	UPROPERTY (BlueprintAssignable)
 	FOnStatChanged OnSanityChanged;
 
+	UPROPERTY ( BlueprintAssignable , Category = "Unit|Event" )
+	FOnCombatStateChanged OnCombatStateChanged;
 
 	UFUNCTION (BlueprintCallable, Category = "Unit|Logic")
 	void ReduceHP ( float InDamage );
