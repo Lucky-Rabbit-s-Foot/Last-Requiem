@@ -75,6 +75,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Components")
 	TObjectPtr<class UCameraComponent> cameraComp;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Components")
+	TObjectPtr<class UIndicatorSpriteComponent> indicatorComp;
+	
 	//Data
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Data")
 	TObjectPtr<class UK_DroneData> droneData;
