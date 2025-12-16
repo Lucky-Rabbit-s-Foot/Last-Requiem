@@ -3,6 +3,9 @@
 
 #include "KHS/UI/K_UnitSlotWiddget.h"
 
+#include <string>
+
+#include "KHS/Util/K_LoggingSystem.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
 #include "Components/ProgressBar.h"
@@ -36,23 +39,22 @@ bool UK_UnitSlotWiddget::CanUpdateUIData(float TimeDelta)
 {
 	if (currentState != EUnitSlotState::DETECTED)
 	{
+		bIsActive = false;
+		
 		return false;
 	}
 	
-	//HP, SP bar 보간
-	if (bIsActive && FMath::Abs(currentDisplayedHP - targetDisplayedHP) > 0.1f)
+	//HP, SP bar 보간 (Active일때만 업데이트 작동)
+	if (bIsActive)
 	{
-		currentDisplayedHP = FMath::FInterpTo(currentDisplayedHP, targetDisplayedHP, currentDisplayedHP, TimeDelta);
+		currentDisplayedHP = FMath::FInterpTo(currentDisplayedHP, targetDisplayedHP, TimeDelta, UI_INTERP_SPEED);
 		
 		if (HPBar)
 		{
 			float percent = cachedUnitData.MaxHP > 0? currentDisplayedHP / cachedUnitData.MaxHP : 0.f;
 			HPBar->SetPercent(percent);
 		}
-	}
-	
-	if (bIsActive && FMath::Abs(currentDisplayedSP - targetDisplayedSP) > 0.1f)
-	{
+		
 		currentDisplayedSP = FMath::FInterpTo(currentDisplayedSP, targetDisplayedSP, currentDisplayedSP, TimeDelta);
 		
 		if (SPBar)
@@ -61,6 +63,7 @@ bool UK_UnitSlotWiddget::CanUpdateUIData(float TimeDelta)
 			SPBar->SetPercent(percent);
 		}
 	}
+	
 	return true;
 }
 
@@ -87,9 +90,14 @@ void UK_UnitSlotWiddget::OnSlotClicked()
 void UK_UnitSlotWiddget::UpdateUnitData(const FUnitProfileData& newData)
 {
 	cachedUnitData = newData;
-	targetDisplayedHP = newData.MaxHP;
-	targetDisplayedSP = newData.MaxSanity;
 	
+	bIsActive = true;
+	
+	//목표값은 Unit의 가장 최신 수치 반영
+	targetDisplayedHP = newData.CurrentHP;
+	targetDisplayedSP = newData.CurrentSanity;
+	
+	//첫 초기화 시에만 즉시 설정
 	if (currentDisplayedHP == 0.0f)
 	{
 		currentDisplayedHP = targetDisplayedHP;
@@ -99,11 +107,16 @@ void UK_UnitSlotWiddget::UpdateUnitData(const FUnitProfileData& newData)
 	{
 		currentDisplayedSP = targetDisplayedSP;
 	}
+
 	
 	if (!newData.bIsAlive)
 	{
 		SetSlotState(EUnitSlotState::DEAD);
 	}
+	
+	// const FString state = (newData.bIsAlive == true? TEXT("Alive") : TEXT("Dead"));
+	// KHS_SCREEN_INFO(TEXT("UpdateUnitData Called - HP : %f -> %f, SP : %f -> %f, State - %s"), 
+	// 	currentDisplayedHP, targetDisplayedHP, currentDisplayedSP, targetDisplayedSP, *state);	
 }
 
 

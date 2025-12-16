@@ -58,6 +58,8 @@ void UB_UnitStatusComponent::ReduceHP (float InDamage)
 	}
 
 	ModifySanity (-InDamage * 0.1f);
+
+	
 }
 
 void UB_UnitStatusComponent::ModifySanity (float InAmount)

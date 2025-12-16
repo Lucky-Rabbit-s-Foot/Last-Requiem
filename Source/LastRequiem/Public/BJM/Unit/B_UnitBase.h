@@ -39,8 +39,17 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	UPROPERTY ( VisibleAnywhere , BlueprintReadWrite , Category = "Unit|Visual" )
+	USkeletalMeshComponent* WeaponMesh;
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadWrite , Category = "Unit|Visual" )
+	class USpotLightComponent* GunFlashlight;
+
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Unit|Component" )
 	UB_UnitStatusComponent* StatusComponent;
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Unit|Component" )
+	UIndicatorSpriteComponent* IndicatorSprite = nullptr;
 
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
 	FGameplayTagContainer GameplayTags;
@@ -51,9 +60,6 @@ public:
 	// 위젯 찾게 돌리는거
 	UFUNCTION ()
 	void FindMapWidgetLoop ();
-
-	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Unit|Component" )
-	UIndicatorSpriteComponent* IndicatorSprite = nullptr;
 
 protected:
 	float OriginalAttackDamage;
@@ -72,6 +78,10 @@ public:
 	UFUNCTION ( BlueprintCallable , Category = "Unit|Data" )
 	FUnitProfileData GetUnitProfileData ();
 
+
+	FUnitProfileData UnitUpdateData;
+	
+
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Setting" )
 	EUnitType UnitType;
 
@@ -80,6 +90,8 @@ public:
 
 	virtual void OnConstruction ( const FTransform& Transform ) override;
 
+protected:
+	void UnitDataUpdate ();
 
 public:
 
@@ -167,5 +179,14 @@ public:
 	);
 
 	void OnDie_Unit ();
+
+protected:
+
+	UFUNCTION ()
+	void OnHPChanged_Wrapper ( float InCurrentHP , float InMaxHP );
+	
+	UFUNCTION ()
+	void OnSanityChanged_Wrapper ( float InCurrentSanity , float InMaxSanity );
+
 
 };
