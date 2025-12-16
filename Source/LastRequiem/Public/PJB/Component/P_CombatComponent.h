@@ -17,6 +17,7 @@ protected:
 	virtual void BeginPlay() override;
 	
 public:
+	void InitStats ( float InMaxHealth , float InAttackRange , float InAttackPower );
 	inline bool IsCombat() { return bIsCombat; }
 
 	void TakeDamage(float InDamage);
@@ -27,7 +28,6 @@ public:
 	inline float GetHealth() { return Health; }
 	inline float GetAttackRange() { return AttackRange; }
 	inline float GetAttackPower() { return AttackPower; }
-	inline float GetTerrorValue() { return TerrorValue; }
 	inline bool IsAlive() { return bIsAlive; }
 
 private:
@@ -43,9 +43,6 @@ protected:
 	float AttackRange = 100.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Data|Combat")
 	float AttackPower = 10.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Data|Terror")
-	float TerrorValue = 5.0f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Data|Combat")
 	bool bIsCombat = false;

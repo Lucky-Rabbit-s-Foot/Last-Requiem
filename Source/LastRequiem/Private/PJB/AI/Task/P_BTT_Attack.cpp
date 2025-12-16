@@ -5,40 +5,51 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "PJB/Component/P_CombatComponent.h"
+#include "PJB/Enemy/P_EnemyBase.h"
 
 UP_BTT_Attack::UP_BTT_Attack ()
 {
 	NodeName = TEXT ( "Attack" );
+
+	bNotifyTick = true;
+	bCreateNodeInstance = true;
 }
 
 EBTNodeResult::Type UP_BTT_Attack::ExecuteTask ( UBehaviorTreeComponent& OwnerComp , uint8* NodeMemory )
 {
 	AAIController* AIC = OwnerComp.GetAIOwner ();
-	APawn* Attacker = AIC ? AIC->GetPawn () : nullptr;
-	UBlackboardComponent* BB = OwnerComp.GetBlackboardComponent ();
+	AP_EnemyBase* Attacker = AIC ? Cast<AP_EnemyBase> ( AIC->GetPawn () ) : nullptr;
 
-	if (!Attacker || !BB) return EBTNodeResult::Failed;
+	if (!Attacker) return EBTNodeResult::Failed;
 
-	AActor* Target = Cast<AActor> ( BB->GetValueAsObject ( TargetActorKey.SelectedKeyName ) );
-	//LOG_MESSAGE ( Log , TEXT ( "UP_BTT_Attack::ExecuteTask : Attacking Target : %s" ) , Target ? *Target->GetName () : TEXT ( "None" ) );
-	if (Target)
+	UAnimMontage* AttackMontage = Attacker->GetAttackMontage ();
+	if (AttackMontage)
 	{
-		UP_CombatComponent* CombatComp = Attacker->FindComponentByClass<UP_CombatComponent> ();
-		if(CombatComp)
-		{
-			CombatComp->OnAttack(Target);
-		}
-		else
-		{
-			UGameplayStatics::ApplyDamage (
-				Target ,
-				DamageAmount ,
-				AIC ,
-				Attacker ,
-				UDamageType::StaticClass ()
-			);
-		}
-		return EBTNodeResult::Succeeded;
+		Attacker->PlayAnimMontage ( AttackMontage );
+		return EBTNodeResult::InProgress;
 	}
 	return EBTNodeResult::Failed;
+}
+
+void UP_BTT_Attack::TickTask ( UBehaviorTreeComponent& OwnerComp , uint8* NodeMemory , float DeltaSeconds )
+{
+	Super::TickTask ( OwnerComp , NodeMemory , DeltaSeconds );
+
+	AAIController* AIC = OwnerComp.GetAIOwner ();
+	AP_EnemyBase* Attacker = AIC ? Cast<AP_EnemyBase> ( AIC->GetPawn () ) : nullptr;
+
+	if (!Attacker)
+	{
+		FinishLatentTask ( OwnerComp , EBTNodeResult::Failed );
+		return;
+	}
+
+	UAnimMontage* AttackMontage = Attacker->GetAttackMontage ();
+	UAnimInstance* AnimInstance = Attacker->GetMesh ()->GetAnimInstance ();
+
+	bool bIsPlayingMontage = AnimInstance && AnimInstance->IsAnyMontagePlaying ();
+	if(!bIsPlayingMontage)
+	{
+		FinishLatentTask ( OwnerComp , EBTNodeResult::Succeeded );
+	}
 }

@@ -14,6 +14,14 @@ void UP_CombatComponent::BeginPlay()
 	InitPrimitiveValues();
 }
 
+void UP_CombatComponent::InitStats ( float InMaxHealth , float InAttackRange , float InAttackPower )
+{
+	MaxHealth = InMaxHealth;
+	AttackRange = InAttackRange;
+	AttackPower = InAttackPower;
+	Health = MaxHealth;
+}
+
 void UP_CombatComponent::TakeDamage(float InDamage)
 {
 	Health -= InDamage;
