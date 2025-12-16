@@ -35,7 +35,7 @@ public:
 	UPROPERTY (EditAnywhere, BlueprintReadWrite, Category = "Unit|Stat")
 	float MaxHP = 100.0f;
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Stat")
-	float CurrentHP;
+	float CurrentHP = 100.0f;
 
 	// 정신력
 	UPROPERTY (EditAnywhere, BlueprintReadWrite, Category = "Unit|Stat")

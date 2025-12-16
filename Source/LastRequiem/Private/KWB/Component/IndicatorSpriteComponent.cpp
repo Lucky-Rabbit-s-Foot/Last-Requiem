@@ -15,7 +15,7 @@ UIndicatorSpriteComponent::UIndicatorSpriteComponent ()
 	DefaultRelativeTransform = FTransform (
 		FRotator ( 0.f , 0.f , -90.f ) ,	// 기준 순서 : Pitch, Yaw, Roll | 엔진에서는 Roll, Pitch, Yaw
 		FVector ( 0.f , 0.f , 300.f ) ,		// TEMP : 레벨 구성 완료 후 결정
-		FVector ( 0.35f , 0.35f , 0.35f )   // TEMP : 알파 게임 플레이 후 결정
+		FVector ( 0.35f , 0.35f , 0.35f )   // TEMP : 알파 게임 플레이 후 결정 !!사이즈 변경 시 W_MapWidget에서 UnitSelectionRadius 값 변경할 것!!
 	);
 
 	// 상태/Glow 기본값
@@ -26,15 +26,15 @@ UIndicatorSpriteComponent::UIndicatorSpriteComponent ()
 	bGlowActive = false;
 	GlowTime = 0.0f;
 
-	//// 스프라이트 설정
-	//SetCollisionEnabled ( ECollisionEnabled::NoCollision );
-	//SetCastShadow ( false );
-	//SetReceivesDecals ( false );
+	// 스프라이트 설정
+	SetCollisionEnabled ( ECollisionEnabled::NoCollision );
+	SetCastShadow ( false );
+	SetReceivesDecals ( false );
 
-	//// TEMP : 디버그용으로 잠시 꺼둠
-	////bVisibleInSceneCaptureOnly = true;	// SceneCapture에서만 표시
-	//bHiddenInGame = false;				// TEMP : 게임 카메라에는 안 보이지만 SceneCapture에는 보이게 / 설정 바꿔가면서 더 편한 것으로 결정 예정
-	//SetVisibility ( true , true );
+	// TEST : 확인 필요
+	bVisibleInSceneCaptureOnly = true;	// SceneCapture에서만 표시
+	bHiddenInGame = false;
+	SetVisibility ( true , true );
 }
 
 void UIndicatorSpriteComponent::BeginPlay ()
