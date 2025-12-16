@@ -9,8 +9,6 @@ AP_Fortress::AP_Fortress()
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent> ( TEXT ( "Mesh" ) );
 	SetRootComponent ( Mesh );
 
-	static FGameplayTag FortressTag = FGameplayTag::RequestGameplayTag ( FName ( "Fortress" ) );
-	GameplayTags.AddTag ( FortressTag );
 }
 
 void AP_Fortress::GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const
@@ -31,6 +29,9 @@ void AP_Fortress::BeginPlay()
 	OnTakeAnyDamage.AddDynamic ( this , &AP_Fortress::OnTakeDamage );
 
 	Mesh->SetCanEverAffectNavigation ( false );
+
+	static FGameplayTag FortressTag = FGameplayTag::RequestGameplayTag ( FName ( "Fortress" ) );
+	GameplayTags.AddTag ( FortressTag );
 }
 
 void AP_Fortress::OnTakeDamage ( AActor* DamagedActor , float Damage , const UDamageType* DamageType , AController* InstigateBy , AActor* DamageCauser )
