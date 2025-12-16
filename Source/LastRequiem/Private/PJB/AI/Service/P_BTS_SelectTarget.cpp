@@ -97,7 +97,7 @@ void UP_BTS_SelectTarget::TickNode ( UBehaviorTreeComponent& OwnerComp , uint8* 
 	if (!FinalTarget)
 	{
 		FinalTarget = AIC->GetCachedFortress ();
-		LOG_MESSAGE ( Warning , TEXT ( "Selecting Fortress as Target : %s" ) , FinalTarget ? *FinalTarget->GetName () : nullptr );
+		//LOG_MESSAGE ( Warning , TEXT ( "Selecting Fortress as Target : %s" ) , FinalTarget ? *FinalTarget->GetName () : nullptr );
 		if (FinalTarget)
 		{
 			FinalTypeInt = 3;
