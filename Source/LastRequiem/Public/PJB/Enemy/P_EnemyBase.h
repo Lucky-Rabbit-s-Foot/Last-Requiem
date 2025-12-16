@@ -57,8 +57,6 @@ private:
 	void OnDie ();
 	void OnDeactivate ();
 
-	void AIPathVisualization ();
-
 public:
 	FOnEnemyDieDelegate OnEnemyDieDelegate;
 

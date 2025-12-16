@@ -9,7 +9,7 @@
 #include "PJB/Data/P_EnemyDataAsset.h"
 #include "PJB/Enemy/P_AnimInstanceEnemyBase.h"
 #include "KWB/Component/IndicatorSpriteComponent.h"
-
+#include "BrainComponent.h"
 
 #include "Navigation/PathFollowingComponent.h"
 
@@ -149,8 +149,9 @@ void AP_EnemyBase::OnDeactivate()
 	}
 
 	AP_AIControllerEnemyBase* AIC = Cast<AP_AIControllerEnemyBase>(GetController());
-	if (AIC)
+	if (AIC && AIC->GetBrainComponent())
 	{
+		AIC->GetBrainComponent ()->StopLogic ( TEXT ( "Enemy Dead" ) );
 		AIC->StopMovement();
 	}
 
@@ -163,6 +164,14 @@ void AP_EnemyBase::OnDeactivate()
 	GetCharacterMovement()->StopMovementImmediately();
 	GetCharacterMovement()->DisableMovement();	
 	GetCharacterMovement ()->SetComponentTickEnabled ( false );
+
+	if(USkeletalMeshComponent* SkeletalMeshComp = GetMesh())
+	{
+		if(UP_AnimInstanceEnemyBase* AnimInst = Cast<UP_AnimInstanceEnemyBase>(SkeletalMeshComp->GetAnimInstance()))
+		{
+			AnimInst->SetDeadState ( true );
+		}
+	}
 
 	SetLifeSpan ( 5.0f );
 }
