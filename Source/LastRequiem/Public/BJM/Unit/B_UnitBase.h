@@ -153,6 +153,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Unit|Attack")
 	void UnitAttack(AActor* TargetActor);
 
+	UFUNCTION(BlueprintCallable, Category = "Unit|Attack")
+	void OnAttackHit_Unit ();
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Animation" )
+	UAnimMontage* AttackMontage;
+
+protected:
+	UPROPERTY ()
+	AActor* CurrentAttackTarget;
+
+public:
+
 	FOnUnitDieDelegate OnUnitDieDelegate;
 
 	UPROPERTY ( BlueprintAssignable , Category = "Unit|Event" )
