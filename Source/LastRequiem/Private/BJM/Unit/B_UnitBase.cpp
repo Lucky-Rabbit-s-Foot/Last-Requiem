@@ -205,7 +205,6 @@ void AB_UnitBase::OnConstruction(const FTransform& Transform)
 
 void AB_UnitBase::UnitDataUpdate ()
 {
-
 	UnitUpdateData.ProfileImage = MyProfileImage;
 	UnitUpdateData.UnitName = MyUnitName;
 	UnitUpdateData.CurrentHP = StatusComponent->CurrentHP;
@@ -542,49 +541,90 @@ float AB_UnitBase::TakeDamage ( float DamageAmount , FDamageEvent const& DamageE
 
 void AB_UnitBase::UnitAttack(AActor* TargetActor)
 {
-	if (TargetActor == nullptr || !bIsAlive) return;
+	//if (TargetActor == nullptr || !bIsAlive) return;
 
-	if (StatusComponent)
-	{
-		if (StatusComponent->CurrentState == EUnitBehaviorState::Panic)
-		{
-			return;
-		}
-	}
+	//if (StatusComponent)
+	//{
+	//	if (StatusComponent->CurrentState == EUnitBehaviorState::Panic)
+	//	{
+	//		return;
+	//	}
+	//}
 
+
+	//FVector LookDir = TargetActor->GetActorLocation () - GetActorLocation ();
+	//LookDir.Z = 0.0f;
+	//FRotator TargetRot = FRotationMatrix::MakeFromX ( LookDir ).Rotator ();
+	//SetActorRotation ( TargetRot );
+
+	//UGameplayStatics::ApplyDamage (
+	//	TargetActor,
+	//	AttackDamage,    
+	//	GetController(),
+	//	this,
+	//	UDamageType::StaticClass () // 데미지 유형
+	//);
+
+	//UE_LOG ( LogTemp , Warning , TEXT ( "% s 공격!" ) , *TargetActor->GetName () );
+
+
+	//FVector MuzzleLoc = GetActorLocation ();
+	//if (GetMesh ()->DoesSocketExist ( MuzzleSocketName ))
+	//{
+	//	MuzzleLoc = GetMesh ()->GetSocketLocation ( MuzzleSocketName );
+	//}
+	//DrawDebugLine ( GetWorld () , MuzzleLoc , TargetActor->GetActorLocation () , FColor::Red , false , 0.2f , 0 , 1.0f );
+
+	//UAISense_Damage::ReportDamageEvent (
+	//	GetWorld () ,
+	//	TargetActor ,                     // 맞은 놈 (적 AI)
+	//	this ,                            // 때린 놈 (플레이어)
+	//	10.0f ,                           // 데미지 양
+	//	this->GetActorLocation () ,       // 때린 위치
+	//	TargetActor->GetActorLocation ()  // 맞은 위치
+	//);
+
+	if (!TargetActor || !bIsAlive) return;
+
+	CurrentAttackTarget = TargetActor;
 
 	FVector LookDir = TargetActor->GetActorLocation () - GetActorLocation ();
 	LookDir.Z = 0.0f;
-	FRotator TargetRot = FRotationMatrix::MakeFromX ( LookDir ).Rotator ();
-	SetActorRotation ( TargetRot );
+	SetActorRotation ( FRotationMatrix::MakeFromX ( LookDir ).Rotator () );
+
+	UAnimInstance* AnimInstance = GetMesh ()->GetAnimInstance ();
+	if (AnimInstance && AttackMontage)
+	{
+		AnimInstance->Montage_Play ( AttackMontage );
+	}
+	else
+	{
+		OnAttackHit_Unit ();
+	}
+}
+
+void AB_UnitBase::OnAttackHit_Unit ()
+{
+	if (!CurrentAttackTarget || !bIsAlive) return;
+
+	float Distance = FVector::Dist ( GetActorLocation () , CurrentAttackTarget->GetActorLocation () );
+	if (Distance > AttackRange + 100.0f) return; 
 
 	UGameplayStatics::ApplyDamage (
-		TargetActor,
-		AttackDamage,    
-		GetController(),
-		this,
-		UDamageType::StaticClass () // 데미지 유형
+		CurrentAttackTarget ,
+		AttackDamage ,
+		GetController () ,
+		this ,
+		UDamageType::StaticClass ()
 	);
-
-	UE_LOG ( LogTemp , Warning , TEXT ( "% s 공격!" ) , *TargetActor->GetName () );
-
 
 	FVector MuzzleLoc = GetActorLocation ();
 	if (GetMesh ()->DoesSocketExist ( MuzzleSocketName ))
 	{
 		MuzzleLoc = GetMesh ()->GetSocketLocation ( MuzzleSocketName );
 	}
-	DrawDebugLine ( GetWorld () , MuzzleLoc , TargetActor->GetActorLocation () , FColor::Red , false , 0.2f , 0 , 1.0f );
 
-	UAISense_Damage::ReportDamageEvent (
-		GetWorld () ,
-		TargetActor ,                     // 맞은 놈 (적 AI)
-		this ,                            // 때린 놈 (플레이어)
-		10.0f ,                           // 데미지 양
-		this->GetActorLocation () ,       // 때린 위치
-		TargetActor->GetActorLocation ()  // 맞은 위치
-	);
-
+	UE_LOG ( LogTemp , Warning , TEXT ( "타격" ) );
 }
 
 void AB_UnitBase::SetCombatState_Unit ( bool bInCombat )
@@ -719,12 +759,12 @@ void AB_UnitBase::OnDie_Unit ()
 	GetCapsuleComponent ()->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
 	GetCapsuleComponent ()->SetCollisionResponseToAllChannels ( ECR_Ignore );
 
-	GetMesh ()->SetCollisionProfileName ( TEXT ( "Ragdoll" ) );
-	GetMesh ()->SetSimulatePhysics ( true );
+	//GetMesh ()->SetCollisionProfileName ( TEXT ( "Ragdoll" ) );
+	//GetMesh ()->SetSimulatePhysics ( true );
 
-	SetLifeSpan ( 5.0f );
+	//SetLifeSpan ( 5.0f );
 
-	UE_LOG ( LogTemp , Warning , TEXT ( "%s 사망! 태그 제거됨." ) , *GetName () );
+	UE_LOG ( LogTemp , Warning , TEXT ( "%s 태그 제거" ) , *GetName () );
 }
 
 void AB_UnitBase::OnHPChanged_Wrapper ( float InCurrentHP , float InMaxHP )
