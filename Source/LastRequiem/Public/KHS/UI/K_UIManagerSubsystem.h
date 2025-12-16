@@ -7,6 +7,19 @@
 #include "K_BaseUIWidget.h"
 #include "K_UIManagerSubsystem.generated.h"
 
+/*
+ * UI생명주기 및 표시레이어 관리하는 UI서브시스템
+ * 
+ * 두가지 UI레이어 지원
+ * - PERSISTENT : 게임 플레이 중 지속적으로 표시되는 UI(예: HUD, Minimap, UnitList)
+ * - POPUP : 필요시 표시되는 팝업 모달 UI(예 : 인벤토리, 설정, 튜토리얼)
+ * 
+ * 주요기능
+ * - 위젯을 캐싱해 반복생성/소멸 비용 절약
+ * - Popup UI 스택관리로 팝업 간 포커스 제어
+ * - 입력모드 자동 전환 (팝업 Open시 UI ONLY, Close 시 Game Only)
+ * 
+ */
 
 UCLASS()
 class LASTREQUIEM_API UK_UIManagerSubsystem : public UGameInstanceSubsystem
@@ -20,30 +33,36 @@ public:
 private:
 	int32 CalculateZOrder(UK_BaseUIWidget* widget) const;
 	void NotifyInputModeChange();
+	// CloseUI 함수들 닫기 작업 내부 헬퍼함수.
+	void CloseUIInternal(UK_BaseUIWidget* widget);
 	
 public:
+	template<typename T>
+	T* OpenUI(TSubclassOf<T> targetClass);
+	
 	template<typename T>
 	T* GetOrCreateWidget(TSubclassOf<T> widgetClass);
 	
 	template<typename T>
-	T* OpenUI(TSubclassOf<T> targetClass);
+	void CloseUI();
 	
+	void CloseUI(UK_BaseUIWidget* widget);
 	void CloseTopPopupUI();
 	void CloseAllPopupUI();
 	void RefreshTopPopupUI();
 	
-	template<typename T>
-	void CloseUI();
-	
 	bool HasOpenPopupUI() const { return popUpUIStack.Num() > 0; }
 	
 private:
+	//현재 열려있는 Persistent UI들의 맵 (클래스 -> 인스턴스)
 	UPROPERTY()
 	TMap<TSubclassOf<UK_BaseUIWidget>, UK_BaseUIWidget*> persitentUIMap;
 	
+	//현재 열려있는 모든 popupUI들 스택. 
 	UPROPERTY()
 	TArray<UK_BaseUIWidget*> popUpUIStack;
 	
+	//생성된 모든 위젯들 캐싱(클래스->인스턴스)
 	UPROPERTY()
 	TMap<TSubclassOf<UK_BaseUIWidget>, UK_BaseUIWidget*> cachedWidgets;
 	
@@ -147,31 +166,7 @@ void UK_UIManagerSubsystem::CloseUI()
 	}
 	
 	UK_BaseUIWidget* widget = cachedWidgets[targetClass];
-	if (!widget || !widget->IsOpen())
-	{
-		return;
-	}
 	
-	//Persistent 타입 UI일때
-	if (widget->UILayer == EUILayer::PERSISTENT)
-	{
-		widget->CloseUI();
-		widget->RemoveFromParent();
-		persitentUIMap.Remove(targetClass);
-	}
-	else //PopUp 타입 UI일때
-	{
-		//스택에서 제거
-		int32 idx = popUpUIStack.Find(targetClass);
-		if (idx != INDEX_NONE)
-		{
-			popUpUIStack.RemoveAt(idx);
-			widget->CloseUI();
-			widget->RemoveFromParent();
-			
-			//새로운 Top Refresh
-			RefreshTopPopupUI();
-			NotifyInputModeChange();
-		}
-	}
+	//실제 닫기 로직은 내부 헬퍼함수 호출
+	CloseUIInternal(widget);
 }

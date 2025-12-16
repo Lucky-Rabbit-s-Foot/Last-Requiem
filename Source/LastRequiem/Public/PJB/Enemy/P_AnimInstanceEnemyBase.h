@@ -18,6 +18,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Data|Speed")
 	float Speed = 0.0f;
 
+	UPROPERTY ( VisibleAnywhere , BlueprintReadWrite , Category = "Data|Combat" )
+	bool bIsCombat = false;
+
 private:
 	TWeakObjectPtr<const UPawnMovementComponent> OwnerMovementComp = nullptr;
 };

@@ -11,8 +11,10 @@
 #include "B_UnitBase.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnUnitDieDelegate, AActor*, InUnit );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnCombatStateChangedDelegate , bool , bIsCombat );
 
 class UB_UnitStatusComponent;
+class UIndicatorSpriteComponent;
 
 
 UCLASS()
@@ -37,8 +39,17 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	UPROPERTY ( VisibleAnywhere , BlueprintReadWrite , Category = "Unit|Visual" )
+	USkeletalMeshComponent* WeaponMesh;
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadWrite , Category = "Unit|Visual" )
+	class USpotLightComponent* GunFlashlight;
+
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Unit|Component" )
 	UB_UnitStatusComponent* StatusComponent;
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Unit|Component" )
+	UIndicatorSpriteComponent* IndicatorSprite = nullptr;
 
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
 	FGameplayTagContainer GameplayTags;
@@ -50,6 +61,13 @@ public:
 	UFUNCTION ()
 	void FindMapWidgetLoop ();
 
+protected:
+	float OriginalAttackDamage;
+	float OriginalAttackRange;
+
+	UFUNCTION ()
+	void OnBehaviorStateChanged_Unit ( EUnitBehaviorState NewState );
+
 public:
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Data" )
 	UTexture2D* MyProfileImage = nullptr;
@@ -57,10 +75,23 @@ public:
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Data" )
 	FText MyUnitName;
 
-	// 유닛 프로필 데이터
 	UFUNCTION ( BlueprintCallable , Category = "Unit|Data" )
 	FUnitProfileData GetUnitProfileData ();
 
+
+	FUnitProfileData UnitUpdateData;
+	
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Setting" )
+	EUnitType UnitType;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Setting" )
+	UDataTable* UnitDataTable;
+
+	virtual void OnConstruction ( const FTransform& Transform ) override;
+
+protected:
+	void UnitDataUpdate ();
 
 public:
 
@@ -124,6 +155,13 @@ public:
 
 	FOnUnitDieDelegate OnUnitDieDelegate;
 
+	UPROPERTY ( BlueprintAssignable , Category = "Unit|Event" )
+	FOnCombatStateChangedDelegate OnCombatStateChanged;
+
+	
+	UFUNCTION ( BlueprintCallable , Category = "Unit|State" )
+	void SetCombatState_Unit ( bool bInCombat );
+
 private:
 	bool bIsAlive = true;
 
@@ -141,5 +179,14 @@ public:
 	);
 
 	void OnDie_Unit ();
+
+protected:
+
+	UFUNCTION ()
+	void OnHPChanged_Wrapper ( float InCurrentHP , float InMaxHP );
+	
+	UFUNCTION ()
+	void OnSanityChanged_Wrapper ( float InCurrentSanity , float InMaxSanity );
+
 
 };

@@ -18,18 +18,38 @@ class LASTREQUIEM_API AK_DroneController : public APlayerController
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
+	virtual void OnPossess(APawn* InPawn) override;
 	
 private:
+	//Input Binding Functions
 	void OnDroneLook(const FInputActionValue& value);
 	void OnDroneMove(const FInputActionValue& value);
 	void OnDroneMoveReleased(const FInputActionValue& value);
 	void OnDroneUpDown(const FInputActionValue& value);
 	void OnDroneDownReleased(const FInputActionValue& value);
-	void OnDroneModeChange(const FInputActionValue& value);
+	
 	void OnDroneUseSkill01(const FInputActionValue& value);
 	void OnDroneUseSkill02(const FInputActionValue& value);
 	
+	void OnOpenSettingUI(const FInputActionValue& value);
+	void OnToggleSituationMapUI(const FInputActionValue& value); //드론뷰-상황판 전환용
+	
+	//UI Management
+	void InitializePersistentUI();
+	UFUNCTION() //UI 닫기 요청시 공통 델리게이트 핸들러 함수
+	void HandleUICloseReqeust(class UK_BaseUIWidget* requestWidget);
+	
 protected:
+	//UI
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|UI")
+	TSubclassOf<class UK_HUDWidget> hudWidget;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|UI")
+	TSubclassOf<class UK_UnitListWidget> unitListWidget;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|UI")
+	TSubclassOf<class UW_SituationMapWidget> mapWidget;
+	
 	//Input
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Input")
 	TObjectPtr<class UInputMappingContext> IMC_Drone;
@@ -52,5 +72,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Input")
 	TObjectPtr<class UInputAction> IA_ModeChange;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Input")
+	TObjectPtr<class UInputAction> IA_Setting;
 	
 };

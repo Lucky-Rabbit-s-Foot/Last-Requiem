@@ -55,6 +55,8 @@ private:
 	float currentDisplayedSP = 0.f;
 	float targetDisplayedSP = 0.f;
 	
+	const float UI_INTERP_SPEED = 5.0f;
+	
 protected:
 	UPROPERTY(meta = (BindWidget))
 	class UImage* BackgroundImg;

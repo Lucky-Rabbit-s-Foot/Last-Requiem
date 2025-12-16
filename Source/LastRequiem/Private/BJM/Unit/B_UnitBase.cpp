@@ -4,6 +4,7 @@
 #include "NavigationSystem.h"
 #include "BJM/Unit/B_UnitStatusComponent.h"
 #include "BJM/Unit/B_UnitAIController.h"
+#include "PJB/Fortress/P_Fortress.h"
 #include "AIController.h" 
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -11,15 +12,34 @@
 #include "DrawDebugHelpers.h"
 #include "KWB/UI/Monitor/W_SituationMapWidget.h"
 #include "KWB/UI/W_MapWidget.h"
+#include "KWB/Component/IndicatorSpriteComponent.h"
 #include "Perception/AISense_Damage.h"
 #include "TimerManager.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "GameplayTagsManager.h"
+#include "Components/CapsuleComponent.h"
+#include "Components/SpotLightComponent.h"
+#include "Engine/OverlapResult.h"
 
 // Sets default values
 AB_UnitBase::AB_UnitBase()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent> ( TEXT ( "WeaponMesh" ) );
+	WeaponMesh->SetupAttachment ( GetMesh () , FName ( "WeaponSocket" ) );
+	WeaponMesh->SetCollisionProfileName ( TEXT ( "NoCollision" ) );
+
+	GunFlashlight = CreateDefaultSubobject<USpotLightComponent> ( TEXT ( "GunFlashlight" ) );
+	GunFlashlight->SetupAttachment ( WeaponMesh , FName ( "Flash" ) );
+	GunFlashlight->SetIntensity ( 3000.0f );       // 밝기 
+	GunFlashlight->SetOuterConeAngle ( 15.0f );    // 각도
+	GunFlashlight->SetAttenuationRadius ( 1000.0f ); // 거리
+	GunFlashlight->SetLightColor ( FLinearColor ( 1.0f , 0.95f , 0.8f ) );
+	// 그림자
+	GunFlashlight->SetCastShadows ( true );
+
 
 	StatusComponent = CreateDefaultSubobject<UB_UnitStatusComponent>(TEXT("StatusComponent"));
 
@@ -30,6 +50,10 @@ AB_UnitBase::AB_UnitBase()
 
 	static FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
 	GameplayTags.AddTag ( UnitTag );
+
+	// 우빈님 추가
+	IndicatorSprite = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "IndicatorSprite" ) );
+	IndicatorSprite->SetupAttachment ( RootComponent );
 
 }
 
@@ -54,6 +78,17 @@ void AB_UnitBase::BeginPlay()
 
 	UE_LOG ( LogTemp , Warning , TEXT ( "위젯 찾기 시작" ) );
 
+	OriginalAttackDamage = AttackDamage;
+	OriginalAttackRange = AttackRange;
+
+	if (StatusComponent)
+	{
+		StatusComponent->OnStateChanged.AddDynamic ( this , &AB_UnitBase::OnBehaviorStateChanged_Unit );
+		StatusComponent->OnHPChanged.AddDynamic ( this , &AB_UnitBase::OnHPChanged_Wrapper );
+		StatusComponent->OnSanityChanged.AddDynamic ( this , &AB_UnitBase::OnSanityChanged_Wrapper );
+	}
+
+	UnitDataUpdate ();
 
 }
 
@@ -61,6 +96,8 @@ void AB_UnitBase::BeginPlay()
 void AB_UnitBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	//UnitDataUpdate ();
 
 }
 
@@ -105,72 +142,79 @@ void AB_UnitBase::FindMapWidgetLoop ()
 
 			// 4. 타이머 해제
 			GetWorld ()->GetTimerManager ().ClearTimer ( FindWidgetTimerHandle );
-		}
+		} 
 	}
 	else
 	{
 		UE_LOG ( LogTemp , Log , TEXT ( "SituationMapWidget 아직 못 찾음..." ) );
 	}
 
-	//TArray<UUserWidget*> FoundWidgets;
-	//UWidgetBlueprintLibrary::GetAllWidgetsOfClass ( GetWorld () , FoundWidgets , UW_MapWidget::StaticClass () , false );
-
-	//if (FoundWidgets.Num () > 0)
-	//{
-	//	UW_MapWidget* MapWidget = Cast<UW_MapWidget> ( FoundWidgets[0] );
-	//	if (MapWidget)
-	//	{
-	//	
-	//		MapWidget->OnRightMouseButtonClicked.AddDynamic ( this , &AB_UnitBase::CommandMoveToLocation );
-
-	//		UE_LOG ( LogTemp , Warning , TEXT ( "연결 성공" ) );
-
-	//		GetWorld ()->GetTimerManager ().ClearTimer ( FindWidgetTimerHandle );
-	//	}
-	//}
-	//else
-	//{
-	//	 UE_LOG(LogTemp, Log, TEXT("위젯 아직 못찾음"));
-	//}
-
-	//if (FoundWidgets.Num () > 0)
-	//{
-	//	UW_SituationMapWidget* SituationMapWidget = Cast<UW_SituationMapWidget> ( FoundWidgets[0] );
-
-	//	//MapWidget->OnAttackButtonClicked.AddDynamic ( this , &AB_UnitBase::OnAttackButtonClicked );
-	//	//MapWidget->OnStopButtonClicked.AddDynamic ( this , &AB_UnitBase::OnStopButtonClicked );
-	//	//MapWidget->OnHoldButtonClicked.AddDynamic ( this , &AB_UnitBase::OnHoldButtonClicked );
-	//	//MapWidget->OnRetreatButtonClicked.AddDynamic ( this , &AB_UnitBase::OnRetreatButtonClicked );
-
-	//	UE_LOG ( LogTemp , Warning , TEXT ( "액션 버튼 연결 완료!" ) );
-	//}
-
 }
+
 
 FUnitProfileData AB_UnitBase::GetUnitProfileData ()
 {
-	FUnitProfileData Data;
+	//FUnitProfileData Data;
 
-	// 고정정보
-	Data.ProfileImage = MyProfileImage;
-	Data.UnitName = MyUnitName;
+	//// 고정정보
+	//Data.ProfileImage = MyProfileImage;
+	//Data.UnitName = MyUnitName;
 
-	// 변동정보
-	if (StatusComponent)
+	//// 변동정보
+	//if (StatusComponent)
+	//{
+	//	Data.MaxHP = StatusComponent->MaxHP;
+	//	Data.CurrentHP = StatusComponent->CurrentHP;
+
+	//	Data.MaxSanity = StatusComponent->MaxSanity;
+	//	Data.CurrentSanity = StatusComponent->CurrentSanity;
+
+	//	Data.bIsInCombat = StatusComponent->bIsInCombat;
+	//	Data.bIsSpeaking = StatusComponent->bIsSpeaking;
+	//}
+
+	//Data.bIsAlive = bIsAlive;
+
+	return UnitUpdateData;
+}
+
+void AB_UnitBase::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction ( Transform );
+
+	if (!UnitDataTable)
 	{
-		Data.MaxHP = StatusComponent->MaxHP;
-		Data.CurrentHP = StatusComponent->CurrentHP;
-
-		Data.MaxSanity = StatusComponent->MaxSanity;
-		Data.CurrentSanity = StatusComponent->CurrentSanity;
-
-		Data.bIsInCombat = StatusComponent->bIsInCombat;
-		Data.bIsSpeaking = StatusComponent->bIsSpeaking;
+		return;
 	}
 
-	Data.bIsAlive = bIsAlive;
+	const UEnum* UnitTypeEnum = StaticEnum<EUnitType> ();
+	if (UnitTypeEnum)
+	{
+		FName RowName = FName ( *UnitTypeEnum->GetNameStringByValue ( (int64)UnitType ) );
 
-	return Data;
+		FUnitDataTableRow* UnitData = UnitDataTable->FindRow<FUnitDataTableRow> ( RowName , TEXT ( "UnitDataInit" ) );
+
+		if (UnitData)
+		{
+			MyUnitName = UnitData->UnitName;
+			MyProfileImage = UnitData->ProfileImage;
+
+		}
+	}
+}
+
+void AB_UnitBase::UnitDataUpdate ()
+{
+
+	UnitUpdateData.ProfileImage = MyProfileImage;
+	UnitUpdateData.UnitName = MyUnitName;
+	UnitUpdateData.CurrentHP = StatusComponent->CurrentHP;
+	UnitUpdateData.MaxHP = StatusComponent->MaxHP;
+	UnitUpdateData.CurrentSanity = StatusComponent->CurrentSanity;
+	UnitUpdateData.MaxSanity = StatusComponent->MaxSanity;
+	UnitUpdateData.bIsInCombat = StatusComponent->bIsInCombat;
+	UnitUpdateData.bIsAlive = bIsAlive;
+	UnitUpdateData.bIsSpeaking = StatusComponent->bIsSpeaking;
 }
 
 void AB_UnitBase::UnitMentalCheck_Move(float InX, float InY)
@@ -195,13 +239,13 @@ void AB_UnitBase::UnitMentalCheck_Move(float InX, float InY)
 			break;
 		case EUnitBehaviorState::Tense:
 			// 50퍼 확률로 명령 수행
-			if (FMath::RandRange(0, 100) > 20)
+			if (FMath::RandRange(0, 100) <= 80)
 			{
 				bCanMove = true;
 			}
 			else
 			{
-				UE_LOG(LogTemp, Warning, TEXT("나태"));
+				UE_LOG(LogTemp, Warning, TEXT("긴장"));
 			}
 			break;
 		case EUnitBehaviorState::Fear:
@@ -219,6 +263,39 @@ void AB_UnitBase::UnitMentalCheck_Move(float InX, float InY)
 		ProcessMoveCommand ( InX , InY );
 	}
 
+}
+
+void AB_UnitBase::OnBehaviorStateChanged_Unit ( EUnitBehaviorState NewState )
+{
+	AttackDamage = OriginalAttackDamage;
+	AttackRange = OriginalAttackRange;
+
+	FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
+	FGameplayTag EnemyTag = FGameplayTag::RequestGameplayTag ( FName ( "Enemy" ) );
+
+	GameplayTags.AddTag ( UnitTag );
+	GameplayTags.RemoveTag ( EnemyTag );
+
+	switch (NewState)
+	{
+	case EUnitBehaviorState::Awakened:
+		AttackDamage = OriginalAttackDamage * 1.5f;
+		AttackRange = OriginalAttackRange * 1.5f;
+		UE_LOG ( LogTemp , Warning , TEXT ( "유닛 각성" ) );
+		break;
+
+	case EUnitBehaviorState::Fear:
+		CommandRetreat ();
+		UE_LOG ( LogTemp , Warning , TEXT ( "공포 / 요새로 후퇴" ) );
+		break;
+
+	case EUnitBehaviorState::Madness:
+		//GameplayTags.RemoveTag ( UnitTag );
+		//GameplayTags.AddTag ( EnemyTag );
+		UE_LOG ( LogTemp , Warning , TEXT ( "광기 / 팀킬 시작" ) );
+		break;
+	}
+	UnitDataUpdate ();
 }
 
 void AB_UnitBase::ProcessMoveCommand(float InX, float InY)
@@ -345,8 +422,7 @@ void AB_UnitBase::CommandStop ()
 
 		if (AIController->GetBlackboardComponent ())
 		{
-			// 상태를 Idle (없으면 Stop)로 변경
-			AIController->GetBlackboardComponent ()->SetValueAsEnum ( TEXT ( "Command" ) , (uint8)EUnitCommandType::None );
+			AIController->GetBlackboardComponent ()->SetValueAsEnum ( TEXT ( "Command" ) , (uint8)EUnitCommandType::Stop );
 		}
 	}
 }
@@ -360,7 +436,6 @@ void AB_UnitBase::CommandHold ()
 
 		if (AIController->GetBlackboardComponent ())
 		{
-			// 상태를 Hold로 변경
 			AIController->GetBlackboardComponent ()->SetValueAsEnum ( TEXT ( "Command" ) , (uint8)EUnitCommandType::Hold );
 		}
 	}
@@ -369,14 +444,60 @@ void AB_UnitBase::CommandHold ()
 void AB_UnitBase::CommandRetreat ()
 {
 	AAIController* AIController = Cast<AAIController> ( GetController () );
-	if (AIController && AIController->GetBlackboardComponent ())
+	if (!AIController) return;
+
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass ( GetWorld () , AP_Fortress::StaticClass () , FoundActors );
+
+	FVector RetreatLocation = FVector::ZeroVector;
+	bool bFoundFortress = false;
+
+	FGameplayTag FortressTag = FGameplayTag::RequestGameplayTag ( FName ( "Fortress" ) );
+
+	for (AActor* Actor : FoundActors)
 	{
-		// 본진 좌표 입력
-		AIController->GetBlackboardComponent ()->SetValueAsVector ( TEXT ( "TargetLocation" ) , FortressLocation );
-		// 상태를 Retreat으로 변경
+		AP_Fortress* Fortress = Cast<AP_Fortress> ( Actor );
+		if (Fortress)
+		{
+			FGameplayTagContainer FortressTags;
+			Fortress->GetOwnedGameplayTags ( FortressTags );
+
+			if (FortressTags.HasTag ( FortressTag ))
+			{
+				RetreatLocation = Fortress->GetActorLocation ();
+				bFoundFortress = true;
+				UE_LOG ( LogTemp , Warning , TEXT ( "요새 발견: %s" ) , *Fortress->GetName () );
+				break;
+			}
+		}
+	}
+
+	if (bFoundFortress && AIController->GetBlackboardComponent ())
+	{
+
+		AIController->GetBlackboardComponent ()->SetValueAsVector ( TEXT ( "TargetLocation" ) , RetreatLocation );
+
 		AIController->GetBlackboardComponent ()->SetValueAsEnum ( TEXT ( "Command" ) , (uint8)EUnitCommandType::Retreat );
 
+		AIController->GetBlackboardComponent ()->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
+		AIController->ClearFocus ( EAIFocusPriority::Gameplay );
+
+		UE_LOG ( LogTemp , Warning , TEXT ( "후퇴 시작" ) );
 	}
+	else
+	{
+		UE_LOG ( LogTemp , Error , TEXT ( "요새 발견 x" ) );
+	}
+
+
+	//if (AIController && AIController->GetBlackboardComponent ())
+	//{
+	//	// 본진 좌표 입력
+	//	AIController->GetBlackboardComponent ()->SetValueAsVector ( TEXT ( "TargetLocation" ) , FortressLocation );
+	//	// 상태를 Retreat으로 변경
+	//	AIController->GetBlackboardComponent ()->SetValueAsEnum ( TEXT ( "Command" ) , (uint8)EUnitCommandType::Retreat );
+
+	//}
 }
 
 void AB_UnitBase::OnAttackButtonClicked_Unit ()
@@ -423,6 +544,15 @@ void AB_UnitBase::UnitAttack(AActor* TargetActor)
 {
 	if (TargetActor == nullptr || !bIsAlive) return;
 
+	if (StatusComponent)
+	{
+		if (StatusComponent->CurrentState == EUnitBehaviorState::Panic)
+		{
+			return;
+		}
+	}
+
+
 	FVector LookDir = TargetActor->GetActorLocation () - GetActorLocation ();
 	LookDir.Z = 0.0f;
 	FRotator TargetRot = FRotationMatrix::MakeFromX ( LookDir ).Rotator ();
@@ -457,19 +587,152 @@ void AB_UnitBase::UnitAttack(AActor* TargetActor)
 
 }
 
+void AB_UnitBase::SetCombatState_Unit ( bool bInCombat )
+{
+	if (!StatusComponent) return;
+
+	if (StatusComponent->bIsInCombat != bInCombat)
+	{
+		StatusComponent->bIsInCombat = bInCombat;
+
+		UnitDataUpdate ();
+		OnCombatStateChanged.Broadcast ( bInCombat );
+
+		if (bInCombat)
+		{
+			UE_LOG ( LogTemp , Warning , TEXT ( "[%s] 전투 돌입" ) , *GetName () );
+		}
+		else
+		{
+			UE_LOG ( LogTemp , Warning , TEXT ( "[%s] 전투 해제" ) , *GetName () );
+		}
+	}
+
+	// 우빈님 추가
+	if (IndicatorSprite)
+	{
+		IndicatorSprite->SetIndicatorState (
+			bInCombat ? EIndicatorSpriteState::Combat : EIndicatorSpriteState::Normal );
+
+		if (bInCombat)
+		{
+			IndicatorSprite->StartGlow (); // 무한
+		}
+		else
+		{
+			IndicatorSprite->StopGlow ();
+		}
+	}
+
+}
+
 void AB_UnitBase::OnTakeDamage_Unit ( AActor* DamagedActor , float Damage , const UDamageType* DamageType , AController* InstigateBy , AActor* DamageCauser )
 {
 	if (!bIsAlive) return;
 
-	StatusComponent->TakeDamage(Damage);
-	if (!IsAlive ())
+	if (StatusComponent)
 	{
-		OnDie_Unit ();
+		StatusComponent->ReduceHP ( Damage );
+
+		UnitDataUpdate ();
+
+		if (StatusComponent->CurrentHP <= 0.0f)
+		{
+			OnDie_Unit ();
+		}
 	}
 }
 
 void AB_UnitBase::OnDie_Unit ()
 {
+	if (!bIsAlive)
+	{
+		return;
+	}
 	bIsAlive = false;
-	OnUnitDieDelegate.Broadcast (this);
+
+	// 우빈님 추가
+	if (IndicatorSprite)
+	{
+		IndicatorSprite->SetIndicatorState ( EIndicatorSpriteState::Dead );
+		IndicatorSprite->StopGlow ();
+	}
+
+
+	float ShockRadius = 1500.0f;
+	float DeathPenalty = -10.0f; 
+
+	TArray<FOverlapResult> OverlapResults;
+	FCollisionShape CollisionShape;
+	CollisionShape.SetSphere ( ShockRadius );
+
+	bool bResult = GetWorld ()->OverlapMultiByChannel (
+		OverlapResults ,
+		GetActorLocation () ,
+		FQuat::Identity ,
+		ECollisionChannel::ECC_Pawn ,
+		CollisionShape
+	);
+
+	if (bResult)
+	{
+		DrawDebugSphere ( GetWorld () , GetActorLocation () , ShockRadius , 24 , FColor::Red , false , 2.0f );
+
+		for (auto const& Overlap : OverlapResults)
+		{
+			AActor* OverlapActor = Overlap.GetActor ();
+
+			// 나 제외
+			if (OverlapActor == this) continue;
+
+			// 아군 확인1
+			AB_UnitBase* FellowUnit = Cast<AB_UnitBase> ( OverlapActor );
+			if (FellowUnit && FellowUnit->IsAlive ())
+			{
+				// 아군확인2
+				FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
+				if (FellowUnit->GameplayTags.HasTag ( UnitTag ))
+				{
+					if (FellowUnit->StatusComponent)
+					{
+						FellowUnit->StatusComponent->ModifySanity ( DeathPenalty );
+						UE_LOG ( LogTemp , Warning , TEXT ( "%s가 %s의 죽음 목격" ) , *FellowUnit->GetName () , *GetName () );		}
+				}
+			}
+		}
+	}
+
+
+	OnUnitDieDelegate.Broadcast ( this );
+
+	// 택 제거
+	FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
+	GameplayTags.RemoveTag ( UnitTag );
+
+	// 이동 뺌
+	if (AAIController* AIController = Cast<AAIController> ( GetController () ))
+	{
+		AIController->StopMovement ();
+		AIController->UnPossess ();
+	}
+
+	GetCapsuleComponent ()->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
+	GetCapsuleComponent ()->SetCollisionResponseToAllChannels ( ECR_Ignore );
+
+	GetMesh ()->SetCollisionProfileName ( TEXT ( "Ragdoll" ) );
+	GetMesh ()->SetSimulatePhysics ( true );
+
+	SetLifeSpan ( 5.0f );
+
+	UE_LOG ( LogTemp , Warning , TEXT ( "%s 사망! 태그 제거됨." ) , *GetName () );
+}
+
+void AB_UnitBase::OnHPChanged_Wrapper ( float InCurrentHP , float InMaxHP )
+{
+	UnitDataUpdate ();
+}
+
+void AB_UnitBase::OnSanityChanged_Wrapper ( float InCurrentSanity , float InMaxSanity )
+{
+	UnitDataUpdate ();
 }

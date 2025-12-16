@@ -5,7 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "NavigationSystem.h"
 #include "PJB/Data/P_DataTableRows.h"
-
+#include "PJB/Enemy/P_EnemyBase.h"
 
 AP_EnemySpawner::AP_EnemySpawner()
 {
@@ -47,7 +47,6 @@ void AP_EnemySpawner::StartSpawnEnemy ()
 void AP_EnemySpawner::SpawnEnemy ()
 {
 	if (!EnemyDataTable || !EnemyTagToSpawn.IsValid ()) return;
-
 	
 	FP_EnemySpawnRow* SelectedRow = nullptr;
 
@@ -60,7 +59,7 @@ void AP_EnemySpawner::SpawnEnemy ()
 		if (!Row || !Row->EnemyTag.MatchesTag ( EnemyTagToSpawn )) continue;
 
 		SelectedRow = Row;
-		if (!SelectedRow || !SelectedRow->EnemyClass) return;
+		if (!SelectedRow || !SelectedRow->EnemyClass || !SelectedRow->EnemyDataAsset) return;
 
 		FVector SpawnLocation = GetActorLocation ();
 		FTransform SpawnTransform = GetActorTransform ();
@@ -76,7 +75,7 @@ void AP_EnemySpawner::SpawnEnemy ()
 		}
 		SpawnTransform.SetLocation ( SpawnLocation );
 
-		APawn* SpawnedEnemy = GetWorld ()->SpawnActorDeferred<APawn> (
+		AP_EnemyBase* SpawnedEnemy = GetWorld ()->SpawnActorDeferred<AP_EnemyBase> (
 			SelectedRow->EnemyClass ,
 			SpawnTransform ,
 			nullptr ,
@@ -86,6 +85,8 @@ void AP_EnemySpawner::SpawnEnemy ()
 		
 		if (SpawnedEnemy)
 		{
+			SpawnedEnemy->InitEnemyData ( SelectedRow->EnemyDataAsset );
+
 			UGameplayStatics::FinishSpawningActor ( SpawnedEnemy , SpawnTransform );
 			if (SpawnedEnemy->GetController () == nullptr)
 			{

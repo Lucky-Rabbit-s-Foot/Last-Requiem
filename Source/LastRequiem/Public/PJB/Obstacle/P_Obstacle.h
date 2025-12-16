@@ -18,7 +18,7 @@ public:
 	AP_Obstacle();
 
 	virtual void GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const override;
-
+	bool IsBroken () const { return bIsBroken; }
 protected:
 	virtual void BeginPlay() override;
 
@@ -39,7 +39,9 @@ public:
 protected:
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Components" )
 	TObjectPtr<UStaticMeshComponent> Mesh = nullptr;
-
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Components" )
+	TObjectPtr<class UBoxComponent> CollisionComp = nullptr;
+	
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
 	FGameplayTagContainer GameplayTags;
 

@@ -17,21 +17,20 @@ class LASTREQUIEM_API AP_EnemyBase : public ACharacter , public IGameplayTagAsse
 public:
 	AP_EnemyBase();
 
-	void InitSpriteComponent ();
-
 protected:
 	virtual void BeginPlay() override;
 
 public:	
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	virtual void GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const override;
-
 public:
 	UFUNCTION(BlueprintCallable)
 	inline bool IsAlive() { return bIsAlive; }
+
+	void InitEnemyData ( class UP_EnemyDataAsset* InData );
+
+	UFUNCTION()
+	void OnAttack ();
 
 	UFUNCTION()
 	void OnTakeDamage(
@@ -42,34 +41,39 @@ public:
 		AActor* DamageCauser
 	);
 
-	void OnDie();
-
-	void OnDeactivate ();
+	virtual void GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const override;
+	
+	UFUNCTION ( BlueprintPure , Category = "Combat" )
+	float GetAttackRange () const { return CachedAttackRange; }
+	UFUNCTION ( BlueprintPure , Category = "Combat" )
+	UAnimMontage* GetAttackMontage () const { return CachedAttackMontage; }
 
 private:
-	void InitAnimInstance ();
+	void InitSpriteComponent ();
+	void InitGameplayTag ();
+	void InitRotationSetting ();
+
+	void OnDie ();
+	void OnDeactivate ();
+
+	void AIPathVisualization ();
 
 public:
 	FOnEnemyDieDelegate OnEnemyDieDelegate;
 
 protected:
-	// Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Data|Components")
 	TObjectPtr<class UP_CombatComponent> CombatComp = nullptr;
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Sprite" )
-	TObjectPtr<class UPaperSpriteComponent> SpriteComp = nullptr;
-
+	TObjectPtr<class UIndicatorSpriteComponent> SpriteComp = nullptr;
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
 	FGameplayTagContainer GameplayTags;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Data|Speed")
-	float WalkSpeed = 300.0f;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Data|Speed")
-	float SprintSpeed = 600.0f;
+	// Cached combat data
+	float CachedAttackRange = 100.0f;
+	UPROPERTY ()
+	UAnimMontage* CachedAttackMontage = nullptr;
 
 private:
-	UPROPERTY()
-	TWeakObjectPtr<UAnimInstance> AnimInstance = nullptr;
-
 	bool bIsAlive = true;
 };

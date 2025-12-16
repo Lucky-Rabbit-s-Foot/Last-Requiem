@@ -2,19 +2,18 @@
 
 
 #include "KHS/Drone/K_Drone.h"
+#include "KHS/Data/K_DroneData.h"
 
 #include "BJM/Unit/B_UnitBase.h"
 #include "BJM/Unit/B_UnitMentalTypes.h"
-#include "KHS/Data/K_DroneData.h"
+
+#include "KWB/Component/IndicatorSpriteComponent.h"
 
 #include "Camera/CameraComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-
-#include "KHS/UI/K_HUDWidget.h"
-#include "KHS/UI/K_UnitListWidget.h"
-#include "KHS/UI/K_UIManagerSubsystem.h"
+#include "KWB/Component/IndicatorSpriteComponent.h"
 
 
 // Sets default values
@@ -43,16 +42,8 @@ void AK_Drone::BeginPlay()
 		animInst->Montage_JumpToSection(FName("Start"));
 	}
 	
-	//Persistent UI Open
-	UK_UIManagerSubsystem* UIManager = GetGameInstance()->GetSubsystem<UK_UIManagerSubsystem>();
-	if (UIManager)
-	{
-		UIManager->OpenUI<UK_HUDWidget>(hudWidget);
-		UIManager->OpenUI<UK_UnitListWidget>(unitListWidget);
-	}
 	
-	
-	//최초 UnitSlot 활성화 후
+	//Unit 최초 탐색 후
 	//타이머로 n초마다 UpdateDetectedUnitSlot 호출
 	InitializeDetectedUnitSlot();
 	
@@ -113,6 +104,10 @@ void AK_Drone::InitializeDefaultComponents()
 	//mesh
 	meshComp = CreateDefaultSubobject<USkeletalMeshComponent>("meshComp");
 	meshComp->SetupAttachment(RootComponent);
+	
+	//indicator
+	indicatorComp = CreateDefaultSubobject<UIndicatorSpriteComponent>("indicatorComp");
+	indicatorComp->SetupAttachment(RootComponent);
 }
 
 void AK_Drone::UpdateDroneMovement(float DeltaTime)
@@ -172,7 +167,7 @@ void AK_Drone::InitializeDetectedUnitSlot()
 	FVector start = GetActorLocation();
 	FVector end = start;
 	
-	float capsuleRadius = 2500.f;
+	float capsuleRadius = 3000.f;
 	float capsuleHalfHeight = 700.f;
 	FCollisionShape capsuleShpae = FCollisionShape::MakeCapsule(capsuleRadius, capsuleHalfHeight);
 	
@@ -183,7 +178,7 @@ void AK_Drone::InitializeDetectedUnitSlot()
 		ECC_Pawn,
 		capsuleShpae);
 	
-
+#if WITH_EDITOR
 	DrawDebugCapsule(
 		GetWorld(),
 		start,
@@ -194,6 +189,7 @@ void AK_Drone::InitializeDetectedUnitSlot()
 		false,
 		1.f, 0, 3.f
 		);
+#endif
 	
 	//현재 탐지된 유닛 캐싱
 	TSet<AActor*> currentDetectedUnits;
@@ -242,7 +238,7 @@ void AK_Drone::UpdateDetectedUnitSlot()
 		ECC_Pawn,
 		capsuleShpae);
 	
-
+#if WITH_EDITOR
 	DrawDebugCapsule(
 		GetWorld(),
 		start,
@@ -253,6 +249,7 @@ void AK_Drone::UpdateDetectedUnitSlot()
 		false,
 		1.f, 0, 3.f
 		);
+#endif
 	
 	//현재 탐지된 유닛 캐싱
 	TSet<AActor*> currentDetectedUnits;
@@ -303,10 +300,6 @@ void AK_Drone::Move(const FVector2D& inputValue)
 void AK_Drone::UpDown(float inputValue)
 {
 	upDownInputValue = inputValue;
-}
-
-void AK_Drone::ChangeMode()
-{
 }
 
 void AK_Drone::UseSkill01()

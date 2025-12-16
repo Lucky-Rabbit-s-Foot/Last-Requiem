@@ -60,7 +60,7 @@ void UW_SituationMapWidget::NativeConstruct()
 void UW_SituationMapWidget::HandleExitButtonClicked ()
 {
 	UE_LOG ( LogTemp , Log , TEXT ( "Exit Button Clicked." ) );
-	// Widget Hide / 해당 위젯에 해당하는 모든 기능 비활성화 => Not Touchable
+	//OnCloseUIRequested.BroadCast ()
 }
 
 void UW_SituationMapWidget::HandleAttackButtonClicked ()
@@ -86,27 +86,3 @@ void UW_SituationMapWidget::HandleRetreatButtonClicked ()
 	OnRetreatButtonClicked.Broadcast ();
 	UE_LOG ( LogTemp , Log , TEXT ( "Retreat Button Clicked." ) );
 }
-
-//// 추후 시스템 변경 대응용
-//void UW_SituationMapWidget::HandleOrderButtonClicked ( uint8 InOrderID)
-//{
-//	uint8 orderType;
-//
-//	switch (InOrderID)
-//	{
-//	case 0:
-//		UE_LOG ( LogTemp , Log , TEXT ( "Attack Button Clicked." ) );
-//		orderType = InOrderID;
-//		break;
-//	case 1:
-//		UE_LOG ( LogTemp , Log , TEXT ( "Patrol Button Clicked." ) );
-//		orderType = InOrderID;
-//		break;
-//	case 2:
-//		UE_LOG ( LogTemp , Log , TEXT ( "Retreat Button Clicked." ) );
-//		orderType = InOrderID;
-//		break;
-//	}
-//
-//	OnOrderButtonClicked.ExecuteIfBound(orderType);
-//}

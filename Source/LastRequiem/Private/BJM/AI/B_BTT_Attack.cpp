@@ -44,5 +44,5 @@ EBTNodeResult::Type UB_BTT_Attack::ExecuteTask ( UBehaviorTreeComponent& OwnerCo
 		}
 	}
 
-	return EBTNodeResult::Failed;
+	return EBTNodeResult::Succeeded;
 }

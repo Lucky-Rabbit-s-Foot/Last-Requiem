@@ -40,6 +40,8 @@ public:
 	// 정신력
 	UPROPERTY (EditAnywhere, BlueprintReadWrite, Category = "Unit|Stat")
 	float MaxSanity = 100.0f;
+	UPROPERTY (EditAnywhere, BlueprintReadWrite, Category = "Unit|Stat")
+	float StartSanity = 80.0f;
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Stat")
 	float CurrentSanity;
 
@@ -65,7 +67,7 @@ public:
 
 
 	UFUNCTION (BlueprintCallable, Category = "Unit|Logic")
-	void TakeDamage (float InDamage);
+	void ReduceHP ( float InDamage );
 
 	UFUNCTION (BlueprintCallable, Category = "Unit|Logic")
 	void ModifySanity (float InAmount);
@@ -77,7 +79,12 @@ protected:
 	FTimerHandle CombatTimerHandle;
 	void ResetCombatState ();
 
+protected:
+	FTimerHandle CombatSanityTimerHandle;
+
+	void ReduceSanityInCombat ();
+		
 private:
 	void UpdateBehaviorState ();
-		
+
 };
