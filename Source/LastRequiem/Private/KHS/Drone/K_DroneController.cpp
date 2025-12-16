@@ -87,7 +87,7 @@ void AK_DroneController::BindPersistentUIDelegates()
 	bPersistentUIBound = true;
 }
 
-void AK_DroneController::BindSituaionMapUIDelegates(class UW_SituationMapWidget* situationUI)
+void AK_DroneController::BindSituationMapUIDelegates(class UW_SituationMapWidget* situationUI)
 {
 	if (!situationUI || bSituationMapUIBound)
 	{
@@ -234,6 +234,7 @@ void AK_DroneController::OnToggleSituationMapUI(const FInputActionValue& value)
 	}
 	
 	auto* minimapUI = UIManger->GetOrCreateWidget<UW_SituationMapWidget>(mapWidget);
+	
 	if (!minimapUI)
 	{
 		return;
@@ -241,17 +242,19 @@ void AK_DroneController::OnToggleSituationMapUI(const FInputActionValue& value)
 	
 	if (minimapUI->IsOpen())
 	{
+		KHS_SCREEN_INFO(TEXT("열린 미니맵 닫기 - 스택 크기 : %d, 위젯 포인터 : %p"), UIManger->GetPopupStackSize(), minimapUI);
 		//이미 열려있으면 닫고 델리게이트 구독 해제
 		UnbindSituationMapUIDelegates();
-		UIManger->CloseUI<UW_SituationMapWidget>();
+		UIManger->CloseUI(minimapUI);
 		minimapUI->onCloseUIRequested.RemoveDynamic(this, &AK_DroneController::HandleUICloseReqeust);
 	}
 	else
 	{
+		KHS_SCREEN_INFO(TEXT("미니맵 새로 열기 - 스택 크기 : %d"), UIManger->GetPopupStackSize());
 		//닫혀있으면 열고 델리게이트 구독
 		UIManger->OpenUI<UW_SituationMapWidget>(mapWidget);
 		minimapUI->onCloseUIRequested.AddDynamic(this, &AK_DroneController::HandleUICloseReqeust);
-		BindSituaionMapUIDelegates(minimapUI);
+		BindSituationMapUIDelegates(minimapUI);
 	}
 }
 
@@ -281,6 +284,8 @@ void AK_DroneController::OnOpenSettingUI(const FInputActionValue& value)
 
 void AK_DroneController::HandleUICloseReqeust(class UK_BaseUIWidget* requestWidget)
 {
+	KHS_SCREEN_INFO(TEXT("HandleUICloseRequest is Called"));
+	
 	if (!requestWidget)
 	{
 		return;

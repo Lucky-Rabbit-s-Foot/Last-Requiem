@@ -4,12 +4,15 @@
 #include "KWB/UI/Monitor/W_SituationMapWidget.h"
 #include "Components/Button.h"
 
+UW_SituationMapWidget::UW_SituationMapWidget ()
+{
+	UILayer = EUILayer::POPUP;
+	zOrder = 0;
+}
+
 void UW_SituationMapWidget::NativeConstruct()
 {
 	Super::NativeConstruct ();
-
-	UILayer = EUILayer::POPUP;
-	zOrder = 0;
 
 	if (Exit)
 	{
