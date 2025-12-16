@@ -45,6 +45,12 @@ void UK_UnitListWidget::NativeDestruct()
 	//남아있는 유닛들에 대한 Death 델리게이트 구독해제
 	for (auto& pair : unitSlotMap)
 	{
+		UK_UnitSlotWiddget* slot = pair.Value;
+		if (slot)
+		{
+			slot->onSlotClickedDel.RemoveDynamic(this, &UK_UnitListWidget::OnUnitListClicked);
+		}
+		
 		AB_UnitBase* unit = Cast<AB_UnitBase>(pair.Key);
 		if (unit)
 		{
@@ -80,6 +86,7 @@ void UK_UnitListWidget::OnUnitDetected(AActor* detectedUnit)
 		
 		//Data Update
 		FUnitProfileData data = unit->GetUnitProfileData();
+		
 		unitSlot->UpdateUnitData(data);
 	}
 }
@@ -130,6 +137,11 @@ void UK_UnitListWidget::OnUnitDied(AActor* deadUnit)
 	}
 }
 
+void UK_UnitListWidget::OnUnitListClicked(AActor* selectedUnit)
+{
+	onUnitListSelectedDel.Broadcast(selectedUnit);
+}
+
 UK_UnitSlotWiddget* UK_UnitListWidget::GetOrCreateUnitSlot(AActor* unitActor)
 {
 	if (!unitActor)
@@ -157,6 +169,10 @@ UK_UnitSlotWiddget* UK_UnitListWidget::GetOrCreateUnitSlot(AActor* unitActor)
 	UK_UnitSlotWiddget* newSlot = CreateWidget<UK_UnitSlotWiddget>(GetWorld(), unitSlotWidget);
 	if (newSlot)
 	{
+		//생성되면 해당 유닛을 슬롯에 연결 후 UI클릭 이벤트 구독
+		newSlot->SetLinkedUnit(unitActor);
+		newSlot->onSlotClickedDel.AddDynamic(this, &UK_UnitListWidget::OnUnitListClicked);
+		
 		unitSlotMap.Add(unitActor, newSlot);
 		AddUnitSlot(newSlot);
 		
