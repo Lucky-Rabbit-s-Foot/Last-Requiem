@@ -66,7 +66,7 @@ public:
 
 	// 사망
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Profile" )
-	bool bIsAlive = false;
+	bool bIsAlive = true;
 
 	// 전투
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Profile" )
