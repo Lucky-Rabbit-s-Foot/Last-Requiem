@@ -14,11 +14,11 @@ struct FP_EnemySpawnRow : public FTableRowBase
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FGameplayTag EnemyTag;
+	FGameplayTag EnemyTag = FGameplayTag::EmptyTag;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UP_EnemyDataAsset* EnemyDataAsset;
+	UP_EnemyDataAsset* EnemyDataAsset = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<APawn> EnemyClass;
+	TSubclassOf<APawn> EnemyClass = nullptr;
 };
