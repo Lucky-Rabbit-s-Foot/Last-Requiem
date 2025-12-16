@@ -85,6 +85,8 @@ void UK_UIManagerSubsystem::CloseUIInternal(UK_BaseUIWidget* widget)
 	//Persistent 타입 UI일때
 	if (widget->UILayer == EUILayer::PERSISTENT)
 	{
+		KHS_SCREEN_INFO(TEXT("PERSISTENT 타입 UI 제거"));
+		
 		widget->CloseUI();
 		widget->RemoveFromParent();
 		
@@ -93,6 +95,7 @@ void UK_UIManagerSubsystem::CloseUIInternal(UK_BaseUIWidget* widget)
 	}
 	else //PopUp 타입 UI일때
 	{
+		KHS_SCREEN_INFO(TEXT("POPUP 타입 UI 제거"));
 		//스택에서 제거
 		int32 idx = popUpUIStack.Find(widget);
 		if (idx != INDEX_NONE)
@@ -101,9 +104,17 @@ void UK_UIManagerSubsystem::CloseUIInternal(UK_BaseUIWidget* widget)
 			widget->CloseUI();
 			widget->RemoveFromParent();
 			
+			KHS_SCREEN_INFO(TEXT("위젯 제거됨 - IsInViewport: %s, IsVisible: %s"), 
+				widget->IsInViewport() ? TEXT("TRUE") : TEXT("FALSE"),
+				widget->IsVisible() ? TEXT("TRUE") : TEXT("FALSE"));
+			
 			//새로운 Top Refresh
 			RefreshTopPopupUI();
 			NotifyInputModeChange();
+		}
+		else
+		{
+			KHS_SCREEN_INFO(TEXT("popupStack에 해당 UI없음!"));
 		}
 	}
 }

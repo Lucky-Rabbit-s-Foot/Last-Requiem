@@ -16,6 +16,9 @@ class LASTREQUIEM_API UW_SituationMapWidget : public UK_BaseUIWidget
 {
 	GENERATED_BODY()
 
+private:
+	UW_SituationMapWidget ();
+
 public:
 	inline class UW_MapWidget* GetRenderedMap () const { return RenderedMap; }
 

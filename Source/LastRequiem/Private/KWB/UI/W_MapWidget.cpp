@@ -2,13 +2,10 @@
 
 
 #include "KWB/UI/W_MapWidget.h"
-#include "Engine/World.h"
 #include "Engine/Engine.h"
 #include "Input/Events.h"
-#include "Engine/OverlapResult.h"
 #include "GameplayTagsManager.h"
 #include "BJM/Unit/B_UnitBase.h"
-#include "DrawDebugHelpers.h" // [TEST/DEBUG]
 #include "Kismet/GameplayStatics.h"
 #include "KHS/Util/K_LoggingSystem.h"
 
@@ -102,10 +99,9 @@ FReply UW_MapWidget::NativeOnMouseButtonDown ( const FGeometry& InGeometry , con
 	// 7. (U,V) → 월드 좌표 변환
 	const FVector WorldPos = MapUVToWorld ( U , V );
 
-	// [FIX] 멤버에 저장 (이걸 안 해서 선택이 안 됨)
+	// 멤버에 월드 좌표 저장
 	ClickedWorldLocation = WorldPos;
-	ClickedWidgetLocation = WidgetLocalPos; // 필요하면
-
+	
 	// 8. 디버그 출력
 	
 	UE_LOG ( LogTemp , Log , TEXT ( "Minimap Click: U=%.3f V=%.3f -> World=%s" ) ,
@@ -123,8 +119,6 @@ FReply UW_MapWidget::NativeOnMouseButtonDown ( const FGeometry& InGeometry , con
 	// 좌클릭: 유닛 선택
 	if (PressedButton == EKeys::LeftMouseButton)
 	{
-		OnLeftMouseButtonClicked.Broadcast ();
-
 		AActor* ClickedUnit = GetUnitAtWorldPosition ( ClickedWorldLocation );
 		if (ClickedUnit)
 		{
@@ -145,13 +139,12 @@ FReply UW_MapWidget::NativeOnMouseButtonDown ( const FGeometry& InGeometry , con
 	// 우클릭: 이동 명령
 	if (PressedButton == EKeys::RightMouseButton)
 	{
-		OnRightMouseButtonClicked.Broadcast ( ClickedWorldLocation );
-
 		if (SelectedUnit.IsValid ())
 		{
 			OnMapMoveCommand.Broadcast ( SelectedUnit.Get () , ClickedWorldLocation );
 			KHS_INFO ( TEXT ( "Move command: %s to %s" ) ,
 				*SelectedUnit->GetName () , *ClickedWorldLocation.ToString () );
+			ClearUnitSelection (); // 명령 내린 후에는 저장된 유닛 비우기
 		}
 
 		return FReply::Handled ();

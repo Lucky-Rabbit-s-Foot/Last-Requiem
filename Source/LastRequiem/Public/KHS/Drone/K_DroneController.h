@@ -37,7 +37,7 @@ private:
 	//UI Management
 	void InitializePersistentUI();
 	void BindPersistentUIDelegates();
-	void BindSituaionMapUIDelegates(class UW_SituationMapWidget* situationUI);
+	void BindSituationMapUIDelegates(class UW_SituationMapWidget* situationUI);
 	void UnbindPersistentUIDelegates();
 	void UnbindSituationMapUIDelegates();
 	
