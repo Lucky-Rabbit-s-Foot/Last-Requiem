@@ -7,6 +7,8 @@
 #include "BJM/Unit/B_UnitMentalTypes.h"
 #include "K_UnitSlotWiddget.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUnitSlotClicked, AActor*, SelectedUnit);
+
 UENUM(BlueprintType)
 enum class EUnitSlotState : uint8
 {
@@ -23,11 +25,13 @@ class LASTREQUIEM_API UK_UnitSlotWiddget : public UUserWidget
 	
 protected:
 	virtual void NativeConstruct() override;
-	bool CanUpdateUIData(float TimeDelta);
 	virtual void NativeTick(const FGeometry& Geometry, float TimeDelta) override;
 	
+	bool CanUpdateUIData(float TimeDelta);
+
 private:
-	void UpdateVisualState();
+	void UpdateSlotVisualState();
+	void SetSlotVisualState(FLinearColor color, ESlateVisibility visibility, bool bIsEnable );
 	
 protected:
 	UFUNCTION()
@@ -35,9 +39,11 @@ protected:
 	
 public:
 	void UpdateUnitData(const FUnitProfileData& newData);
-
 	void SetSlotState(EUnitSlotState newState);
-	EUnitSlotState GetSlotState() const { return currentState; }
+	void SetLinkedUnit(AActor* targetUnit);
+	
+	FORCEINLINE AActor* GetLinkedUnit() const { return linkedUnit.Get(); }
+	FORCEINLINE EUnitSlotState GetSlotState() const { return currentState; }
 	
 private:
 	bool bIsActive = false;
@@ -47,7 +53,7 @@ private:
 	
 	FUnitProfileData cachedUnitData;
 	
-	EUnitSlotState currentState = EUnitSlotState::DETECTED;
+	EUnitSlotState currentState = EUnitSlotState::UNDETECTED;
 	
 	float currentDisplayedHP = 0.f;
 	float targetDisplayedHP = 0.f;
@@ -56,6 +62,9 @@ private:
 	float targetDisplayedSP = 0.f;
 	
 	const float UI_INTERP_SPEED = 5.0f;
+	
+	//슬롯과 연결된 유닛
+	TWeakObjectPtr<AActor> linkedUnit;
 	
 protected:
 	UPROPERTY(meta = (BindWidget))
@@ -85,5 +94,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "LR|UI")
 	float lerpSpeed = 5.f;
 	
+public:
+	UPROPERTY(BlueprintAssignable, Category = "LR|Event")
+	FOnUnitSlotClicked onSlotClickedDel;
 	
 };

@@ -36,11 +36,43 @@ private:
 	
 	//UI Management
 	void InitializePersistentUI();
+	void BindPersistentUIDelegates();
+	void BindSituaionMapUIDelegates(class UW_SituationMapWidget* situationUI);
+	void UnbindPersistentUIDelegates();
+	void UnbindSituationMapUIDelegates();
+	
 	UFUNCTION() //UI 닫기 요청시 공통 델리게이트 핸들러 함수
 	void HandleUICloseReqeust(class UK_BaseUIWidget* requestWidget);
+	UFUNCTION() //유닛 선택시 공통 델리게이트 핸들러 함수
+	void HandleUnitSelected(AActor* selectedActor);
+	UFUNCTION()
+	void HandleMapMoveCommand(AActor* targetUnit, FVector dest);
+	UFUNCTION()
+	void HandleAttackButtonClicked();
+	UFUNCTION()
+	void HandleStopButtonClicked();
+	UFUNCTION()
+	void HandleHoldButtonClicked();
+	UFUNCTION()
+	void HandleRetreatButtonClicked();
 	
+
 protected:
-	//UI
+	//개별 명령 전달 유닛 캐싱
+	TWeakObjectPtr<class AB_UnitBase> selectedUnit;
+	
+	//UI캐싱
+	UPROPERTY()
+	TObjectPtr<class UK_UnitListWidget> cachedUnitListUI;
+	UPROPERTY()
+	TObjectPtr<class UW_SituationMapWidget> cachedSituationUI;
+	UPROPERTY()
+	TObjectPtr<class UW_MapWidget> cachedMapWidget;
+	
+	bool bPersistentUIBound = false;
+	bool bSituationMapUIBound = false;
+	
+	//UI Classes
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|UI")
 	TSubclassOf<class UK_HUDWidget> hudWidget;
 	

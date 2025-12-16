@@ -68,15 +68,15 @@ void AB_UnitBase::BeginPlay()
 	Super::BeginPlay();
 
 	
-	GetWorld ()->GetTimerManager ().SetTimer (
-		FindWidgetTimerHandle ,
-		this ,
-		&AB_UnitBase::FindMapWidgetLoop ,
-		0.5f ,
-		true
-	);
+	//GetWorld ()->GetTimerManager ().SetTimer (
+	//	FindWidgetTimerHandle ,
+	//	this ,
+	//	&AB_UnitBase::FindMapWidgetLoop ,
+	//	0.5f ,
+	//	true
+	//);
 
-	UE_LOG ( LogTemp , Warning , TEXT ( "위젯 찾기 시작" ) );
+	//UE_LOG ( LogTemp , Warning , TEXT ( "위젯 찾기 시작" ) );
 
 	OriginalAttackDamage = AttackDamage;
 	OriginalAttackRange = AttackRange;
@@ -108,48 +108,48 @@ void AB_UnitBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 }
 
-void AB_UnitBase::FindMapWidgetLoop ()
-{
-
-	TArray<UUserWidget*> FoundWidgets;
-
-	// 1. 가장 큰 부모인 SituationMapWidget을 찾는다.
-	UWidgetBlueprintLibrary::GetAllWidgetsOfClass ( GetWorld () , FoundWidgets , UW_SituationMapWidget::StaticClass () , false );
-
-	if (FoundWidgets.Num () > 0)
-	{
-		UW_SituationMapWidget* SituationWidget = Cast<UW_SituationMapWidget> ( FoundWidgets[0] );
-
-		if (SituationWidget)
-		{
-			SituationWidget->OnAttackButtonClicked.AddDynamic ( this , &AB_UnitBase::OnAttackButtonClicked_Unit );
-			SituationWidget->OnStopButtonClicked.AddDynamic ( this , &AB_UnitBase::OnStopButtonClicked_Unit );
-			SituationWidget->OnHoldButtonClicked.AddDynamic ( this , &AB_UnitBase::OnHoldButtonClicked_Unit );
-			SituationWidget->OnRetreatButtonClicked.AddDynamic ( this , &AB_UnitBase::OnRetreatButtonClicked_Unit );
-
-			UW_MapWidget* MapWidget = SituationWidget->GetRenderedMap ();
-			if (MapWidget)
-			{
-				MapWidget->OnRightMouseButtonClicked.AddDynamic ( this , &AB_UnitBase::CommandMoveToLocation );
-				UE_LOG ( LogTemp , Warning , TEXT ( "맵 이동 명령 연결 성공" ) );
-			}
-			else
-			{
-				UE_LOG ( LogTemp , Error , TEXT ( "SituationWidget은 찾았는데 그 안에 RenderedMap이 비어있음" ) );
-			}
-
-			UE_LOG ( LogTemp , Warning , TEXT ( "위젯 찾음 & 모든 연결 완료!" ) );
-
-			// 4. 타이머 해제
-			GetWorld ()->GetTimerManager ().ClearTimer ( FindWidgetTimerHandle );
-		} 
-	}
-	else
-	{
-		UE_LOG ( LogTemp , Log , TEXT ( "SituationMapWidget 아직 못 찾음..." ) );
-	}
-
-}
+//void AB_UnitBase::FindMapWidgetLoop ()
+//{
+//
+//	TArray<UUserWidget*> FoundWidgets;
+//
+//	// 1. 가장 큰 부모인 SituationMapWidget을 찾는다.
+//	UWidgetBlueprintLibrary::GetAllWidgetsOfClass ( GetWorld () , FoundWidgets , UW_SituationMapWidget::StaticClass () , false );
+//
+//	if (FoundWidgets.Num () > 0)
+//	{
+//		UW_SituationMapWidget* SituationWidget = Cast<UW_SituationMapWidget> ( FoundWidgets[0] );
+//
+//		if (SituationWidget)
+//		{
+//			SituationWidget->OnAttackButtonClicked.AddDynamic ( this , &AB_UnitBase::OnAttackButtonClicked_Unit );
+//			SituationWidget->OnStopButtonClicked.AddDynamic ( this , &AB_UnitBase::OnStopButtonClicked_Unit );
+//			SituationWidget->OnHoldButtonClicked.AddDynamic ( this , &AB_UnitBase::OnHoldButtonClicked_Unit );
+//			SituationWidget->OnRetreatButtonClicked.AddDynamic ( this , &AB_UnitBase::OnRetreatButtonClicked_Unit );
+//
+//			UW_MapWidget* MapWidget = SituationWidget->GetRenderedMap ();
+//			if (MapWidget)
+//			{
+//				MapWidget->OnRightMouseButtonClicked.AddDynamic ( this , &AB_UnitBase::CommandMoveToLocation );
+//				UE_LOG ( LogTemp , Warning , TEXT ( "맵 이동 명령 연결 성공" ) );
+//			}
+//			else
+//			{
+//				UE_LOG ( LogTemp , Error , TEXT ( "SituationWidget은 찾았는데 그 안에 RenderedMap이 비어있음" ) );
+//			}
+//
+//			UE_LOG ( LogTemp , Warning , TEXT ( "위젯 찾음 & 모든 연결 완료!" ) );
+//
+//			// 4. 타이머 해제
+//			GetWorld ()->GetTimerManager ().ClearTimer ( FindWidgetTimerHandle );
+//		} 
+//	}
+//	else
+//	{
+//		UE_LOG ( LogTemp , Log , TEXT ( "SituationMapWidget 아직 못 찾음..." ) );
+//	}
+//
+//}
 
 
 FUnitProfileData AB_UnitBase::GetUnitProfileData ()
