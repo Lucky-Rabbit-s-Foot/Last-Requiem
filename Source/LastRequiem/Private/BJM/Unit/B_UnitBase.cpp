@@ -86,6 +86,7 @@ void AB_UnitBase::BeginPlay()
 		StatusComponent->OnStateChanged.AddDynamic ( this , &AB_UnitBase::OnBehaviorStateChanged_Unit );
 		StatusComponent->OnHPChanged.AddDynamic ( this , &AB_UnitBase::OnHPChanged_Wrapper );
 		StatusComponent->OnSanityChanged.AddDynamic ( this , &AB_UnitBase::OnSanityChanged_Wrapper );
+		StatusComponent->OnCombatStateChanged.AddDynamic ( this , &AB_UnitBase::OnCombatStateChanged_Wrapper );
 	}
 
 	UnitDataUpdate ();
@@ -586,6 +587,8 @@ void AB_UnitBase::UnitAttack(AActor* TargetActor)
 
 	if (!TargetActor || !bIsAlive) return;
 
+	SetCombatState_Unit ( true );
+
 	CurrentAttackTarget = TargetActor;
 
 	FVector LookDir = TargetActor->GetActorLocation () - GetActorLocation ();
@@ -630,6 +633,8 @@ void AB_UnitBase::OnAttackHit_Unit ()
 void AB_UnitBase::SetCombatState_Unit ( bool bInCombat )
 {
 	if (!StatusComponent) return;
+
+	StatusComponent->SetCombatState ( bInCombat );
 
 	if (StatusComponent->bIsInCombat != bInCombat)
 	{
@@ -774,5 +779,15 @@ void AB_UnitBase::OnHPChanged_Wrapper ( float InCurrentHP , float InMaxHP )
 
 void AB_UnitBase::OnSanityChanged_Wrapper ( float InCurrentSanity , float InMaxSanity )
 {
+	UnitDataUpdate ();
+}
+
+void AB_UnitBase::OnCombatStateChanged_Wrapper ( bool bInCombat )
+{
+	if (IndicatorSprite)
+	{
+		IndicatorSprite->SetIndicatorState ( bInCombat ? EIndicatorSpriteState::Combat : EIndicatorSpriteState::Normal );
+	}
+
 	UnitDataUpdate ();
 }

@@ -80,6 +80,11 @@ void UB_UnitStatusComponent::SetCombatState(bool bNewState)
 	if (bIsInCombat == bNewState) return;
 	bIsInCombat = bNewState;
 
+	if (OnCombatStateChanged.IsBound ())
+	{
+		OnCombatStateChanged.Broadcast ( bIsInCombat );
+	}
+
 	if (bIsInCombat)
 	{
 		// 전투 종료 타이머
@@ -113,7 +118,7 @@ void UB_UnitStatusComponent::SetCombatState(bool bNewState)
 
 void UB_UnitStatusComponent::ResetCombatState()
 {
-	bIsInCombat = false;
+	SetCombatState ( false );
 	UE_LOG(LogTemp, Warning, TEXT("전투 모드 비활성화"));
 }
 
