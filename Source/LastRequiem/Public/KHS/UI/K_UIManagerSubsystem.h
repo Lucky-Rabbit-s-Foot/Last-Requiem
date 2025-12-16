@@ -117,11 +117,6 @@ T* UK_UIManagerSubsystem::OpenUI(TSubclassOf<T> targetClass)
 	
 	UK_BaseUIWidget* baseWidget = widget;
 	
-	KHS_SCREEN_INFO(TEXT("OpenUI - widget: %p, baseWidget: %p, 캐스팅 성공: %s"), 
-		widget, baseWidget,	(baseWidget != nullptr) ? TEXT("TRUE") : TEXT("FALSE"));
-	
-	KHS_SCREEN_INFO(TEXT("UILayer 값: %d (0=PERSISTENT, 1=POPUP)"), (int32)baseWidget->UILayer);
-	
 	//Persistent 타입 UI일때
 	if (baseWidget->UILayer == EUILayer::PERSISTENT)
 	{
