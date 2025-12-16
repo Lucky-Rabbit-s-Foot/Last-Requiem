@@ -38,8 +38,6 @@ void AP_EnemyBase::BeginPlay()
 void AP_EnemyBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
-	AIPathVisualization ();
 }
 
 void AP_EnemyBase::InitSpriteComponent ()
@@ -196,26 +194,6 @@ void AP_EnemyBase::SetCombatState ( bool bNewIsCombat )
 		if (UP_AnimInstanceEnemyBase* AnimInst = Cast<UP_AnimInstanceEnemyBase> ( SkeletalMeshComp->GetAnimInstance () ))
 		{
 			AnimInst->SetCombatState ( bIsCombat );
-		}
-	}
-}
-
-void AP_EnemyBase::AIPathVisualization ()
-{
-	AAIController* AIC = Cast<AAIController> ( GetController () );
-	if (AIC->GetPathFollowingComponent () && AIC->GetPathFollowingComponent ()->GetPath ().IsValid ())
-	{
-		const TArray<FNavPathPoint>& PathPoints = AIC->GetPathFollowingComponent ()->GetPath ()->GetPathPoints ();
-
-		for (int32 i = 0; i < PathPoints.Num () - 1; ++i)
-		{
-			DrawDebugLine (
-				GetWorld () ,
-				PathPoints[i].Location ,
-				PathPoints[i + 1].Location ,
-				FColor::Green ,
-				false , -1.0f , 0 , 3.0f
-			);
 		}
 	}
 }
