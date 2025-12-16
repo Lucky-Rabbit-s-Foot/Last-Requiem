@@ -18,7 +18,10 @@ UP_BTS_SelectTarget::UP_BTS_SelectTarget ()
 {
 	NodeName = TEXT ( "Select Target" );
 	Interval = 0.5f;
+}
 
+void UP_BTS_SelectTarget::OnBecomeRelevant ( UBehaviorTreeComponent& OwnerComp , uint8* NodeMemory )
+{
 	UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
 	ObstacleTag = FGameplayTag::RequestGameplayTag ( FName ( "Obstacle" ) );
 	FortressTag = FGameplayTag::RequestGameplayTag ( FName ( "Fortress" ) );

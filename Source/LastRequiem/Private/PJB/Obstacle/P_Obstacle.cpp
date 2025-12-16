@@ -12,8 +12,6 @@ AP_Obstacle::AP_Obstacle()
 	CollisionComp = CreateDefaultSubobject<UBoxComponent> ( TEXT ( "CollisionComp" ) );
 	CollisionComp->SetupAttachment ( Mesh );
 
-	static FGameplayTag ObstacleTag = FGameplayTag::RequestGameplayTag ( FName ( "Obstacle" ) );
-	GameplayTags.AddTag ( ObstacleTag );
 }
 
 void AP_Obstacle::GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const
@@ -29,6 +27,9 @@ void AP_Obstacle::BeginPlay()
 	OnTakeAnyDamage.AddDynamic ( this , &AP_Obstacle::OnTakeDamage );
 
 	Mesh->SetCanEverAffectNavigation ( false );
+
+	static FGameplayTag ObstacleTag = FGameplayTag::RequestGameplayTag ( FName ( "Obstacle" ) );
+	GameplayTags.AddTag ( ObstacleTag );
 }
 
 void AP_Obstacle::OnTakeDamage ( AActor* DamagedActor , float Damage , const UDamageType* DamageType , AController* InstigateBy , AActor* DamageCauser )

@@ -30,6 +30,17 @@ AK_Drone::AK_Drone()
 	SetReplicateMovement(true);
 }
 
+void AK_Drone::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	
+	if (sphereComp)
+	{
+		sphereComp->SetSimulatePhysics(true);
+		sphereComp->SetMassOverrideInKg(NAME_None, DRONE_MASS_WEIGHT); //드론 질량
+	}
+}
+
 // Called when the game starts or when spawned
 void AK_Drone::BeginPlay()
 {
@@ -83,11 +94,9 @@ void AK_Drone::InitializeDefaultComponents()
 	sphereComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	sphereComp->SetCollisionObjectType(ECollisionChannel::ECC_Pawn);
 	sphereComp->SetCollisionResponseToAllChannels(ECR_Block);
-	sphereComp->SetSimulatePhysics(true);
 	sphereComp->SetEnableGravity(false); 
 	sphereComp->SetLinearDamping(1.2f);  //관성 감쇠
 	sphereComp->SetAngularDamping(2.0f); //회전 감쇠
-	sphereComp->SetMassOverrideInKg(NAME_None, DRONE_MASS_WEIGHT); //드론 질량
 	
 	//springArm
 	springArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("springArmComp"));
@@ -197,6 +206,7 @@ void AK_Drone::InitializeDetectedUnitSlot()
 	//탐지결과 처리
 	for (const FHitResult& hit : hitResults)
 	{
+#if WITH_EDITOR
 		DrawDebugPoint(
 			GetWorld(),
 			hit.ImpactPoint,
@@ -204,7 +214,7 @@ void AK_Drone::InitializeDetectedUnitSlot()
 			FColor::Red,
 			false,
 			1.f);
-		
+#endif
 		
 		AActor* detectedActor = hit.GetActor();
 		AB_UnitBase* detectedUnit = Cast<AB_UnitBase>(detectedActor);
@@ -257,14 +267,15 @@ void AK_Drone::UpdateDetectedUnitSlot()
 	//탐지결과 처리
 	for (const FHitResult& hit : hitResults)
 	{
+#if WITH_EDITOR
 		DrawDebugPoint(
 			GetWorld(),
 			hit.ImpactPoint,
 			20.f,
 			FColor::Red,
 			false,
-			5.f);
-		
+			5.f);		
+#endif
 		
 		AActor* detectedActor = hit.GetActor();
 		AB_UnitBase* detectedUnit = Cast<AB_UnitBase>(detectedActor);

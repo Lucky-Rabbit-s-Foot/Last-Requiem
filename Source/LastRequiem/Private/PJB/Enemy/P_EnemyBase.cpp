@@ -21,7 +21,6 @@ AP_EnemyBase::AP_EnemyBase()
 	SpriteComp = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "Indicator Sprite Component" ) );
 	
 	InitSpriteComponent ();
-	InitGameplayTag ();
 	InitRotationSetting ();
 
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
@@ -32,6 +31,7 @@ void AP_EnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
 
+	InitGameplayTag ();
 	OnTakeAnyDamage.AddDynamic ( this , &AP_EnemyBase::OnTakeDamage );
 }
 
