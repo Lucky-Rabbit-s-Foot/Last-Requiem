@@ -200,5 +200,8 @@ protected:
 	UFUNCTION ()
 	void OnSanityChanged_Wrapper ( float InCurrentSanity , float InMaxSanity );
 
+	UFUNCTION ()
+	void OnCombatStateChanged_Wrapper ( bool bInCombat );
+
 
 };
