@@ -3,13 +3,15 @@
 
 #include "BJM/AI/B_OnHitNotify.h"
 #include "BJM/Unit/B_UnitBase.h"
+#include "Animation/AnimNotifies/AnimNotify.h"
 
 
 UB_OnHitNotify::UB_OnHitNotify ()
 {
+#if WITH_EDITORONLY_DATA
 	NotifyColor = FColor::Red;
+#endif
 }
-
 void UB_OnHitNotify::Notify ( USkeletalMeshComponent* MeshComp , UAnimSequenceBase* Animation , const FAnimNotifyEventReference& EventReference )
 {
 	Super::Notify ( MeshComp , Animation , EventReference );

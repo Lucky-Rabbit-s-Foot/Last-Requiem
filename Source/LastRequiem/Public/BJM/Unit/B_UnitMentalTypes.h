@@ -46,7 +46,7 @@ struct FUnitProfileData
 public:
 	// 프로필사진
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Profile" )
-	UTexture2D* ProfileImage;
+	UTexture2D* ProfileImage = nullptr;
 
 	// 유닛 이름
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Profile" )
@@ -54,27 +54,27 @@ public:
 
 	// 체력
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Profile" )
-	float MaxHP;
+	float MaxHP = 100.0f;
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Profile" )
-	float CurrentHP;
+	float CurrentHP = 100.0f;
 
 	// 정신력
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Profile" )
-	float MaxSanity;
+	float MaxSanity = 100.0f;
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Profile" )
-	float CurrentSanity;
+	float CurrentSanity = 80.0f;
 
 	// 사망
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Profile" )
-	bool bIsAlive;
+	bool bIsAlive = false;
 
 	// 전투
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Profile" )
-	bool bIsInCombat;
+	bool bIsInCombat = false;
 
 	// 음성상태
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Profile" )
-	bool bIsSpeaking;
+	bool bIsSpeaking = false;
 
 
 };
