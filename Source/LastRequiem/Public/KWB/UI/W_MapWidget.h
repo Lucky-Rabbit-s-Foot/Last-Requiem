@@ -7,13 +7,14 @@
 #include "GameplayTagContainer.h"
 #include "W_MapWidget.generated.h"
 
-class AB_UnitBase;
+class AActor;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE( FOnLeftMouseButtonClicked );
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam( FOnRightMouseButtonClicked, FVector, OutClickedLocation);
 
 // 유닛 선택 / 선택된 유닛에게 이동명령
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnMinimapUnitSelected , AActor* , SelectedActor ); // 이 부분 좀 의문스러움
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams ( FOnMinimapMoveCommand , AActor* , SelectedActor , FVector , Destination );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnMapUnitSelected , AActor* , SelectedActor );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams ( FOnMapMoveCommand , AActor* , SelectedActor , FVector , Destination );
 /**
  * 
  */
@@ -27,6 +28,12 @@ public:
 
 	inline FVector GetClickedWorldLocation () { return ClickedWorldLocation; }
 
+	// 거리계산으로 유닛 찾기
+	AActor* GetUnitAtWorldPosition ( const FVector& WorldPos );
+
+	UFUNCTION ( BlueprintCallable , Category = "Minimap" )
+	void SetSelectedUnit ( AActor* Unit ) { SelectedUnit = Unit; }
+
 	UFUNCTION ( BlueprintCallable , Category = "Minimap" )
 	AActor* GetSelectedUnit () const { return SelectedUnit.Get (); }
 
@@ -38,8 +45,9 @@ protected:
 
 	FVector MapUVToWorld ( float U , float V ) const;
 
+	// 레거시 : Overlap 사용해서 유닛 선택하기 -> 거리 계산으로 셀렉 동작하면 지울 예정
 	// 클릭 근처에서 유닛 찾기
-	AB_UnitBase* FindClosestUnitNear ( const FVector& ClickWorld ) const;
+	// AActor* FindClosestUnitNear ( const FVector& ClickWorld ) const;
 
 public:
 	// 맵 중심 (Location)
@@ -82,9 +90,16 @@ public:
 
 
 	// 델리게이트
+	UPROPERTY ( BlueprintAssignable , Category = "Map|Event" )
+	FOnMapUnitSelected OnMapUnitSelected;
+
+	UPROPERTY ( BlueprintAssignable , Category = "Map|Event" )
+	FOnMapMoveCommand OnMapMoveCommand;
+
+	FOnLeftMouseButtonClicked OnLeftMouseButtonClicked;
+
+	// 레거시 : 종민님 코드 수정 후 제거 || 수정된 코드와 호환성 체크 후 제거 여부 결정
 	FOnRightMouseButtonClicked OnRightMouseButtonClicked;
-	FOnMinimapUnitSelected OnMinimapUnitSelected;
-	FOnMinimapMoveCommand OnMinimapMoveCommand;
 
 private:
 	// 선택된 유닛 저장용
