@@ -6,25 +6,32 @@
 #include "Engine/Engine.h"
 #include "Input/Events.h"
 #include "Engine/OverlapResult.h"
+#include "GameplayTagsManager.h"
 #include "BJM/Unit/B_UnitBase.h"
+#include "DrawDebugHelpers.h" // [TEST/DEBUG]
 
 void UW_MapWidget::NativeConstruct ()
 {
 	Super::NativeConstruct ();
 
-	// TEST: TEMP Func
+	// SelectableUnitTag가 비어있으면 기본 "Unit" 사용
+	if (!SelectableUnitTag.IsValid ())
+	{
+		SelectableUnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
+	}
+
+	// TEST: TEMP Func => 형님 코드랑 충돌 안되는 지 확인 필요
 	if (GetOwningPlayer ())
 	{
 		GetOwningPlayer ()->bShowMouseCursor = true;
 	}
 }
 
-// FIX : 함수 이름 수정 필요 여기까지 하던 중
-//void UW_MapWidget::ClearSelection ()
-//{
-//	SelectedActor = nullptr;
-//	OnMinimapUnitSelected.Broadcast ( nullptr );
-//}
+void UW_MapWidget::ClearUnitSelection ()
+{
+	SelectedUnit = nullptr;
+	OnMinimapUnitSelected.Broadcast ( nullptr );
+}
 
 FReply UW_MapWidget::NativeOnMouseButtonDown ( const FGeometry& InGeometry , const FPointerEvent& InMouseEvent )
 {
@@ -66,6 +73,14 @@ FReply UW_MapWidget::NativeOnMouseButtonDown ( const FGeometry& InGeometry , con
 	// 7. (U,V) → 월드 좌표 변환
 	const FVector WorldPos = MapUVToWorld ( U , V );
 
+	// [TEST/DEBUG] 멤버에도 저장 (GetClickedWorldLocation() 정상화)
+	ClickedWorldLocation = WorldPos;
+	ClickedWidgetLocation = WidgetLocalPos;
+	WidgetX = U;
+	WidgetY = V;
+	WorldX = WorldPos.X;
+	WorldY = WorldPos.Y;
+
 	// 8. 디버그 출력
 	UE_LOG ( LogTemp , Log , TEXT ( "Minimap Click: U=%.3f V=%.3f -> World=%s" ) ,
 		U , V , *WorldPos.ToString () );
@@ -79,20 +94,30 @@ FReply UW_MapWidget::NativeOnMouseButtonDown ( const FGeometry& InGeometry , con
 
 	if (PressedButton == EKeys::LeftMouseButton)
 	{
-		// 좌클릭은 액터를 선택하거나 액션 버튼을 조작하는 기능을 담당
-		// 1. 선택한 부분이 액터일 때
+		// 좌클릭: 클릭 지점 주변에서 가장 가까운 유닛 선택
+		AB_UnitBase* NewSelected = FindClosestUnitNear ( WorldPos );
+		SelectedUnit = NewSelected;
 
-		// 2. 선택한 부분이 
+		// 선택 이벤트 발송(Controller가 받음)
+		OnMinimapUnitSelected.Broadcast ( NewSelected );
 
-		OnLeftMouseButtonClicked.Broadcast ();
+		// [TEST/DEBUG]
+		if (bDebugMinimapSelection && GEngine)
+		{
+			const FString SelName = NewSelected ? NewSelected->GetName () : TEXT ( "None" );
+			GEngine->AddOnScreenDebugMessage (
+				-1 , 2.f , FColor::Yellow ,
+				FString::Printf ( TEXT ( "[Minimap] Selected: %s" ) , *SelName )
+			);
+		}
 	}
 	else if (PressedButton == EKeys::RightMouseButton)
 	{
-		// 우클릭은 위치 값을 유닛에게 전달
+		// 우클릭 : (선택된 유닛 + 목적지) 명령 발송
+		OnMinimapMoveCommand.Broadcast ( SelectedUnit.Get () , WorldPos );
 
-		// 가장 마지막에 할 것
-		OnRightMouseButtonClicked.Broadcast ( WorldPos );
-		UE_LOG ( LogTemp , Warning , TEXT ( "World Loc Val 반환 델리게이트 발송 완료" ) );
+		// 레거시 : B_Unit에서 연결 끊으면 삭제 예정
+		//OnRightMouseButtonClicked.Broadcast ( WorldPos ); // DEBUG 동안 잠시 주석 처리
 	}
 
 	return FReply::Handled ();
@@ -120,7 +145,100 @@ FVector UW_MapWidget::MapUVToWorld ( float U , float V ) const
 	return WorldPos;
 }
 
-AActor* UW_MapWidget::FindClosestUnitNear ( const FVector& ClickWorld ) const
+AB_UnitBase* UW_MapWidget::FindClosestUnitNear ( const FVector& ClickWorld ) const
 {
-	return nullptr;
+	UWorld* World = GetWorld ();
+	if (!World) return nullptr;
+
+	// [TEST/DEBUG]
+	const FVector QueryCenter = ClickWorld + FVector ( 0 , 0 , 0 ); // 안되면 SelectionQueryZOffset를 Z값에 넣을 예정
+
+	if (bDebugMinimapSelection)
+	{
+		DrawDebugSphere ( World , QueryCenter , UnitSelectionRadius , 24 , FColor::Cyan , false , DebugDrawDuration );
+		DrawDebugString ( World , QueryCenter + FVector ( 0 , 0 , 50 ) , TEXT ( "Minimap Pick Center" ) , nullptr , FColor::Cyan , DebugDrawDuration );
+	}
+	//
+
+	TArray<FOverlapResult> Overlaps;
+	const FCollisionShape Shape = FCollisionShape::MakeSphere ( UnitSelectionRadius );
+
+	const bool bHit = World->OverlapMultiByChannel (
+		Overlaps ,
+		ClickWorld ,
+		FQuat::Identity ,
+		ECC_Pawn ,
+		Shape
+	);
+
+	// [TEST/DEBUG]
+	if (!bHit)
+	{
+		if (bDebugLogOverlaps)
+		{
+			UE_LOG ( LogTemp , Warning , TEXT ( "[MinimapPick] No overlap at %s" ) , *QueryCenter.ToString () );
+		}
+		return nullptr;
+	}
+	//
+
+	// 디버그 이후 살릴 것
+	//if (!bHit) return nullptr;
+
+	AB_UnitBase* BestUnit = nullptr;
+	float BestDistSq = TNumericLimits<float>::Max ();
+
+	// [TEST/DEBUG]
+	if (bDebugLogOverlaps)
+	{
+		UE_LOG ( LogTemp , Log , TEXT ( "[MinimapPick] Overlaps=%d" ) , Overlaps.Num () );
+	}
+	//
+
+	for (const FOverlapResult& R : Overlaps)
+	{
+		AB_UnitBase* Unit = Cast<AB_UnitBase> ( R.GetActor () );
+		if (!Unit) continue;
+		if (!Unit->IsAlive ()) continue;
+
+		// 태그 필터: SelectableUnitTag(Unit) 없는 액터는 선택 제외
+		if (SelectableUnitTag.IsValid ())
+		{
+			FGameplayTagContainer OwnedTags;
+			Unit->GetOwnedGameplayTags ( OwnedTags ); // AB_UnitBase가 GameplayTags를 반환
+			if (!OwnedTags.HasTag ( SelectableUnitTag ))
+			{
+				continue;
+			}
+		}
+
+		const float DistSq = FVector::DistSquared2D ( Unit->GetActorLocation () , ClickWorld );
+
+		// [TEST/DEBUG]
+		if (bDebugMinimapSelection)
+		{
+			DrawDebugSphere ( World , Unit->GetActorLocation () , 60.f , 12 , FColor::White , false , DebugDrawDuration );
+			DrawDebugLine ( World , QueryCenter , Unit->GetActorLocation () , FColor::White , false , DebugDrawDuration , 0 , 1.f );
+			DrawDebugString ( World , Unit->GetActorLocation () + FVector ( 0 , 0 , 120 ) ,
+				Unit->GetName () , nullptr , FColor::White , DebugDrawDuration );
+		}
+		//
+
+		if (DistSq < BestDistSq)
+		{
+			BestDistSq = DistSq;
+			BestUnit = Unit;
+		}
+	}
+
+	// [TEST/DEBUG]
+	if (bDebugMinimapSelection && BestUnit)
+	{
+		DrawDebugSphere ( World , BestUnit->GetActorLocation () , 120.f , 16 , FColor::Green , false , DebugDrawDuration );
+		DrawDebugString ( World , BestUnit->GetActorLocation () + FVector ( 0 , 0 , 180 ) ,
+			TEXT ( "SELECTED" ) , nullptr , FColor::Orange , DebugDrawDuration );
+	}
+	//
+
+	return BestUnit;
 }
