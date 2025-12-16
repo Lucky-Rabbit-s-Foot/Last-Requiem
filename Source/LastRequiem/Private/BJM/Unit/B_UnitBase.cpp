@@ -624,7 +624,7 @@ void AB_UnitBase::OnAttackHit_Unit ()
 		MuzzleLoc = GetMesh ()->GetSocketLocation ( MuzzleSocketName );
 	}
 
-	UE_LOG ( LogTemp , Warning , TEXT ( "타격 적중! 데미지 들어감." ) );
+	UE_LOG ( LogTemp , Warning , TEXT ( "타격" ) );
 }
 
 void AB_UnitBase::SetCombatState_Unit ( bool bInCombat )
@@ -759,12 +759,12 @@ void AB_UnitBase::OnDie_Unit ()
 	GetCapsuleComponent ()->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
 	GetCapsuleComponent ()->SetCollisionResponseToAllChannels ( ECR_Ignore );
 
-	GetMesh ()->SetCollisionProfileName ( TEXT ( "Ragdoll" ) );
-	GetMesh ()->SetSimulatePhysics ( true );
+	//GetMesh ()->SetCollisionProfileName ( TEXT ( "Ragdoll" ) );
+	//GetMesh ()->SetSimulatePhysics ( true );
 
-	SetLifeSpan ( 5.0f );
+	//SetLifeSpan ( 5.0f );
 
-	UE_LOG ( LogTemp , Warning , TEXT ( "%s 사망! 태그 제거됨." ) , *GetName () );
+	UE_LOG ( LogTemp , Warning , TEXT ( "%s 태그 제거" ) , *GetName () );
 }
 
 void AB_UnitBase::OnHPChanged_Wrapper ( float InCurrentHP , float InMaxHP )
