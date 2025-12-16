@@ -55,11 +55,11 @@ public:
 	FGameplayTagContainer GameplayTags;
 
 	// 위젯 찾으려고 타이머 설정한거(위젯찾으면 사라짐)
-	FTimerHandle FindWidgetTimerHandle;
+	//FTimerHandle FindWidgetTimerHandle;
 
 	// 위젯 찾게 돌리는거
-	UFUNCTION ()
-	void FindMapWidgetLoop ();
+	//UFUNCTION ()
+	//void FindMapWidgetLoop ();
 
 protected:
 	float OriginalAttackDamage;
