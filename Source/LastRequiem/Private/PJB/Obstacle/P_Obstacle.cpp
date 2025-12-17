@@ -1,6 +1,7 @@
 ﻿#include "PJB/Obstacle/P_Obstacle.h"
 
 #include "Components/BoxComponent.h"
+#include "KWB/Component/IndicatorSpriteComponent.h"
 
 AP_Obstacle::AP_Obstacle()
 {
@@ -12,6 +13,8 @@ AP_Obstacle::AP_Obstacle()
 	CollisionComp = CreateDefaultSubobject<UBoxComponent> ( TEXT ( "CollisionComp" ) );
 	CollisionComp->SetupAttachment ( Mesh );
 
+	SpriteComp = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "SpriteComp" ) );
+	SpriteComp->SetupAttachment ( Mesh );
 }
 
 void AP_Obstacle::GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const

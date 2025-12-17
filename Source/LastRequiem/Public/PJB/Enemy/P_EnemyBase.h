@@ -53,7 +53,6 @@ public:
 	void SetCombatState ( bool bNewIsCombat );
 
 private:
-	void InitSpriteComponent ();
 	void InitGameplayTag ();
 	void InitRotationSetting ();
 

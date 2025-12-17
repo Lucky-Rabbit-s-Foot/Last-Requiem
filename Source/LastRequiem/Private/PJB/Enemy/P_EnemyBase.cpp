@@ -21,8 +21,8 @@ AP_EnemyBase::AP_EnemyBase()
 
 	CombatComp = CreateDefaultSubobject<UP_CombatComponent> ( TEXT ( "Combat Component" ) );
 	SpriteComp = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "Indicator Sprite Component" ) );
-	
-	InitSpriteComponent ();
+	SpriteComp->SetupAttachment ( GetRootComponent () );
+
 	InitRotationSetting ();
 
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
@@ -45,15 +45,6 @@ void AP_EnemyBase::BeginPlay()
 void AP_EnemyBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-}
-
-void AP_EnemyBase::InitSpriteComponent ()
-{
-	SpriteComp->SetupAttachment ( GetRootComponent () );
-	SpriteComp->SetRelativeLocation ( FVector ( 0.0f , 0.0f , 300.0f ) );
-	SpriteComp->SetRelativeRotation ( FRotator ( -90.0f , 0.0f , 0.0f ) );
-	SpriteComp->SetCastShadow ( false );
-	SpriteComp->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
 }
 
 void AP_EnemyBase::InitGameplayTag ()
