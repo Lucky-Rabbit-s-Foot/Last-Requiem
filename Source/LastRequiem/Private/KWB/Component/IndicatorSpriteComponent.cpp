@@ -71,7 +71,7 @@ void UIndicatorSpriteComponent::OnRegister ()
 	{
 		bVisibleInSceneCaptureOnly = true;  // UPrimitiveComponent 플래그
 		bHiddenInGame = false;
-		SetVisibility ( true , true );
+		SetVisibility ( bSpriteOn , true );
 	}
 }
 
@@ -141,6 +141,30 @@ void UIndicatorSpriteComponent::StopGlow ()
 	}
 }
 
+void UIndicatorSpriteComponent::SetSpriteOnOff ( bool bOn , bool bStopGlowWhenOff )
+{
+	if (bSpriteOn == bOn)
+	{
+		return;
+	}
+
+	bSpriteOn = bOn;
+
+	// SceneCapture 포함 렌더링 자체 On/Off
+	SetVisibility ( bSpriteOn , true );
+
+	// Glow 같이 끄기
+	if (!bSpriteOn && bStopGlowWhenOff)
+	{
+		StopGlow ();
+	}
+}
+
+void UIndicatorSpriteComponent::ToggleSpriteOnOff ()
+{
+	SetSpriteOnOff ( !bSpriteOn );
+}
+
 void UIndicatorSpriteComponent::HandleGlowFinished ()
 {
 	StopGlow ();
@@ -186,6 +210,9 @@ void UIndicatorSpriteComponent::UpdateSpriteForState ()
 		break;
 	case EIndicatorSpriteState::Combat:
 		NewSprite = SpirteCombat;
+		break;
+	case EIndicatorSpriteState::Selected:
+		NewSprite = SpirteSelected;
 		break;
 	case EIndicatorSpriteState::Dead:
 		NewSprite = SpirteDead;

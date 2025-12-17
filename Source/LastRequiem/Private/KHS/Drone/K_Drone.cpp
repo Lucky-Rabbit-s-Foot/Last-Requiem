@@ -13,7 +13,9 @@
 #include "Components/SphereComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "KHS/Util/K_LoggingSystem.h"
 #include "KWB/Component/IndicatorSpriteComponent.h"
+#include "PJB/Enemy/P_EnemyBase.h"
 
 
 // Sets default values
@@ -231,7 +233,7 @@ void AK_Drone::UpdateDetectedUnitSlot()
 	float capsuleHalfHeight = droneData->DRONE_DETECTION_CAPSULE_HALF_HEIGHT;
 	FCollisionShape capsuleShpae = FCollisionShape::MakeCapsule(capsuleRadius, capsuleHalfHeight);
 	
-	//(수정) 캡슐 회전 추가
+	//(251217 수정) 캡슐 회전 추가
 	FRotator currentRot = GetActorRotation();
 	currentRot.Pitch += droneData->DRONE_DETECTION_CAPSULE_ROTATION;
 	FQuat capsuleQuat = currentRot.Quaternion();
@@ -242,13 +244,6 @@ void AK_Drone::UpdateDetectedUnitSlot()
 		capsuleQuat,
 		ECC_Pawn,
 		capsuleShpae);
-	
-	// GetWorld()->SweepMultiByChannel(
-	// 	hitResults,
-	// 	start, end,
-	// 	FQuat::Identity,
-	// 	ECC_Pawn,
-	// 	capsuleShpae);
 	
 #if WITH_EDITOR
 	DrawDebugCapsule(
@@ -262,32 +257,32 @@ void AK_Drone::UpdateDetectedUnitSlot()
 		1.f, 0, 3.f
 		);
 	
-	// DrawDebugCapsule(
-	// 	GetWorld(),
-	// 	start,
-	// 	capsuleHalfHeight,
-	// 	capsuleRadius,
-	// 	FQuat::Identity,
-	// 	FColor::Green,
-	// 	false,
-	// 	1.f, 0, 3.f
-	// 	);
 #endif
 	
 	//현재 탐지된 유닛 캐싱
 	TSet<AActor*> currentDetectedUnits;
+	TSet<AActor*> currentDetectedEnemys;
 	
 	//탐지결과 처리
 	for (const FHitResult& hit : hitResults)
 	{
-		
 		AActor* detectedActor = hit.GetActor();
-		AB_UnitBase* detectedUnit = Cast<AB_UnitBase>(detectedActor);
 		
+		//유닛
+		AB_UnitBase* detectedUnit = Cast<AB_UnitBase>(detectedActor);
 		if (detectedUnit)
 		{
 			currentDetectedUnits.Add(detectedActor);
 			//broadcast
+			onUnitDetected.Broadcast(detectedActor);
+		}
+		
+		//(251217 수정) 에너미 탐지 추가
+		AP_EnemyBase* detectedEnemy = Cast<AP_EnemyBase>(detectedActor);
+		if (detectedEnemy)
+		{
+			KHS_SCREEN_INFO(TEXT("에너미 탐지되었음 - %p"), detectedEnemy);
+			currentDetectedEnemys.Add(detectedActor);
 			onUnitDetected.Broadcast(detectedActor);
 		}
 	}
@@ -297,13 +292,24 @@ void AK_Drone::UpdateDetectedUnitSlot()
 	{
 		if (!currentDetectedUnits.Contains(detectedActor))
 		{
+			KHS_SCREEN_INFO(TEXT("에너미 탐지벗어남 - %p"), detectedActor);
 			//broadcast
 			onUnitLostDetection.Broadcast(detectedActor);
 		}
 	}
 	
-	//unit list update
+	//(251217 수정) 이전 탐지되었으나 지금은 안된 에너미들 브로드캐스트
+	for (AActor* detectedEnemy : previouslyDetectedEnemys)
+	{
+		if (!currentDetectedEnemys.Contains(detectedEnemy))
+		{
+			onUnitLostDetection.Broadcast(detectedEnemy);
+		}
+	}
+	
+	//list update
 	previouslyDetectedUnits = currentDetectedUnits;
+	previouslyDetectedEnemys = currentDetectedEnemys;
 }
 
 

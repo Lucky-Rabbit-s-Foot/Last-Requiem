@@ -15,6 +15,7 @@ enum class EIndicatorSpriteState : uint8
 {
 	Normal ,
 	Combat ,
+	Selected ,
 	Dead
 };
 
@@ -41,7 +42,12 @@ public:
 	// Glow 강제 종료
 	void StopGlow ();
 
+	void SetSpriteOnOff ( bool bOn , bool bStopGlowWhenOff = true );
+
+	void ToggleSpriteOnOff ();
+
 	FORCEINLINE EIndicatorSpriteState GetIndicatorState () const { return CurrentState; }
+
 
 protected:
 	// Sprite 세팅 : 필요 없는 건 nullptr 로 두면 됨
@@ -50,6 +56,9 @@ protected:
 
 	UPROPERTY ( EditAnywhere , Category = "Data|Sprite" )
 	TObjectPtr<UPaperSprite> SpirteCombat = nullptr;
+
+	UPROPERTY ( EditAnywhere , Category = "Data|Sprite" )
+	TObjectPtr<UPaperSprite> SpirteSelected = nullptr;
 
 	UPROPERTY ( EditAnywhere , Category = "Data|Sprite" )
 	TObjectPtr<UPaperSprite> SpirteDead = nullptr;
@@ -83,6 +92,9 @@ protected:
 private:
 	// 현재 상태
 	EIndicatorSpriteState CurrentState;
+
+	// 스프라이트 온오프 플래그
+	bool bSpriteOn = true;
 
 	// Sprite 초기화 여부 (Fallback 로직 한 번만 돌리기 위함)
 	bool bSpritesInitialized;
