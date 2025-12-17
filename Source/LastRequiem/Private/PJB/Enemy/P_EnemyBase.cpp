@@ -10,6 +10,8 @@
 #include "PJB/Enemy/P_AnimInstanceEnemyBase.h"
 #include "KWB/Component/IndicatorSpriteComponent.h"
 #include "BrainComponent.h"
+#include "KHS/Drone/K_Drone.h"
+#include "Kismet/GameplayStatics.h"
 
 #include "Navigation/PathFollowingComponent.h"
 
@@ -31,8 +33,13 @@ void AP_EnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
 
+	SpriteComp->SetSpriteOnOff ( false );
 	InitGameplayTag ();
 	OnTakeAnyDamage.AddDynamic ( this , &AP_EnemyBase::OnTakeDamage );
+
+	AK_Drone* Drone = Cast<AK_Drone> ( UGameplayStatics::GetPlayerPawn ( GetWorld () , 0 ) );
+	Drone->onUnitDetected.AddUObject ( this , &AP_EnemyBase::OnDetected );
+	Drone->onUnitLostDetection.AddUObject ( this , &AP_EnemyBase::OnLostDetection );
 }
 
 void AP_EnemyBase::Tick(float DeltaTime)
@@ -63,7 +70,6 @@ void AP_EnemyBase::InitRotationSetting ()
 	GetCharacterMovement ()->bOrientRotationToMovement = true;
 	GetCharacterMovement ()->RotationRate = FRotator ( 0.0f , 640.0f , 0.0f );
 }
-
 
 void AP_EnemyBase::GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const
 {
@@ -123,8 +129,26 @@ void AP_EnemyBase::OnTakeDamage ( AActor* DamagedActor , float Damage , const UD
 	}
 }
 
-void AP_EnemyBase::OnDetected ()
+void AP_EnemyBase::OnDetected ( AActor* DetectedActor )
 {
+	if (DetectedActor != this || !bIsAlive) return;
+
+	if (SpriteComp)
+	{
+		SpriteComp->SetSpriteOnOff ( true );
+	}
+}
+
+void AP_EnemyBase::OnLostDetection ( AActor* DetectedActor )
+{
+	if (DetectedActor != this || !bIsAlive) return;
+
+	// TODO: if other units still detect this enemy then do not turn off the sprite
+
+	if (SpriteComp)
+	{
+		SpriteComp->SetSpriteOnOff ( false );
+	}
 }
 
 void AP_EnemyBase::OnDie ()

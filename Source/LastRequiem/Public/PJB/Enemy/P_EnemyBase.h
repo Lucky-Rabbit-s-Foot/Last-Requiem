@@ -41,7 +41,8 @@ public:
 		AActor* DamageCauser
 	);
 
-	void OnDetected ();
+	void OnDetected ( AActor* DetectedActor );
+	void OnLostDetection ( AActor* DetectedActor );
 
 	virtual void GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const override;
 	
