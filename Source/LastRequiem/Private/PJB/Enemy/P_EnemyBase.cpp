@@ -188,6 +188,10 @@ void AP_EnemyBase::OnDeactivate()
 	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
 	GetMesh()->SetSimulatePhysics(true);
 
+	GetMesh ()->SetCollisionResponseToChannel ( ECC_Visibility , ECR_Ignore );
+	GetMesh ()->SetCollisionResponseToChannel ( ECC_Camera , ECR_Ignore );
+	GetMesh ()->SetCollisionResponseToChannel ( ECC_Pawn , ECR_Ignore );
+
 	GetCharacterMovement()->StopMovementImmediately();
 	GetCharacterMovement()->DisableMovement();	
 	GetCharacterMovement ()->SetComponentTickEnabled ( false );
