@@ -331,8 +331,7 @@ void AK_Drone::UseSkill01()
 		AB_UnitBase* unit = Cast<AB_UnitBase>(actor);
 		if (!unit || !unit->IsAlive())
 		{
-			KHS_WARN(TEXT("UseSkill01 : No Valid Unit Selected"));
-			return;
+			continue;
 		}
 		
 		unit->ReceiveSupport_HP(droneData->RECOVER_HEALTH_AMOUNT);
@@ -346,8 +345,7 @@ void AK_Drone::UseSkill02()
 		AB_UnitBase* unit = Cast<AB_UnitBase>(actor);
 		if (!unit || !unit->IsAlive())
 		{
-			KHS_WARN(TEXT("UseSkill02 : No Valid Unit Selected"));
-			return;
+			continue;
 		}
 		
 		unit->ReceiveSupport_Sanity(droneData->RECOVER_SANITY_AMOUNT);
