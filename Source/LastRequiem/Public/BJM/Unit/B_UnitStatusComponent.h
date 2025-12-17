@@ -11,6 +11,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam (FOnStateChanged, EUnitBehaviorState, NewState );
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams (FOnStatChanged, float, Current, float, Max );
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnCombatStateChanged , bool , bInCombat );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams ( FOnUnitSpeak , AActor* , InSpeaker , bool , bIsSpeaking );
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -47,6 +48,8 @@ public:
 	float CurrentSanity;
 
 
+public:
+
 	// 유닛 멘탈 상황
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Stat")
 	EUnitBehaviorState CurrentState;
@@ -69,6 +72,9 @@ public:
 	UPROPERTY ( BlueprintAssignable , Category = "Unit|Event" )
 	FOnCombatStateChanged OnCombatStateChanged;
 
+	UPROPERTY ( BlueprintAssignable , Category = "Unit|Event" )
+	FOnUnitSpeak OnUnitSpeak;
+
 	UFUNCTION (BlueprintCallable, Category = "Unit|Logic")
 	void ReduceHP ( float InDamage );
 
@@ -77,6 +83,15 @@ public:
 
 	UFUNCTION (BlueprintCallable, Category = "Unit|Logic")
 	void SetCombatState ( bool bNewState );
+
+	UFUNCTION ( BlueprintCallable , Category = "Unit|Logic" )
+	void SetSpeakingState ( bool bNewState );
+
+	UFUNCTION ( BlueprintCallable , Category = "Unit|Logic" )
+	void RecoverHP ( float InAmount );
+
+	UFUNCTION ( BlueprintCallable , Category = "Unit|Logic" )
+	void RecoverSanity ( float InAmount );
 
 protected:
 	FTimerHandle CombatTimerHandle;

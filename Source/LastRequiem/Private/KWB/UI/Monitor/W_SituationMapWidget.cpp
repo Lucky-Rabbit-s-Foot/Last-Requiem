@@ -3,6 +3,7 @@
 
 #include "KWB/UI/Monitor/W_SituationMapWidget.h"
 #include "Components/Button.h"
+#include "KHS/Util/K_LoggingSystem.h"
 
 UW_SituationMapWidget::UW_SituationMapWidget ()
 {
@@ -53,6 +54,60 @@ void UW_SituationMapWidget::NativeConstruct()
 	if (Retreat)
 	{
 		Retreat->OnClicked.AddDynamic ( this , &UW_SituationMapWidget::HandleRetreatButtonClicked );
+	}
+	else
+	{
+		UE_LOG ( LogTemp , Error , TEXT ( "TObjectPtr<UButton> Retreat이 존재하지 않습니다." ) );
+	}
+}
+
+void UW_SituationMapWidget::NativeDestruct ()
+{
+	if (Exit)
+	{
+		Exit->OnClicked.RemoveDynamic ( this , &UW_SituationMapWidget::HandleExitButtonClicked );
+		//KHS_INFO ( TEXT ( "Exit->OnClicked.RemoveDynamic" ) );
+	}
+	else
+	{
+		UE_LOG ( LogTemp , Error , TEXT ( "TObjectPtr<UButton> Exit이 존재하지 않습니다." ) );
+	}
+
+	if (Attack)
+	{
+		Attack->OnClicked.RemoveDynamic ( this , &UW_SituationMapWidget::HandleAttackButtonClicked );
+		//KHS_INFO ( TEXT ( "Attack->OnClicked.RemoveDynamic" ) );
+	}
+	else
+	{
+		UE_LOG ( LogTemp , Error , TEXT ( "TObjectPtr<UButton> Attack이 존재하지 않습니다." ) );
+	}
+
+	if (Stop)
+	{
+		Stop->OnClicked.RemoveDynamic ( this , &UW_SituationMapWidget::HandleStopButtonClicked );
+		//KHS_INFO ( TEXT ( "Stop->OnClicked.RemoveDynamic" ) );
+	}
+	else
+	{
+		UE_LOG ( LogTemp , Error , TEXT ( "TObjectPtr<UButton> Stop이 존재하지 않습니다." ) );
+	}
+
+	if (Hold)
+	{
+		Hold->OnClicked.RemoveDynamic ( this , &UW_SituationMapWidget::HandleHoldButtonClicked );
+		//KHS_INFO ( TEXT ( "Hold->OnClicked.RemoveDynamic" ) );
+
+	}
+	else
+	{
+		UE_LOG ( LogTemp , Error , TEXT ( "TObjectPtr<UButton> Hold이 존재하지 않습니다." ) );
+	}
+
+	if (Retreat)
+	{
+		Retreat->OnClicked.RemoveDynamic ( this , &UW_SituationMapWidget::HandleRetreatButtonClicked );
+		KHS_INFO ( TEXT ( "Retreat->OnClicked.RemoveDynamic" ) );
 	}
 	else
 	{

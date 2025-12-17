@@ -15,19 +15,34 @@ class LASTREQUIEM_API UK_DroneData : public UDataAsset
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "LR|Move", meta=(ClampMin="0.0", ToolTip = "Drone Flight Speed"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "LR|Move", meta=(ClampMin="0.0", ToolTip = "Drone Flight Horizontal Speed"))
 	float DRONE_HORIZONTAL_FORCE = 2000.f;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "LR|Move", meta=(ClampMin="0.0", ToolTip = "Drone Flight Speed"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "LR|Move", meta=(ClampMin="0.0", ToolTip = "Drone Flight Vertical Speed"))
 	float DRONE_VERTICAL_FORCE = 2000.f;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "LR|Move", meta=(ClampMin="0.0", ToolTip = "Drone Deceleration Index"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "LR|Move", meta=(ClampMin="0.0", ToolTip = "Drone Mesh Rotation Speed"))
 	float ROTATION_SPEED = 3.f;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "LR|Move", meta=(ClampMin="0.0", ToolTip = "Drone Deceleration Index"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "LR|Move", meta=(ClampMin="0.0", ToolTip = "Drone Flight Max Speed"))
 	float MAX_SPEED = 2000.f;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "LR|Move", meta=(ClampMin="0.0", ToolTip = "Drone Deceleration Index"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "LR|Move", meta=(ClampMin="0.0", ToolTip = "Drone Flight Max Height"))
 	float DRONE_FLIGHT_MAX_HEIGHT = 2000.f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "LR|Detection", meta=(ClampMin="0.0", ToolTip = "Drone Detection Initial Capsule Radius"))
+	float DRONE_DETECTION_INITIAL_RADIUS = 10000.f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "LR|Detection", meta=(ClampMin="0.0", ToolTip = "Drone Detection Initial Capsule Half Height"))
+	float DRONE_DETECTION_INITIAL_HALF_HEIGHT = 1000.f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "LR|Detection", meta=(ClampMin="0.0", ToolTip = "Drone Detection Capsule Radius"))
+	float DRONE_DETECTION_CAPSULE_RADIUS = 700.f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "LR|Detection", meta=(ClampMin="0.0", ToolTip = "Drone Detection Capsule Half Height"))
+	float DRONE_DETECTION_CAPSULE_HALF_HEIGHT = 2800.f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "LR|Detection", meta=(ClampMin="0.0", ToolTip = "Drone Detection Capsule Rotate Degree"))
+	float DRONE_DETECTION_CAPSULE_ROTATION = 60.f;
 	
 };

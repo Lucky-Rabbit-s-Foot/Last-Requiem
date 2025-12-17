@@ -90,8 +90,8 @@ public:
 
 	virtual void OnConstruction ( const FTransform& Transform ) override;
 
-protected:
 	void UnitDataUpdate ();
+protected:
 
 public:
 
