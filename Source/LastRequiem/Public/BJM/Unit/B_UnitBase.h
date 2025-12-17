@@ -138,6 +138,21 @@ public:
 	FVector FortressLocation;
 
 public:
+	UFUNCTION ( BlueprintCallable , Category = "Unit|Support" )
+	void ReceiveSupport_HP ( float InValue );
+
+	UFUNCTION ( BlueprintCallable , Category = "Unit|Support" )
+	void ReceiveSupport_Sanity ( float InValue );
+
+protected:
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Stats" )
+	float HPRecoveryRatio = 0.25f;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Stats" )
+	float SanityRecoveryRatio = 0.3f;
+
+
+public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Unit|Attack")
 	float AttackRange = 700.0f;
@@ -202,6 +217,9 @@ protected:
 
 	UFUNCTION ()
 	void OnCombatStateChanged_Wrapper ( bool bInCombat );
+
+	public:
+		void SetSelectedSprite ( bool bIsSelected );
 
 
 };

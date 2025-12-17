@@ -530,6 +530,22 @@ void AB_UnitBase::OnRetreatButtonClicked_Unit ()
 	CommandRetreat ();
 }
 
+void AB_UnitBase::ReceiveSupport_HP ( float InValue )
+{
+	if (!StatusComponent || !bIsAlive) return;
+
+	float RecoverHPAmount = InValue * HPRecoveryRatio;
+	StatusComponent->RecoverHP ( RecoverHPAmount );
+}
+
+void AB_UnitBase::ReceiveSupport_Sanity ( float InValue )
+{
+
+	if (!StatusComponent || !bIsAlive) return;
+	float RecoverSanityAmount = InValue * SanityRecoveryRatio;
+	StatusComponent->RecoverSanity ( RecoverSanityAmount );
+}
+
 float AB_UnitBase::TakeDamage ( float DamageAmount , FDamageEvent const& DamageEvent , AController* EventInstigator , AActor* DamageCauser )
 {
 	float ActualDamage = Super::TakeDamage ( DamageAmount , DamageEvent , EventInstigator , DamageCauser );
@@ -793,4 +809,11 @@ void AB_UnitBase::OnCombatStateChanged_Wrapper ( bool bInCombat )
 	}
 
 	UnitDataUpdate ();
+}
+
+void AB_UnitBase::SetSelectedSprite ( bool bIsSelected )
+{
+	if (IndicatorSprite == nullptr) return;
+
+	//IndicatorSprite->SetIndicatorState ( EIndicatorSpriteState::Selected );
 }
