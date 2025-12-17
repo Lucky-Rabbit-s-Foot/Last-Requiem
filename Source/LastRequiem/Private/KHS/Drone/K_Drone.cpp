@@ -325,9 +325,32 @@ void AK_Drone::UpDown(float inputValue)
 
 void AK_Drone::UseSkill01()
 {
+	//previouslyDetectedUnits을 순회하면서 유닛들에게 회복명령
+	for (AActor* actor : previouslyDetectedUnits)
+	{
+		AB_UnitBase* unit = Cast<AB_UnitBase>(actor);
+		if (!unit || !unit->IsAlive())
+		{
+			KHS_WARN(TEXT("UseSkill01 : No Valid Unit Selected"));
+			return;
+		}
+		
+		unit->ReceiveSupport_HP(droneData->RECOVER_HEALTH_AMOUNT);
+	}
 }
 
 void AK_Drone::UseSkill02()
 {
+	for (AActor* actor : previouslyDetectedUnits)
+	{
+		AB_UnitBase* unit = Cast<AB_UnitBase>(actor);
+		if (!unit || !unit->IsAlive())
+		{
+			KHS_WARN(TEXT("UseSkill02 : No Valid Unit Selected"));
+			return;
+		}
+		
+		unit->ReceiveSupport_Sanity(droneData->RECOVER_SANITY_AMOUNT);
+	}
 }
 

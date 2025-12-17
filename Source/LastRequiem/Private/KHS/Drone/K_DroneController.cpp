@@ -260,17 +260,6 @@ void AK_DroneController::OnToggleSituationMapUI(const FInputActionValue& value)
 
 void AK_DroneController::OnDroneUseSkill01(const FInputActionValue& value)
 {
-	//유닛처리
-	AB_UnitBase* unit = selectedUnit.Get();
-	if (!unit || !unit->IsAlive())
-	{
-		KHS_WARN(TEXT("UseSkill01 : No Valid Unit Selected"));
-		return;
-	}
-	
-	unit->ReceiveSupport_HP(RECOVER_HEALTH_AMOUNT);
-	
-	//UI처리
 	AK_Drone* drone = Cast<AK_Drone>(GetPawn());
 	if (drone)
 	{
@@ -280,17 +269,6 @@ void AK_DroneController::OnDroneUseSkill01(const FInputActionValue& value)
 
 void AK_DroneController::OnDroneUseSkill02(const FInputActionValue& value)
 {
-	//유닛처리
-	AB_UnitBase* unit = selectedUnit.Get();
-	if (!unit || !unit->IsAlive())
-	{
-		KHS_WARN(TEXT("UseSkill02 : No Valid Unit Selected"));
-		return;
-	}
-	
-	unit->ReceiveSupport_Sanity(RECOVER_SANITY_AMOUNT);
-	
-	//UI처리
 	AK_Drone* drone = Cast<AK_Drone>(GetPawn());
 	if (drone)
 	{
