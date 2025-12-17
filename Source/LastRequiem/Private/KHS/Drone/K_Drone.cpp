@@ -176,8 +176,8 @@ void AK_Drone::InitializeDetectedUnitSlot()
 	FVector start = GetActorLocation();
 	FVector end = start;
 	
-	float capsuleRadius = 10000.f;
-	float capsuleHalfHeight = 700.f;
+	float capsuleRadius = droneData->DRONE_DETECTION_INITIAL_RADIUS;
+	float capsuleHalfHeight = droneData->DRONE_DETECTION_INITIAL_HALF_HEIGHT;
 	FCollisionShape capsuleShpae = FCollisionShape::MakeCapsule(capsuleRadius, capsuleHalfHeight);
 	
 	GetWorld()->SweepMultiByChannel(
@@ -227,16 +227,28 @@ void AK_Drone::UpdateDetectedUnitSlot()
 	FVector start = GetActorLocation();
 	FVector end = start;
 	
-	float capsuleRadius = 800.f;
-	float capsuleHalfHeight = 2500.f;
+	float capsuleRadius = droneData->DRONE_DETECTION_CAPSULE_RADIUS;
+	float capsuleHalfHeight = droneData->DRONE_DETECTION_CAPSULE_HALF_HEIGHT;
 	FCollisionShape capsuleShpae = FCollisionShape::MakeCapsule(capsuleRadius, capsuleHalfHeight);
+	
+	//(수정) 캡슐 회전 추가
+	FRotator currentRot = GetActorRotation();
+	currentRot.Pitch += droneData->DRONE_DETECTION_CAPSULE_ROTATION;
+	FQuat capsuleQuat = currentRot.Quaternion();
 	
 	GetWorld()->SweepMultiByChannel(
 		hitResults,
 		start, end,
-		FQuat::Identity,
+		capsuleQuat,
 		ECC_Pawn,
 		capsuleShpae);
+	
+	// GetWorld()->SweepMultiByChannel(
+	// 	hitResults,
+	// 	start, end,
+	// 	FQuat::Identity,
+	// 	ECC_Pawn,
+	// 	capsuleShpae);
 	
 #if WITH_EDITOR
 	DrawDebugCapsule(
@@ -244,11 +256,22 @@ void AK_Drone::UpdateDetectedUnitSlot()
 		start,
 		capsuleHalfHeight,
 		capsuleRadius,
-		FQuat::Identity,
+		capsuleQuat,
 		FColor::Green,
 		false,
 		1.f, 0, 3.f
 		);
+	
+	// DrawDebugCapsule(
+	// 	GetWorld(),
+	// 	start,
+	// 	capsuleHalfHeight,
+	// 	capsuleRadius,
+	// 	FQuat::Identity,
+	// 	FColor::Green,
+	// 	false,
+	// 	1.f, 0, 3.f
+	// 	);
 #endif
 	
 	//현재 탐지된 유닛 캐싱
