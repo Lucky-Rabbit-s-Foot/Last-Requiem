@@ -12,6 +12,7 @@
 #include "BrainComponent.h"
 #include "KHS/Drone/K_Drone.h"
 #include "Kismet/GameplayStatics.h"
+#include "PJB/System/P_GameStateBase.h"
 
 #include "Navigation/PathFollowingComponent.h"
 
@@ -88,6 +89,8 @@ void AP_EnemyBase::InitEnemyData(UP_EnemyDataAsset* InData)
 	CachedAttackRange = InData->AttackRange;
 	CachedAttackMontage = InData->AttackMontage;
 
+	Score = InData->Score;
+
 	if (CombatComp)
 	{
 		CombatComp->InitStats ( InData->MaxHealth , InData->AttackRange , InData->AttackPower );
@@ -151,6 +154,11 @@ void AP_EnemyBase::OnDie ()
 	bIsAlive = false;
 
 	OnDeactivate ();
+
+	if (AP_GameStateBase* GS = GetWorld () ? GetWorld ()->GetGameState<AP_GameStateBase> () : nullptr)
+	{
+		GS->AddScore ( Score );
+	}
 
 	OnEnemyDieDelegate.Broadcast ( this );
 }

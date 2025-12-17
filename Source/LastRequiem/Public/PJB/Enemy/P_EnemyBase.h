@@ -75,6 +75,9 @@ protected:
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Movement" )
 	float CombatMoveSpeed = 100.0f;
 
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Score" )
+	int32 Score = 100;
+
 	// Cached combat data
 	float CachedAttackRange = 100.0f;
 	UPROPERTY ()
