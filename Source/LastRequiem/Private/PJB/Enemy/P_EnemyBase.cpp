@@ -1,5 +1,6 @@
 ﻿#include "PJB/Enemy/P_EnemyBase.h"
 
+#include "LastRequiem.h"
 #include "Components/CapsuleComponent.h"
 #include "PaperSpriteComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -167,8 +168,7 @@ void AP_EnemyBase::OnDie ()
 
 void AP_EnemyBase::OnDeactivate()
 {
-	GameplayTags.RemoveTag ( FGameplayTag::RequestGameplayTag ( FName ( "Enemy" ) ) );
-
+	GameplayTags.Reset ();
 	if (SpriteComp)
 	{
 		SpriteComp->SetIndicatorState ( EIndicatorSpriteState::Dead );
