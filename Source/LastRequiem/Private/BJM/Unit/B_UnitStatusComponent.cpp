@@ -117,23 +117,23 @@ void UB_UnitStatusComponent::SetCombatState(bool bNewState)
 
 }
 
-void UB_UnitStatusComponent::SetSpeakingState ( bool bNewState )
-{
-	AB_UnitBase* Unit = Cast<AB_UnitBase> ( GetOwner () );
-	if (bIsSpeaking == bNewState) return;
-
-	bIsSpeaking = bNewState;
-
-	if (OnUnitSpeak.IsBound ())
-	{
-		OnUnitSpeak.Broadcast ( GetOwner () , bIsSpeaking );
-	}
-
-	if (Unit)
-	{
-		Unit->UnitDataUpdate ();
-	}
-}
+//void UB_UnitStatusComponent::SetSpeakingState ( bool bNewState )
+//{
+//	AB_UnitBase* Unit = Cast<AB_UnitBase> ( GetOwner () );
+//	if (bIsSpeaking == bNewState) return;
+//
+//	bIsSpeaking = bNewState;
+//
+//	if (OnUnitSpeak.IsBound ())
+//	{
+//		OnUnitSpeak.Broadcast ( GetOwner () , bIsSpeaking );
+//	}
+//
+//	if (Unit)
+//	{
+//		Unit->UnitDataUpdate ();
+//	}
+//}
 
 void UB_UnitStatusComponent::RecoverHP ( float InAmount )
 {
