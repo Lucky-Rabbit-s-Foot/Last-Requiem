@@ -56,6 +56,9 @@ private:
 	UFUNCTION()
 	void HandleRetreatButtonClicked();
 	
+private:
+	float RECOVER_HEALTH_AMOUNT = 100.f;
+	float RECOVER_SANITY_AMOUNT = 100.f;
 
 protected:
 	//개별 명령 전달 유닛 캐싱

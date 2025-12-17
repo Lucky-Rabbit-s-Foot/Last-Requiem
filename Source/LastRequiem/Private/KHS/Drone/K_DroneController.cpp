@@ -268,7 +268,7 @@ void AK_DroneController::OnDroneUseSkill01(const FInputActionValue& value)
 		return;
 	}
 	
-	//unit->RecoverSanity();
+	unit->ReceiveSupport_HP(RECOVER_HEALTH_AMOUNT);
 	
 	//UI처리
 	AK_Drone* drone = Cast<AK_Drone>(GetPawn());
@@ -288,7 +288,7 @@ void AK_DroneController::OnDroneUseSkill02(const FInputActionValue& value)
 		return;
 	}
 	
-	//unit->RecoverSanity();
+	unit->ReceiveSupport_Sanity(RECOVER_SANITY_AMOUNT);
 	
 	//UI처리
 	AK_Drone* drone = Cast<AK_Drone>(GetPawn());
@@ -339,13 +339,13 @@ void AK_DroneController::HandleUnitSelected(AActor* selectedActor)
 	AB_UnitBase* previousUnit = selectedUnit.Get();
 	if (previousUnit && previousUnit != unit)
 	{
-		//previousUnit->SetSelectedSprite(false);
+		previousUnit->SetSelectedSprite(false);
 	}
 	
 	if (unit && unit->IsAlive())
 	{
 		selectedUnit = unit;
-		//unit->SetSelectedSprite(true);
+		unit->SetSelectedSprite(true);
 		
 		if (cachedMapWidget)
 		{
