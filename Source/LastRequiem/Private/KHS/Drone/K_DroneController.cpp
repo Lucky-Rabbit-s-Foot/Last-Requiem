@@ -260,17 +260,6 @@ void AK_DroneController::OnToggleSituationMapUI(const FInputActionValue& value)
 
 void AK_DroneController::OnDroneUseSkill01(const FInputActionValue& value)
 {
-	//유닛처리
-	AB_UnitBase* unit = selectedUnit.Get();
-	if (!unit || !unit->IsAlive())
-	{
-		KHS_WARN(TEXT("UseSkill01 : No Valid Unit Selected"));
-		return;
-	}
-	
-	//unit->RecoverSanity();
-	
-	//UI처리
 	AK_Drone* drone = Cast<AK_Drone>(GetPawn());
 	if (drone)
 	{
@@ -280,17 +269,6 @@ void AK_DroneController::OnDroneUseSkill01(const FInputActionValue& value)
 
 void AK_DroneController::OnDroneUseSkill02(const FInputActionValue& value)
 {
-	//유닛처리
-	AB_UnitBase* unit = selectedUnit.Get();
-	if (!unit || !unit->IsAlive())
-	{
-		KHS_WARN(TEXT("UseSkill02 : No Valid Unit Selected"));
-		return;
-	}
-	
-	//unit->RecoverSanity();
-	
-	//UI처리
 	AK_Drone* drone = Cast<AK_Drone>(GetPawn());
 	if (drone)
 	{
@@ -339,13 +317,13 @@ void AK_DroneController::HandleUnitSelected(AActor* selectedActor)
 	AB_UnitBase* previousUnit = selectedUnit.Get();
 	if (previousUnit && previousUnit != unit)
 	{
-		//previousUnit->SetSelectedSprite(false);
+		previousUnit->SetSelectedSprite(false);
 	}
 	
 	if (unit && unit->IsAlive())
 	{
 		selectedUnit = unit;
-		//unit->SetSelectedSprite(true);
+		unit->SetSelectedSprite(true);
 		
 		if (cachedMapWidget)
 		{
