@@ -41,6 +41,8 @@ public:
 		AActor* DamageCauser
 	);
 
+	void OnDetected ();
+
 	virtual void GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const override;
 	
 	UFUNCTION ( BlueprintPure , Category = "Combat" )

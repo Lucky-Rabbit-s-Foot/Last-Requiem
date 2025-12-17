@@ -123,6 +123,10 @@ void AP_EnemyBase::OnTakeDamage ( AActor* DamagedActor , float Damage , const UD
 	}
 }
 
+void AP_EnemyBase::OnDetected ()
+{
+}
+
 void AP_EnemyBase::OnDie ()
 {
 	if (!bIsAlive)
