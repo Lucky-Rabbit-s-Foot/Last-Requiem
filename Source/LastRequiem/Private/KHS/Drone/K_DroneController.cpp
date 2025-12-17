@@ -342,6 +342,7 @@ void AK_DroneController::HandleMapMoveCommand(AActor* targetUnit, FVector dest)
 	AB_UnitBase* unit = Cast<AB_UnitBase>(targetUnit);
 	if (!unit || !unit->IsAlive())
 	{
+		KHS_WARN(TEXT("MoveCommand : No Valid Unit Selected"));
 		return;
 	}
 	
