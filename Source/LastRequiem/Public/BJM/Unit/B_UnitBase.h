@@ -12,6 +12,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnUnitDieDelegate, AActor*, InUnit );
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnCombatStateChangedDelegate , bool , bIsCombat );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams ( FOnUnitSpeak , AActor* , InSpeaker , bool , bIsSpeaking );
 
 class UB_UnitStatusComponent;
 class UIndicatorSpriteComponent;
@@ -134,8 +135,14 @@ public:
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Unit|State" )
 	bool bIsAttackMode = false;
 
+	UPROPERTY ( VisibleAnywhere , BlueprintReadWrite , Category = "Unit|State" )
+	bool bIsSpeaking = false;
+
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Data" )
 	FVector FortressLocation;
+
+	UFUNCTION ( BlueprintCallable , Category = "Unit|Logic" )
+	void SetSpeakingState ( bool bNewState );
 
 public:
 	UFUNCTION ( BlueprintCallable , Category = "Unit|Support" )
@@ -185,6 +192,11 @@ public:
 	UPROPERTY ( BlueprintAssignable , Category = "Unit|Event" )
 	FOnCombatStateChangedDelegate OnCombatStateChanged;
 
+	//UPROPERTY ( BlueprintAssignable , Category = "Unit|Event" )
+	//FOnUnitSpeak OnUnitSpeak;
+
+	UPROPERTY ( BlueprintAssignable , Category = "Unit|Event" )
+	FOnUnitSpeak OnUnitSpeakDelegate;
 	
 	UFUNCTION ( BlueprintCallable , Category = "Unit|State" )
 	void SetCombatState_Unit ( bool bInCombat );
@@ -218,8 +230,16 @@ protected:
 	UFUNCTION ()
 	void OnCombatStateChanged_Wrapper ( bool bInCombat );
 
-	public:
-		void SetSelectedSprite ( bool bIsSelected );
+public:
+	void SetSelectedSprite ( bool bIsSelected );
 
+protected:
+	FTimerHandle SpeakingTimerHandle;
+
+public:
+	UFUNCTION ( BlueprintCallable , Category = "Unit|Action" )
+	void PlayUnitVoice ( USoundBase* InVoiceSound );
+
+	void StopUnitVoice ();
 
 };
