@@ -13,7 +13,6 @@ class LASTREQUIEM_API UP_BTS_SelectTarget : public UBTService
 public:
 	UP_BTS_SelectTarget ();
 
-	virtual void OnBecomeRelevant ( UBehaviorTreeComponent& OwnerComp , uint8* NodeMemory ) override;
 protected:
 	virtual void TickNode ( UBehaviorTreeComponent& OwnerComp , uint8* NodeMemory , float DeltaSeconds ) override;
 	bool HasGameplayTag ( AActor* Actor , FGameplayTag Tag ) const;
