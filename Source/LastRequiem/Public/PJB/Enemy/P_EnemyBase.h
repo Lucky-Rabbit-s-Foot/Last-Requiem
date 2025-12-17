@@ -28,6 +28,7 @@ public:
 	inline bool IsAlive() { return bIsAlive; }
 
 	void InitEnemyData ( class UP_EnemyDataAsset* InData );
+	void BindDrone ( class AK_Drone* InDrone );
 
 	UFUNCTION()
 	void OnAttack ();

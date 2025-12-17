@@ -30,17 +30,13 @@ AP_EnemyBase::AP_EnemyBase()
 }
 
 
-void AP_EnemyBase::BeginPlay()
+void AP_EnemyBase::BeginPlay ()
 {
-	Super::BeginPlay();
+	Super::BeginPlay ();
 
 	SpriteComp->SetSpriteOnOff ( false );
 	InitGameplayTag ();
 	OnTakeAnyDamage.AddDynamic ( this , &AP_EnemyBase::OnTakeDamage );
-
-	AK_Drone* Drone = Cast<AK_Drone> ( UGameplayStatics::GetPlayerPawn ( GetWorld () , 0 ) );
-	Drone->onUnitDetected.AddUObject ( this , &AP_EnemyBase::OnDetected );
-	Drone->onUnitLostDetection.AddUObject ( this , &AP_EnemyBase::OnLostDetection );
 }
 
 void AP_EnemyBase::Tick(float DeltaTime)
@@ -95,6 +91,12 @@ void AP_EnemyBase::InitEnemyData(UP_EnemyDataAsset* InData)
 	{
 		CombatComp->InitStats ( InData->MaxHealth , InData->AttackRange , InData->AttackPower );
 	}
+}
+
+void AP_EnemyBase::BindDrone ( AK_Drone* InDrone )
+{
+	InDrone->onUnitDetected.AddUObject ( this , &AP_EnemyBase::OnDetected );
+	InDrone->onUnitLostDetection.AddUObject ( this , &AP_EnemyBase::OnLostDetection );
 }
 
 void AP_EnemyBase::OnAttack ()

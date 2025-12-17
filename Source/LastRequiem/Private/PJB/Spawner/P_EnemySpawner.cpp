@@ -6,6 +6,8 @@
 #include "NavigationSystem.h"
 #include "PJB/Data/P_DataTableRows.h"
 #include "PJB/Enemy/P_EnemyBase.h"
+#include "PJB/System/P_GameStateBase.h"
+#include "KHS/Drone/K_Drone.h"
 
 AP_EnemySpawner::AP_EnemySpawner()
 {
@@ -86,6 +88,10 @@ void AP_EnemySpawner::SpawnEnemy ()
 		if (SpawnedEnemy)
 		{
 			SpawnedEnemy->InitEnemyData ( SelectedRow->EnemyDataAsset );
+			if (AK_Drone* Drone = Cast<AK_Drone> ( UGameplayStatics::GetPlayerPawn ( GetWorld () , 0 ) ) )
+			{
+				SpawnedEnemy->BindDrone ( Drone );
+			}
 
 			UGameplayStatics::FinishSpawningActor ( SpawnedEnemy , SpawnTransform );
 			if (SpawnedEnemy->GetController () == nullptr)
