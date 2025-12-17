@@ -281,7 +281,7 @@ void AK_Drone::UpdateDetectedUnitSlot()
 		AP_EnemyBase* detectedEnemy = Cast<AP_EnemyBase>(detectedActor);
 		if (detectedEnemy)
 		{
-			KHS_SCREEN_INFO(TEXT("에너미 탐지되었음 - %p"), detectedEnemy);
+			//KHS_SCREEN_INFO(TEXT("에너미 탐지되었음 - %p"), detectedEnemy);
 			currentDetectedEnemys.Add(detectedActor);
 			onUnitDetected.Broadcast(detectedActor);
 		}
@@ -292,7 +292,7 @@ void AK_Drone::UpdateDetectedUnitSlot()
 	{
 		if (!currentDetectedUnits.Contains(detectedActor))
 		{
-			KHS_SCREEN_INFO(TEXT("에너미 탐지벗어남 - %p"), detectedActor);
+			//KHS_SCREEN_INFO(TEXT("에너미 탐지벗어남 - %p"), detectedActor);
 			//broadcast
 			onUnitLostDetection.Broadcast(detectedActor);
 		}
