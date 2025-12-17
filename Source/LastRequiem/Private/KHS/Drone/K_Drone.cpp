@@ -206,15 +206,6 @@ void AK_Drone::InitializeDetectedUnitSlot()
 	//탐지결과 처리
 	for (const FHitResult& hit : hitResults)
 	{
-		DrawDebugPoint(
-			GetWorld(),
-			hit.ImpactPoint,
-			20.f,
-			FColor::Red,
-			false,
-			1.f);
-		
-		
 		AActor* detectedActor = hit.GetActor();
 		AB_UnitBase* detectedUnit = Cast<AB_UnitBase>(detectedActor);
 		
@@ -266,14 +257,6 @@ void AK_Drone::UpdateDetectedUnitSlot()
 	//탐지결과 처리
 	for (const FHitResult& hit : hitResults)
 	{
-		DrawDebugPoint(
-			GetWorld(),
-			hit.ImpactPoint,
-			20.f,
-			FColor::Red,
-			false,
-			5.f);
-		
 		
 		AActor* detectedActor = hit.GetActor();
 		AB_UnitBase* detectedUnit = Cast<AB_UnitBase>(detectedActor);
