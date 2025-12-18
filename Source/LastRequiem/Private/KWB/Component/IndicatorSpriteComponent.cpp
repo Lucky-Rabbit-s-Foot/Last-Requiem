@@ -14,7 +14,7 @@ UIndicatorSpriteComponent::UIndicatorSpriteComponent ()
 	// Default Transform
 	DefaultRelativeTransform = FTransform (
 		FRotator ( 0.f , 0.f , -90.f ) ,	// 기준 순서 : Pitch, Yaw, Roll | 엔진에서는 Roll, Pitch, Yaw
-		FVector ( 0.f , 0.f , 300.f ) ,		// TEMP : 레벨 구성 완료 후 결정
+		FVector ( 0.f , 0.f , 3000.f ) ,		// TEMP : 레벨 구성 완료 후 결정 / 3000.0f로 테스트
 		FVector ( 0.35f , 0.35f , 0.35f )   // TEMP : 알파 게임 플레이 후 결정 !!사이즈 변경 시 W_MapWidget에서 UnitSelectionRadius 값 변경할 것!!
 	);
 
@@ -34,7 +34,7 @@ UIndicatorSpriteComponent::UIndicatorSpriteComponent ()
 	// TEST : 확인 필요
 	bVisibleInSceneCaptureOnly = true;	// SceneCapture에서만 표시
 	bHiddenInGame = false;
-	SetVisibility ( true , true );
+	SetVisibility ( true , false );	// propagate 끔 => true -> false : P_Obstacle 디버그
 }
 
 void UIndicatorSpriteComponent::BeginPlay ()
@@ -60,18 +60,28 @@ void UIndicatorSpriteComponent::OnRegister ()
 {
 	Super::OnRegister ();
 
+	if (IsTemplate ()) return; // CDO/아키타입 방어
+
 	if (bApplyDefaultTransform)
 	{
 		// Default Transform 세팅
 		SetRelativeTransform ( DefaultRelativeTransform );
 	}
 
-	// SceneCapture 에서만 보이게 옵션이 켜져 있으면 적용
+	// SceneCapture에서만 보이게 옵션 켜져있을 시 적용
 	if (bVisibleOnlyInSceneCapture)
 	{
-		bVisibleInSceneCaptureOnly = true;  // UPrimitiveComponent 플래그
+		bVisibleInSceneCaptureOnly = true;	// UPrimitiveComponent 플래그
 		bHiddenInGame = false;
-		SetVisibility ( true , true );
+
+		// propagate 끔 => true -> false : P_Obstacle 디버그
+		SetVisibility ( bSpriteOn , false );
+	}
+	else
+	{
+		// 옵션이 꺼질 경우 대비해서 여기도 정리 추천
+		bVisibleInSceneCaptureOnly = false;
+		SetVisibility ( bSpriteOn , false );
 	}
 }
 
@@ -141,6 +151,30 @@ void UIndicatorSpriteComponent::StopGlow ()
 	}
 }
 
+void UIndicatorSpriteComponent::SetSpriteOnOff ( bool bOn , bool bStopGlowWhenOff )
+{
+	if (bSpriteOn == bOn)
+	{
+		return;
+	}
+
+	bSpriteOn = bOn;
+
+	// SceneCapture 포함 렌더링 자체 On/Off
+	SetVisibility ( bSpriteOn , false );	// propagate 끔 => true -> false : P_Obstacle 디버그
+
+	// Glow 같이 끄기
+	if (!bSpriteOn && bStopGlowWhenOff)
+	{
+		StopGlow ();
+	}
+}
+
+void UIndicatorSpriteComponent::ToggleSpriteOnOff ()
+{
+	SetSpriteOnOff ( !bSpriteOn );
+}
+
 void UIndicatorSpriteComponent::HandleGlowFinished ()
 {
 	StopGlow ();
@@ -186,6 +220,9 @@ void UIndicatorSpriteComponent::UpdateSpriteForState ()
 		break;
 	case EIndicatorSpriteState::Combat:
 		NewSprite = SpirteCombat;
+		break;
+	case EIndicatorSpriteState::Selected:
+		NewSprite = SpirteSelected;
 		break;
 	case EIndicatorSpriteState::Dead:
 		NewSprite = SpirteDead;

@@ -3,19 +3,22 @@
 
 #include "KHS/Drone/K_DroneController.h"
 #include "KHS/Drone/K_Drone.h"
+#include "KHS/Util/K_LoggingSystem.h"
 
 #include "KHS/UI/K_UIManagerSubsystem.h"
 #include "KHS/UI/K_BaseUIWidget.h"
 #include "KHS/UI/K_HUDWidget.h"
 #include "KHS/UI/K_UnitListWidget.h"
+#include "KHS/UI/K_SettingWidget.h"
+#include "KWB/UI/W_MapWidget.h"
 
 #include "KWB/UI/Monitor/W_SituationMapWidget.h"
-#include "KWB/UI/W_MapWidget.h"
+#include "BJM/Unit/B_UnitBase.h"
 
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
-#include "BJM/Unit/B_UnitBase.h"
-#include "KHS/Util/K_LoggingSystem.h"
+#include "KHS/UI/K_TutorialWidget.h"
+#include "Kismet/GameplayStatics.h"
 
 void AK_DroneController::BeginPlay()
 {
@@ -61,14 +64,21 @@ void AK_DroneController::OnPossess(APawn* InPawn)
 
 void AK_DroneController::InitializePersistentUI()
 {
+	KHS_SCREEN_INFO(TEXT("==== Initialize Persistent UI START! ===="));
+	
 	UK_UIManagerSubsystem* UIManager = GetGameInstance()->GetSubsystem<UK_UIManagerSubsystem>();
 	if (UIManager)
 	{
-		UIManager->OpenUI<UK_HUDWidget>(hudWidget);
-		cachedUnitListUI = UIManager->OpenUI<UK_UnitListWidget>(unitListWidget);
+		UIManager->OpenUI<UK_HUDWidget>(hudUIFactory);
+		cachedUnitListUI = UIManager->OpenUI<UK_UnitListWidget>(unitListUIFactory);
+		
+		auto* hud = UIManager->GetOrCreateWidget<UK_HUDWidget>(hudUIFactory);
+		KHS_SCREEN_INFO(TEXT("HUD isOpen : %s, ISInViewport : %s"), hud->IsOpen()? TEXT("TRUE") : TEXT("False"), hud->IsInViewport()? TEXT("TRUE") : TEXT("FASLE"));
 		
 		BindPersistentUIDelegates();
 	}
+	
+	KHS_SCREEN_INFO(TEXT("==== Initialize Persistent UI END! ===="));
 }
 
 void AK_DroneController::BindPersistentUIDelegates()
@@ -95,19 +105,19 @@ void AK_DroneController::BindSituationMapUIDelegates(class UW_SituationMapWidget
 	}
 	
 	cachedSituationUI = situationUI;
-	cachedMapWidget =situationUI->GetRenderedMap();
+	cachedMiniMapUI =situationUI->GetRenderedMap();
 	
 	//버튼 델리게이트 연결
-	situationUI->OnAttackButtonClicked.AddDynamic(this, &AK_DroneController::HandleAttackButtonClicked);
-	situationUI->OnStopButtonClicked.AddDynamic(this, &AK_DroneController::HandleStopButtonClicked);
-	situationUI->OnHoldButtonClicked.AddDynamic(this, &AK_DroneController::HandleHoldButtonClicked);
-	situationUI->OnRetreatButtonClicked.AddDynamic(this, &AK_DroneController::HandleRetreatButtonClicked);
+	situationUI->OnAttackButtonClicked.AddDynamic(this, &AK_DroneController::HandleUnitAttackButtonClicked);
+	situationUI->OnStopButtonClicked.AddDynamic(this, &AK_DroneController::HandleUnitStopButtonClicked);
+	situationUI->OnHoldButtonClicked.AddDynamic(this, &AK_DroneController::HandleUnitHoldButtonClicked);
+	situationUI->OnRetreatButtonClicked.AddDynamic(this, &AK_DroneController::HandleUnitRetreatButtonClicked);
 	
 	//맵 델리게이트 연결
-	if (cachedMapWidget)
+	if (cachedMiniMapUI)
 	{
-		cachedMapWidget->OnMapUnitSelected.AddDynamic(this, &AK_DroneController::HandleUnitSelected);
-		cachedMapWidget->OnMapMoveCommand.AddDynamic(this, &AK_DroneController::HandleMapMoveCommand);
+		cachedMiniMapUI->OnMapUnitSelected.AddDynamic(this, &AK_DroneController::HandleUnitSelected);
+		cachedMiniMapUI->OnMapMoveCommand.AddDynamic(this, &AK_DroneController::HandleMapMoveCommand);
 	}
 	
 	bSituationMapUIBound = true;
@@ -140,23 +150,55 @@ void AK_DroneController::UnbindSituationMapUIDelegates()
 	//버튼 델리게이트 연결
 	if (cachedSituationUI)
 	{
-		cachedSituationUI->OnAttackButtonClicked.RemoveDynamic(this, &AK_DroneController::HandleAttackButtonClicked);
-		cachedSituationUI->OnStopButtonClicked.RemoveDynamic(this, &AK_DroneController::HandleStopButtonClicked);
-		cachedSituationUI->OnHoldButtonClicked.RemoveDynamic(this, &AK_DroneController::HandleHoldButtonClicked);
-		cachedSituationUI->OnRetreatButtonClicked.RemoveDynamic(this, &AK_DroneController::HandleRetreatButtonClicked);
+		cachedSituationUI->OnAttackButtonClicked.RemoveDynamic(this, &AK_DroneController::HandleUnitAttackButtonClicked);
+		cachedSituationUI->OnStopButtonClicked.RemoveDynamic(this, &AK_DroneController::HandleUnitStopButtonClicked);
+		cachedSituationUI->OnHoldButtonClicked.RemoveDynamic(this, &AK_DroneController::HandleUnitHoldButtonClicked);
+		cachedSituationUI->OnRetreatButtonClicked.RemoveDynamic(this, &AK_DroneController::HandleUnitRetreatButtonClicked);
 	}
 	
-	
 	//맵 델리게이트 연결
-	if (cachedMapWidget)
+	if (cachedMiniMapUI)
 	{
-		cachedMapWidget->OnMapUnitSelected.RemoveDynamic(this, &AK_DroneController::HandleUnitSelected);
-		cachedMapWidget->OnMapMoveCommand.RemoveDynamic(this, &AK_DroneController::HandleMapMoveCommand);
+		cachedMiniMapUI->OnMapUnitSelected.RemoveDynamic(this, &AK_DroneController::HandleUnitSelected);
+		cachedMiniMapUI->OnMapMoveCommand.RemoveDynamic(this, &AK_DroneController::HandleMapMoveCommand);
 	}
 	
 	cachedSituationUI = nullptr;
-	cachedMapWidget = nullptr;
+	cachedMiniMapUI = nullptr;
 	bSituationMapUIBound = false;
+}
+
+void AK_DroneController::BindSettingUIDelegates(class UK_SettingWidget* settingUI)
+{
+	if (!settingUI || bSituationMapUIBound)
+	{
+		KHS_INFO(TEXT("NO Valid Setting Ui or is already bound with Controller"));
+		return;
+	}
+	
+	cachedSettingUI = settingUI;
+	
+	settingUI->onTutorialRequestedDel.AddDynamic(this, &AK_DroneController::HandleTutorialButtonClicked);
+	settingUI->onRestartRequestedDel.AddDynamic(this, &AK_DroneController::HandleRestartButtonClicked);
+	settingUI->onQuitGameRequestedDel.AddDynamic(this, &AK_DroneController::HandleQuitGameButtonClicked);
+	
+	bSettingUIBound = true;
+}
+
+void AK_DroneController::UnbindSettingUIDelegates()
+{
+	if (!bSituationMapUIBound || !cachedSettingUI)
+	{
+		KHS_INFO(TEXT("NO Valid cached Ui or is already unbound with Controller"));
+		return;
+	}
+	
+	cachedSettingUI->onTutorialRequestedDel.RemoveDynamic(this, &AK_DroneController::HandleTutorialButtonClicked);
+	cachedSettingUI->onRestartRequestedDel.RemoveDynamic(this, &AK_DroneController::HandleRestartButtonClicked);
+	cachedSettingUI->onQuitGameRequestedDel.RemoveDynamic(this, &AK_DroneController::HandleQuitGameButtonClicked);
+	
+	cachedSettingUI = nullptr;
+	bSettingUIBound = false;
 }
 
 
@@ -222,21 +264,24 @@ void AK_DroneController::OnDroneDownReleased(const FInputActionValue& value)
 
 void AK_DroneController::OnToggleSituationMapUI(const FInputActionValue& value)
 {
-	if (!mapWidget)
+	if (!mapUIFactory)
 	{
+		KHS_WARN(TEXT("No Valid SituationMap Widget"));
 		return;
 	}
 	
 	auto* UIManger = GetGameInstance()->GetSubsystem<UK_UIManagerSubsystem>();
 	if (!UIManger)
 	{
+		KHS_WARN(TEXT("No Valid UI Subsystem"));
 		return;
 	}
 	
-	auto* minimapUI = UIManger->GetOrCreateWidget<UW_SituationMapWidget>(mapWidget);
+	auto* minimapUI = UIManger->GetOrCreateWidget<UW_SituationMapWidget>(mapUIFactory);
 	
 	if (!minimapUI)
 	{
+		KHS_WARN(TEXT("No Valid SituationMap Class"));
 		return;
 	}
 	
@@ -246,14 +291,14 @@ void AK_DroneController::OnToggleSituationMapUI(const FInputActionValue& value)
 		//이미 열려있으면 닫고 델리게이트 구독 해제
 		UnbindSituationMapUIDelegates();
 		UIManger->CloseUI(minimapUI);
-		minimapUI->onCloseUIRequested.RemoveDynamic(this, &AK_DroneController::HandleUICloseReqeust);
+		minimapUI->onCloseUIRequested.RemoveDynamic(this, &AK_DroneController::HandleUICloseRequest);
 	}
 	else
 	{
 		//KHS_SCREEN_INFO(TEXT("미니맵 새로 열기 - 스택 크기 : %d"), UIManger->GetPopupStackSize());
 		//닫혀있으면 열고 델리게이트 구독
-		UIManger->OpenUI<UW_SituationMapWidget>(mapWidget);
-		minimapUI->onCloseUIRequested.AddDynamic(this, &AK_DroneController::HandleUICloseReqeust);
+		UIManger->OpenUI<UW_SituationMapWidget>(mapUIFactory);
+		minimapUI->onCloseUIRequested.AddDynamic(this, &AK_DroneController::HandleUICloseRequest);
 		BindSituationMapUIDelegates(minimapUI);
 	}
 }
@@ -278,22 +323,53 @@ void AK_DroneController::OnDroneUseSkill02(const FInputActionValue& value)
 
 void AK_DroneController::OnOpenSettingUI(const FInputActionValue& value)
 {
-	
-}
-
-
-void AK_DroneController::HandleUICloseReqeust(class UK_BaseUIWidget* requestWidget)
-{
-	//KHS_SCREEN_INFO(TEXT("HandleUICloseRequest is Called"));
-	
-	if (!requestWidget)
+	if (!settingUIFactory)
 	{
+		KHS_WARN(TEXT("No Valid SettingWidget"));
 		return;
 	}
 	
 	auto* UIManager = GetGameInstance()->GetSubsystem<UK_UIManagerSubsystem>();
 	if (!UIManager)
 	{
+		KHS_WARN(TEXT("No Valid UI Subsystem"));
+		return;
+	}
+	
+	auto* settingUI = UIManager->GetOrCreateWidget<UK_SettingWidget>(settingUIFactory);
+	if (!settingUI)
+	{
+		KHS_WARN(TEXT("No Valid Casted Widget"));
+		return;
+	}
+	
+	if (settingUI->IsOpen())
+	{
+		return;
+	}
+	
+	SetPause(true);
+	
+	UIManager->OpenUI<UK_SettingWidget>(settingUIFactory);
+	
+	settingUI->onCloseUIRequested.AddDynamic(this, &AK_DroneController::HandleUICloseRequest);
+	
+	BindSettingUIDelegates(settingUI);
+}
+
+
+void AK_DroneController::HandleUICloseRequest(class UK_BaseUIWidget* requestWidget)
+{
+	if (!requestWidget)
+	{
+		KHS_WARN(TEXT("No Valid RequestWidget for close"));
+		return;
+	}
+	
+	auto* UIManager = GetGameInstance()->GetSubsystem<UK_UIManagerSubsystem>();
+	if (!UIManager)
+	{
+		KHS_WARN(TEXT("No Valid UI Subsystem"));
 		return;
 	}
 	
@@ -304,23 +380,39 @@ void AK_DroneController::HandleUICloseReqeust(class UK_BaseUIWidget* requestWidg
 		UnbindSituationMapUIDelegates();
 	}
 	
+	//SettingUI의 경우 델리게이트 구독해제 작업
+	UK_SettingWidget* settingUI = Cast<UK_SettingWidget>(requestWidget);
+	if (settingUI)
+	{
+		UnbindSettingUIDelegates();
+		//게임 재개
+		SetPause(false);
+	}
+	
 	//인스턴스로 직접 닫는 오버로딩 CloseUI함수 호출
 	UIManager->CloseUI(requestWidget);
 	
 	//델리게이트 구독 해제
-	requestWidget->onCloseUIRequested.RemoveDynamic(this, &AK_DroneController::HandleUICloseReqeust);
+	requestWidget->onCloseUIRequested.RemoveDynamic(this, &AK_DroneController::HandleUICloseRequest);
 }
 
 void AK_DroneController::HandleUnitSelected(AActor* selectedActor)
 {
 	AB_UnitBase* unit = Cast<AB_UnitBase>(selectedActor);
+	AB_UnitBase* previousUnit = selectedUnit.Get();
+	if (previousUnit && previousUnit != unit)
+	{
+		previousUnit->SetSelectedSprite(false);
+	}
+	
 	if (unit && unit->IsAlive())
 	{
 		selectedUnit = unit;
+		unit->SetSelectedSprite(true);
 		
-		if (cachedMapWidget)
+		if (cachedMiniMapUI)
 		{
-			cachedMapWidget->SetSelectedUnit(unit);
+			cachedMiniMapUI->SetSelectedUnit(unit);
 		}
 		
 		KHS_SCREEN_INFO(TEXT("Unit Selected : %s"), *unit->GetName());
@@ -330,9 +422,9 @@ void AK_DroneController::HandleUnitSelected(AActor* selectedActor)
 	else
 	{
 		selectedUnit = nullptr;
-		if (cachedMapWidget)
+		if (cachedMiniMapUI)
 		{
-			cachedMapWidget->SetSelectedUnit(nullptr);
+			cachedMiniMapUI->SetSelectedUnit(nullptr);
 		}
 	}
 }
@@ -342,6 +434,7 @@ void AK_DroneController::HandleMapMoveCommand(AActor* targetUnit, FVector dest)
 	AB_UnitBase* unit = Cast<AB_UnitBase>(targetUnit);
 	if (!unit || !unit->IsAlive())
 	{
+		KHS_WARN(TEXT("MoveCommand : No Valid Unit Selected"));
 		return;
 	}
 	
@@ -349,7 +442,7 @@ void AK_DroneController::HandleMapMoveCommand(AActor* targetUnit, FVector dest)
 	KHS_SCREEN_INFO(TEXT("Move Command : %s to %s"), *unit->GetName(), *dest.ToString());
 }
 
-void AK_DroneController::HandleAttackButtonClicked()
+void AK_DroneController::HandleUnitAttackButtonClicked()
 {
 	AB_UnitBase* unit = selectedUnit.Get();
 	if (!unit || !unit->IsAlive())
@@ -361,7 +454,7 @@ void AK_DroneController::HandleAttackButtonClicked()
 	unit->OnAttackButtonClicked_Unit();
 }
 
-void AK_DroneController::HandleStopButtonClicked()
+void AK_DroneController::HandleUnitStopButtonClicked()
 {
 	AB_UnitBase* unit = selectedUnit.Get();
 	if (!unit || !unit->IsAlive())
@@ -373,7 +466,7 @@ void AK_DroneController::HandleStopButtonClicked()
 	unit->OnStopButtonClicked_Unit();
 }
 
-void AK_DroneController::HandleHoldButtonClicked()
+void AK_DroneController::HandleUnitHoldButtonClicked()
 {
 	AB_UnitBase* unit = selectedUnit.Get();
 	if (!unit || !unit->IsAlive())
@@ -385,7 +478,7 @@ void AK_DroneController::HandleHoldButtonClicked()
 	unit->OnHoldButtonClicked_Unit();
 }
 
-void AK_DroneController::HandleRetreatButtonClicked()
+void AK_DroneController::HandleUnitRetreatButtonClicked()
 {
 	AB_UnitBase* unit = selectedUnit.Get();
 	if (!unit || !unit->IsAlive())
@@ -395,6 +488,54 @@ void AK_DroneController::HandleRetreatButtonClicked()
 	}
 	
 	unit->OnRetreatButtonClicked_Unit();
+}
+
+void AK_DroneController::HandleTutorialButtonClicked()
+{
+	if (!tutorialUIFactory)
+	{
+		KHS_WARN(TEXT("Tutorial : No Valid Widget"));
+		return;
+	}
+	
+	auto* UIManager = GetGameInstance()->GetSubsystem<UK_UIManagerSubsystem>();
+	if (!UIManager)
+	{
+		KHS_WARN(TEXT("UIManager : No Valid Instance"));
+		return;
+	}
+	
+	auto* tutorialUI = UIManager->OpenUI<UK_TutorialWidget>(tutorialUIFactory);
+	if (tutorialUI)
+	{
+		//닫기 델리게이트 구독
+		tutorialUI->onCloseUIRequested.AddDynamic(this, &AK_DroneController::HandleUICloseRequest);
+	}
+}
+
+void AK_DroneController::HandleRestartButtonClicked()
+{
+	auto* UIManager = GetGameInstance()->GetSubsystem<UK_UIManagerSubsystem>();
+	if (!UIManager)
+	{
+		KHS_WARN(TEXT("UIManager : No Valid Instance"));
+		return;
+	}
+	
+	UIManager->CloseAllPopupUI();
+	
+	//게임 재개
+	SetPause(false);
+	
+	//레벨 재시작
+	//-> UIManager에서 OnLevelChanged 호출되어 UI초기화 진행
+	UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName(), false));
+}
+
+void AK_DroneController::HandleQuitGameButtonClicked()
+{
+	//게임 종료
+	UKismetSystemLibrary::QuitGame(this, this, EQuitPreference::Quit, false);
 }
 
 

@@ -28,6 +28,7 @@ public:
 	inline bool IsAlive() { return bIsAlive; }
 
 	void InitEnemyData ( class UP_EnemyDataAsset* InData );
+	void BindDrone ( class AK_Drone* InDrone );
 
 	UFUNCTION()
 	void OnAttack ();
@@ -41,6 +42,9 @@ public:
 		AActor* DamageCauser
 	);
 
+	void OnDetected ( AActor* DetectedActor );
+	void OnLostDetection ( AActor* DetectedActor );
+
 	virtual void GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const override;
 	
 	UFUNCTION ( BlueprintPure , Category = "Combat" )
@@ -50,7 +54,6 @@ public:
 	void SetCombatState ( bool bNewIsCombat );
 
 private:
-	void InitSpriteComponent ();
 	void InitGameplayTag ();
 	void InitRotationSetting ();
 
@@ -72,6 +75,9 @@ protected:
 	float BaseMoveSpeed = 100.0f;
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Movement" )
 	float CombatMoveSpeed = 100.0f;
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Score" )
+	int32 Score = 100;
 
 	// Cached combat data
 	float CachedAttackRange = 100.0f;

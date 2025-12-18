@@ -1,6 +1,9 @@
 ﻿#include "PJB/Obstacle/P_Obstacle.h"
 
-#include "Components/BoxComponent.h"
+#include "LastRequiem.h"
+#include "Components/CapsuleComponent.h"
+#include "Kismet/GameplayStatics.h"
+//#include "KWB/Component/IndicatorSpriteComponent.h"
 
 AP_Obstacle::AP_Obstacle()
 {
@@ -8,10 +11,23 @@ AP_Obstacle::AP_Obstacle()
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent> ( TEXT ( "Mesh" ) );
 	SetRootComponent ( Mesh );
+	Mesh->SetCollisionProfileName ( FName ( "NoCollision" ) );
+	Mesh->SetCanEverAffectNavigation ( false );
 
-	CollisionComp = CreateDefaultSubobject<UBoxComponent> ( TEXT ( "CollisionComp" ) );
+	CollisionComp = CreateDefaultSubobject<UCapsuleComponent> ( TEXT ( "CollisionComp" ) );
+	CollisionComp->SetCollisionProfileName ( TEXT ( "BlockAll" ) );
 	CollisionComp->SetupAttachment ( Mesh );
 
+	// TODO: Activate later if fixed indicator sprite issue
+//	SpriteComp = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "SpriteComp" ) );
+//	SpriteComp->SetupAttachment ( Mesh );
+
+	GeometryComp = CreateDefaultSubobject<UGeometryCollectionComponent> ( TEXT ( "GeometryComp" ) );
+	GeometryComp->SetupAttachment ( Mesh );
+
+	GeometryComp->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
+	GeometryComp->SetSimulatePhysics ( false );
+	GeometryComp->SetVisibility ( false );
 }
 
 void AP_Obstacle::GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const
@@ -37,7 +53,7 @@ void AP_Obstacle::OnTakeDamage ( AActor* DamagedActor , float Damage , const UDa
 	if (bIsBroken) return;
 
 	Health -= Damage;
-	if (Health < 0.0f)
+	if (Health <= 0.0f)
 	{
 		OnBroken ();
 	}
@@ -45,7 +61,46 @@ void AP_Obstacle::OnTakeDamage ( AActor* DamagedActor , float Damage , const UDa
 
 void AP_Obstacle::OnBroken ()
 {
+	if (bIsBroken) return;
 	bIsBroken = true;
+
+	GameplayTags.Reset ();
+
+	if (Mesh)
+	{
+		Mesh->SetVisibility ( false );
+	}
+
+	//if (SpriteComp)
+	//{
+	//	SpriteComp->SetSpriteOnOff ( false );
+	//}
+
+	if (CollisionComp)
+	{
+		CollisionComp->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
+	}
+
+	if (GeometryComp)
+	{
+		GeometryComp->SetVisibility ( true );
+		GeometryComp->SetCollisionEnabled ( ECollisionEnabled::QueryAndPhysics );
+		GeometryComp->SetCollisionProfileName ( FName ( "Destructible" ) );
+		GeometryComp->SetSimulatePhysics ( true );
+	}
+
+	if (MasterFieldClass)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		GetWorld ()->SpawnActor<AActor> (
+			MasterFieldClass ,
+			GetActorLocation () ,
+			GetActorRotation () ,
+			SpawnParams
+		);
+	}
+
 	OnObstacleBrokenDelegate.Broadcast ( this );
-	Destroy ();
+	SetLifeSpan ( 3.0f );
 }

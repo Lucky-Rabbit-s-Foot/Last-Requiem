@@ -20,13 +20,6 @@ UP_BTS_SelectTarget::UP_BTS_SelectTarget ()
 	Interval = 0.5f;
 }
 
-void UP_BTS_SelectTarget::OnBecomeRelevant ( UBehaviorTreeComponent& OwnerComp , uint8* NodeMemory )
-{
-	UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
-	ObstacleTag = FGameplayTag::RequestGameplayTag ( FName ( "Obstacle" ) );
-	FortressTag = FGameplayTag::RequestGameplayTag ( FName ( "Fortress" ) );
-}
-
 void UP_BTS_SelectTarget::TickNode ( UBehaviorTreeComponent& OwnerComp , uint8* NodeMemory , float DeltaSeconds )
 {
 	Super::TickNode ( OwnerComp , NodeMemory , DeltaSeconds );
