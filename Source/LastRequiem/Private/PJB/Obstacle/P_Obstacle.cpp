@@ -61,9 +61,10 @@ void AP_Obstacle::OnTakeDamage ( AActor* DamagedActor , float Damage , const UDa
 
 void AP_Obstacle::OnBroken ()
 {
-	LOG_SIMPLE ( Log );
-	//if (!bIsBroken) return;
-	//bIsBroken = true;
+	if (bIsBroken) return;
+	bIsBroken = true;
+
+	GameplayTags.Reset ();
 
 	if (Mesh)
 	{
@@ -77,14 +78,11 @@ void AP_Obstacle::OnBroken ()
 
 	if (CollisionComp)
 	{
-		LOG_SIMPLE ( Log );
 		CollisionComp->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
 	}
 
 	if (GeometryComp)
 	{
-		LOG_SIMPLE ( Warning );
-
 		GeometryComp->SetVisibility ( true );
 		GeometryComp->SetCollisionEnabled ( ECollisionEnabled::QueryAndPhysics );
 		GeometryComp->SetCollisionProfileName ( FName ( "Destructible" ) );
@@ -93,7 +91,6 @@ void AP_Obstacle::OnBroken ()
 
 	if (MasterFieldClass)
 	{
-		LOG_SIMPLE ( Error );
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		GetWorld ()->SpawnActor<AActor> (
