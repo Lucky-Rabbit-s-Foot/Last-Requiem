@@ -30,4 +30,7 @@ public:
 	float AttackPower = 150.0f;
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Combat" )
 	UAnimMontage* AttackMontage;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Score" )
+	int32 Score = 100;
 };

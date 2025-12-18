@@ -1,5 +1,6 @@
 ﻿#include "PJB/Enemy/P_EnemyBase.h"
 
+#include "LastRequiem.h"
 #include "Components/CapsuleComponent.h"
 #include "PaperSpriteComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -10,6 +11,9 @@
 #include "PJB/Enemy/P_AnimInstanceEnemyBase.h"
 #include "KWB/Component/IndicatorSpriteComponent.h"
 #include "BrainComponent.h"
+#include "KHS/Drone/K_Drone.h"
+#include "Kismet/GameplayStatics.h"
+#include "PJB/System/P_GameStateBase.h"
 
 #include "Navigation/PathFollowingComponent.h"
 
@@ -19,18 +23,19 @@ AP_EnemyBase::AP_EnemyBase()
 
 	CombatComp = CreateDefaultSubobject<UP_CombatComponent> ( TEXT ( "Combat Component" ) );
 	SpriteComp = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "Indicator Sprite Component" ) );
-	
-	InitSpriteComponent ();
+	SpriteComp->SetupAttachment ( GetRootComponent () );
+
 	InitRotationSetting ();
 
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 }
 
 
-void AP_EnemyBase::BeginPlay()
+void AP_EnemyBase::BeginPlay ()
 {
-	Super::BeginPlay();
+	Super::BeginPlay ();
 
+	SpriteComp->SetSpriteOnOff ( false );
 	InitGameplayTag ();
 	OnTakeAnyDamage.AddDynamic ( this , &AP_EnemyBase::OnTakeDamage );
 }
@@ -38,15 +43,6 @@ void AP_EnemyBase::BeginPlay()
 void AP_EnemyBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-}
-
-void AP_EnemyBase::InitSpriteComponent ()
-{
-	SpriteComp->SetupAttachment ( GetRootComponent () );
-	SpriteComp->SetRelativeLocation ( FVector ( 0.0f , 0.0f , 300.0f ) );
-	SpriteComp->SetRelativeRotation ( FRotator ( -90.0f , 0.0f , 0.0f ) );
-	SpriteComp->SetCastShadow ( false );
-	SpriteComp->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
 }
 
 void AP_EnemyBase::InitGameplayTag ()
@@ -63,7 +59,6 @@ void AP_EnemyBase::InitRotationSetting ()
 	GetCharacterMovement ()->bOrientRotationToMovement = true;
 	GetCharacterMovement ()->RotationRate = FRotator ( 0.0f , 640.0f , 0.0f );
 }
-
 
 void AP_EnemyBase::GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const
 {
@@ -91,10 +86,18 @@ void AP_EnemyBase::InitEnemyData(UP_EnemyDataAsset* InData)
 	CachedAttackRange = InData->AttackRange;
 	CachedAttackMontage = InData->AttackMontage;
 
+	Score = InData->Score;
+
 	if (CombatComp)
 	{
 		CombatComp->InitStats ( InData->MaxHealth , InData->AttackRange , InData->AttackPower );
 	}
+}
+
+void AP_EnemyBase::BindDrone ( AK_Drone* InDrone )
+{
+	InDrone->onUnitDetected.AddUObject ( this , &AP_EnemyBase::OnDetected );
+	InDrone->onUnitLostDetection.AddUObject ( this , &AP_EnemyBase::OnLostDetection );
 }
 
 void AP_EnemyBase::OnAttack ()
@@ -123,6 +126,28 @@ void AP_EnemyBase::OnTakeDamage ( AActor* DamagedActor , float Damage , const UD
 	}
 }
 
+void AP_EnemyBase::OnDetected ( AActor* DetectedActor )
+{
+	if (DetectedActor != this || !bIsAlive) return;
+
+	if (SpriteComp)
+	{
+		SpriteComp->SetSpriteOnOff ( true );
+	}
+}
+
+void AP_EnemyBase::OnLostDetection ( AActor* DetectedActor )
+{
+	if (DetectedActor != this || !bIsAlive) return;
+
+	// TODO: if other units still detect this enemy then do not turn off the sprite
+
+	if (SpriteComp)
+	{
+		SpriteComp->SetSpriteOnOff ( false );
+	}
+}
+
 void AP_EnemyBase::OnDie ()
 {
 	if (!bIsAlive)
@@ -133,13 +158,17 @@ void AP_EnemyBase::OnDie ()
 
 	OnDeactivate ();
 
+	if (AP_GameStateBase* GS = GetWorld () ? GetWorld ()->GetGameState<AP_GameStateBase> () : nullptr)
+	{
+		GS->AddScore ( Score );
+	}
+
 	OnEnemyDieDelegate.Broadcast ( this );
 }
 
 void AP_EnemyBase::OnDeactivate()
 {
-	GameplayTags.RemoveTag ( FGameplayTag::RequestGameplayTag ( FName ( "Enemy" ) ) );
-
+	GameplayTags.Reset ();
 	if (SpriteComp)
 	{
 		SpriteComp->SetIndicatorState ( EIndicatorSpriteState::Dead );
@@ -158,6 +187,10 @@ void AP_EnemyBase::OnDeactivate()
 
 	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
 	GetMesh()->SetSimulatePhysics(true);
+
+	GetMesh ()->SetCollisionResponseToChannel ( ECC_Visibility , ECR_Ignore );
+	GetMesh ()->SetCollisionResponseToChannel ( ECC_Camera , ECR_Ignore );
+	GetMesh ()->SetCollisionResponseToChannel ( ECC_Pawn , ECR_Ignore );
 
 	GetCharacterMovement()->StopMovementImmediately();
 	GetCharacterMovement()->DisableMovement();	
