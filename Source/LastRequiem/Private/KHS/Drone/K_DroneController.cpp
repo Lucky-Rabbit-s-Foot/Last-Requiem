@@ -284,14 +284,14 @@ void AK_DroneController::OnToggleSituationMapUI(const FInputActionValue& value)
 		//이미 열려있으면 닫고 델리게이트 구독 해제
 		UnbindSituationMapUIDelegates();
 		UIManger->CloseUI(minimapUI);
-		minimapUI->onCloseUIRequested.RemoveDynamic(this, &AK_DroneController::HandleUICloseReqeust);
+		minimapUI->onCloseUIRequested.RemoveDynamic(this, &AK_DroneController::HandleUICloseRequest);
 	}
 	else
 	{
 		//KHS_SCREEN_INFO(TEXT("미니맵 새로 열기 - 스택 크기 : %d"), UIManger->GetPopupStackSize());
 		//닫혀있으면 열고 델리게이트 구독
 		UIManger->OpenUI<UW_SituationMapWidget>(mapWidget);
-		minimapUI->onCloseUIRequested.AddDynamic(this, &AK_DroneController::HandleUICloseReqeust);
+		minimapUI->onCloseUIRequested.AddDynamic(this, &AK_DroneController::HandleUICloseRequest);
 		BindSituationMapUIDelegates(minimapUI);
 	}
 }
@@ -345,13 +345,13 @@ void AK_DroneController::OnOpenSettingUI(const FInputActionValue& value)
 	
 	UIManager->OpenUI<UK_SettingWidget>(settingWidget);
 	
-	settingUI->onCloseUIRequested.AddDynamic(this, &AK_DroneController::HandleUICloseReqeust);
+	settingUI->onCloseUIRequested.AddDynamic(this, &AK_DroneController::HandleUICloseRequest);
 	
 	BindSettingUIDelegates(settingUI);
 }
 
 
-void AK_DroneController::HandleUICloseReqeust(class UK_BaseUIWidget* requestWidget)
+void AK_DroneController::HandleUICloseRequest(class UK_BaseUIWidget* requestWidget)
 {
 	if (!requestWidget)
 	{
@@ -386,7 +386,7 @@ void AK_DroneController::HandleUICloseReqeust(class UK_BaseUIWidget* requestWidg
 	UIManager->CloseUI(requestWidget);
 	
 	//델리게이트 구독 해제
-	requestWidget->onCloseUIRequested.RemoveDynamic(this, &AK_DroneController::HandleUICloseReqeust);
+	requestWidget->onCloseUIRequested.RemoveDynamic(this, &AK_DroneController::HandleUICloseRequest);
 }
 
 void AK_DroneController::HandleUnitSelected(AActor* selectedActor)
@@ -502,7 +502,7 @@ void AK_DroneController::HandleTutorialButtonClicked()
 	if (tutorialUI)
 	{
 		//닫기 델리게이트 구독
-		tutorialUI->onCloseUIRequested.AddDynamic(this, &AK_DroneController::HandleUICloseReqeust);
+		tutorialUI->onCloseUIRequested.AddDynamic(this, &AK_DroneController::HandleUICloseRequest);
 	}
 }
 
@@ -520,6 +520,7 @@ void AK_DroneController::HandleRestartButtonClicked()
 	//게임 재개
 	SetPause(false);
 	
+	//TODO 재시작하고나서 UI들 다 꺼진 문제들 얼른 해결해야함
 	UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName(), false));
 }
 

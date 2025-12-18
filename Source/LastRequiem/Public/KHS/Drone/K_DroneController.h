@@ -59,7 +59,7 @@ private:
 	
 	//Common
 	UFUNCTION() //UI 닫기 요청시 공통 델리게이트 핸들러 함수
-	void HandleUICloseReqeust(class UK_BaseUIWidget* requestWidget);
+	void HandleUICloseRequest(class UK_BaseUIWidget* requestWidget);
 	
 	//Siutaion Map Widget Handling
 	UFUNCTION() //유닛 선택시 공통 델리게이트 핸들러 함수
