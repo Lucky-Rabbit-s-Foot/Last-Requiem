@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "GameplayTagContainer.h"
 #include "GameplayTagAssetInterface.h"
+#include "GeometryCollection/GeometryCollectionComponent.h"
 
 #include "P_Obstacle.generated.h"
 
@@ -16,6 +17,9 @@ class LASTREQUIEM_API AP_Obstacle : public AActor, public IGameplayTagAssetInter
 	
 public:	
 	AP_Obstacle();
+
+	UFUNCTION ( BlueprintCallable , Category = "Obstacle" )
+	void TestBreak () { OnBroken (); };
 
 	virtual void GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const override;
 	bool IsBroken () const { return bIsBroken; }
@@ -40,9 +44,12 @@ protected:
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Components" )
 	TObjectPtr<UStaticMeshComponent> Mesh = nullptr;
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Components" )
-	TObjectPtr<class UBoxComponent> CollisionComp = nullptr;
+	TObjectPtr<class UCapsuleComponent> CollisionComp = nullptr;
 //	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data|Sprite")
 //	TObjectPtr<class UIndicatorSpriteComponent> SpriteComp = nullptr;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Components" )
+	TObjectPtr<UGeometryCollectionComponent> GeometryComp = nullptr;
 
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
 	FGameplayTagContainer GameplayTags;
@@ -51,6 +58,9 @@ protected:
 	float MaxHealth = 300.0f;
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Health" )
 	float Health = 300.0f;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Config = "Data|Destruction" )
+	TSubclassOf<AActor> MasterFieldClass = nullptr;
 
 private:
 	bool bIsBroken = false;
