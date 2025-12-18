@@ -23,7 +23,11 @@ public class LastRequiem : ModuleRules
             "Niagara",
             "NiagaraCore",
             "VectorVM",
-            "Paper2D"
+            "Paper2D",
+            "GeometryCollectionEngine",
+            "FieldSystemEngine",
+            "ChaosSolverEngine",
+            "PhysicsCore"
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] {  });
