@@ -14,7 +14,7 @@ UIndicatorSpriteComponent::UIndicatorSpriteComponent ()
 	// Default Transform
 	DefaultRelativeTransform = FTransform (
 		FRotator ( 0.f , 0.f , -90.f ) ,	// 기준 순서 : Pitch, Yaw, Roll | 엔진에서는 Roll, Pitch, Yaw
-		FVector ( 0.f , 0.f , 300.f ) ,		// TEMP : 레벨 구성 완료 후 결정
+		FVector ( 0.f , 0.f , 3000.f ) ,		// TEMP : 레벨 구성 완료 후 결정 / 3000.0f로 테스트
 		FVector ( 0.35f , 0.35f , 0.35f )   // TEMP : 알파 게임 플레이 후 결정 !!사이즈 변경 시 W_MapWidget에서 UnitSelectionRadius 값 변경할 것!!
 	);
 
@@ -71,7 +71,7 @@ void UIndicatorSpriteComponent::OnRegister ()
 	{
 		bVisibleInSceneCaptureOnly = true;  // UPrimitiveComponent 플래그
 		bHiddenInGame = false;
-		SetVisibility ( true , true );
+		SetVisibility ( bSpriteOn , true );
 	}
 }
 
@@ -141,6 +141,30 @@ void UIndicatorSpriteComponent::StopGlow ()
 	}
 }
 
+void UIndicatorSpriteComponent::SetSpriteOnOff ( bool bOn , bool bStopGlowWhenOff )
+{
+	if (bSpriteOn == bOn)
+	{
+		return;
+	}
+
+	bSpriteOn = bOn;
+
+	// SceneCapture 포함 렌더링 자체 On/Off
+	SetVisibility ( bSpriteOn , true );
+
+	// Glow 같이 끄기
+	if (!bSpriteOn && bStopGlowWhenOff)
+	{
+		StopGlow ();
+	}
+}
+
+void UIndicatorSpriteComponent::ToggleSpriteOnOff ()
+{
+	SetSpriteOnOff ( !bSpriteOn );
+}
+
 void UIndicatorSpriteComponent::HandleGlowFinished ()
 {
 	StopGlow ();
@@ -186,6 +210,9 @@ void UIndicatorSpriteComponent::UpdateSpriteForState ()
 		break;
 	case EIndicatorSpriteState::Combat:
 		NewSprite = SpirteCombat;
+		break;
+	case EIndicatorSpriteState::Selected:
+		NewSprite = SpirteSelected;
 		break;
 	case EIndicatorSpriteState::Dead:
 		NewSprite = SpirteDead;

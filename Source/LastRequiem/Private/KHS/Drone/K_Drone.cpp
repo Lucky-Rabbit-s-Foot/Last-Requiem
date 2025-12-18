@@ -13,7 +13,9 @@
 #include "Components/SphereComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "KHS/Util/K_LoggingSystem.h"
 #include "KWB/Component/IndicatorSpriteComponent.h"
+#include "PJB/Enemy/P_EnemyBase.h"
 
 
 // Sets default values
@@ -176,8 +178,8 @@ void AK_Drone::InitializeDetectedUnitSlot()
 	FVector start = GetActorLocation();
 	FVector end = start;
 	
-	float capsuleRadius = 10000.f;
-	float capsuleHalfHeight = 700.f;
+	float capsuleRadius = droneData->DRONE_DETECTION_INITIAL_RADIUS;
+	float capsuleHalfHeight = droneData->DRONE_DETECTION_INITIAL_HALF_HEIGHT;
 	FCollisionShape capsuleShpae = FCollisionShape::MakeCapsule(capsuleRadius, capsuleHalfHeight);
 	
 	GetWorld()->SweepMultiByChannel(
@@ -227,14 +229,19 @@ void AK_Drone::UpdateDetectedUnitSlot()
 	FVector start = GetActorLocation();
 	FVector end = start;
 	
-	float capsuleRadius = 800.f;
-	float capsuleHalfHeight = 2500.f;
+	float capsuleRadius = droneData->DRONE_DETECTION_CAPSULE_RADIUS;
+	float capsuleHalfHeight = droneData->DRONE_DETECTION_CAPSULE_HALF_HEIGHT;
 	FCollisionShape capsuleShpae = FCollisionShape::MakeCapsule(capsuleRadius, capsuleHalfHeight);
+	
+	//(251217 수정) 캡슐 회전 추가
+	FRotator currentRot = GetActorRotation();
+	currentRot.Pitch += droneData->DRONE_DETECTION_CAPSULE_ROTATION;
+	FQuat capsuleQuat = currentRot.Quaternion();
 	
 	GetWorld()->SweepMultiByChannel(
 		hitResults,
 		start, end,
-		FQuat::Identity,
+		capsuleQuat,
 		ECC_Pawn,
 		capsuleShpae);
 	
@@ -244,27 +251,38 @@ void AK_Drone::UpdateDetectedUnitSlot()
 		start,
 		capsuleHalfHeight,
 		capsuleRadius,
-		FQuat::Identity,
+		capsuleQuat,
 		FColor::Green,
 		false,
 		1.f, 0, 3.f
 		);
+	
 #endif
 	
 	//현재 탐지된 유닛 캐싱
 	TSet<AActor*> currentDetectedUnits;
+	TSet<AActor*> currentDetectedEnemys;
 	
 	//탐지결과 처리
 	for (const FHitResult& hit : hitResults)
 	{
-		
 		AActor* detectedActor = hit.GetActor();
-		AB_UnitBase* detectedUnit = Cast<AB_UnitBase>(detectedActor);
 		
+		//유닛
+		AB_UnitBase* detectedUnit = Cast<AB_UnitBase>(detectedActor);
 		if (detectedUnit)
 		{
 			currentDetectedUnits.Add(detectedActor);
 			//broadcast
+			onUnitDetected.Broadcast(detectedActor);
+		}
+		
+		//(251217 수정) 에너미 탐지 추가
+		AP_EnemyBase* detectedEnemy = Cast<AP_EnemyBase>(detectedActor);
+		if (detectedEnemy)
+		{
+			//KHS_SCREEN_INFO(TEXT("에너미 탐지되었음 - %p"), detectedEnemy);
+			currentDetectedEnemys.Add(detectedActor);
 			onUnitDetected.Broadcast(detectedActor);
 		}
 	}
@@ -274,13 +292,24 @@ void AK_Drone::UpdateDetectedUnitSlot()
 	{
 		if (!currentDetectedUnits.Contains(detectedActor))
 		{
+			//KHS_SCREEN_INFO(TEXT("에너미 탐지벗어남 - %p"), detectedActor);
 			//broadcast
 			onUnitLostDetection.Broadcast(detectedActor);
 		}
 	}
 	
-	//unit list update
+	//(251217 수정) 이전 탐지되었으나 지금은 안된 에너미들 브로드캐스트
+	for (AActor* detectedEnemy : previouslyDetectedEnemys)
+	{
+		if (!currentDetectedEnemys.Contains(detectedEnemy))
+		{
+			onUnitLostDetection.Broadcast(detectedEnemy);
+		}
+	}
+	
+	//list update
 	previouslyDetectedUnits = currentDetectedUnits;
+	previouslyDetectedEnemys = currentDetectedEnemys;
 }
 
 
@@ -296,9 +325,30 @@ void AK_Drone::UpDown(float inputValue)
 
 void AK_Drone::UseSkill01()
 {
+	//previouslyDetectedUnits을 순회하면서 유닛들에게 회복명령
+	for (AActor* actor : previouslyDetectedUnits)
+	{
+		AB_UnitBase* unit = Cast<AB_UnitBase>(actor);
+		if (!unit || !unit->IsAlive())
+		{
+			continue;
+		}
+		
+		unit->ReceiveSupport_HP(droneData->RECOVER_HEALTH_AMOUNT);
+	}
 }
 
 void AK_Drone::UseSkill02()
 {
+	for (AActor* actor : previouslyDetectedUnits)
+	{
+		AB_UnitBase* unit = Cast<AB_UnitBase>(actor);
+		if (!unit || !unit->IsAlive())
+		{
+			continue;
+		}
+		
+		unit->ReceiveSupport_Sanity(droneData->RECOVER_SANITY_AMOUNT);
+	}
 }
 
