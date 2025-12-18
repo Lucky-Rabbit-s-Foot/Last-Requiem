@@ -8,10 +8,15 @@
 void UK_UIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
+	
+	//레벨 전환 이벤트 구독
+	FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this, &UK_UIManagerSubsystem::OnLevelChanged);
 }
 
 void UK_UIManagerSubsystem::Deinitialize()
 {
+	FCoreUObjectDelegates::PostLoadMapWithWorld.RemoveAll(this);
+	
 	CloseAllPopupUI();
 	
 	for (auto& pair : cachedWidgets)
@@ -119,6 +124,8 @@ void UK_UIManagerSubsystem::CloseUIInternal(UK_BaseUIWidget* widget)
 	}
 }
 
+
+
 void UK_UIManagerSubsystem::CloseUI(UK_BaseUIWidget* widget)
 {
 	//인스턴스 타입으로 닫을땐 내부 헬퍼함수로 위임
@@ -158,4 +165,46 @@ void UK_UIManagerSubsystem::RefreshTopPopupUI()
 		//새로운 Top에게 Focus알림
 		popUpUIStack.Last()->OnFocusGained();
 	}
+}
+
+void UK_UIManagerSubsystem::OnLevelChanged(UWorld* world)
+{
+	KHS_SCREEN_INFO(TEXT("==== OnLevelChanged START! ===="));
+	
+	//캐싱된 인스턴스들 상태 초기화
+	for (auto& pair : cachedWidgets)
+	{
+		if (pair.Value)
+		{
+			KHS_SCREEN_INFO(TEXT("Widget: %s, IsOpen: %s, IsInViewport: %s"),
+				*pair.Value->GetName(),
+				pair.Value->IsOpen() ? TEXT("TRUE") : TEXT("FALSE"),
+				pair.Value->IsInViewport() ? TEXT("TRUE") : TEXT("FALSE"));
+			if (pair.Value->IsOpen())
+			{
+				pair.Value->CloseUI();
+				KHS_SCREEN_INFO(TEXT("After CloseUI - IsOpen: %s"),
+					pair.Value->IsOpen() ? TEXT("TRUE") : TEXT("FALSE"));
+			}
+			
+			if (pair.Value->IsInViewport())
+			{
+				pair.Value->RemoveFromParent();
+			}
+		}
+	}
+	
+	//관련 컨테이너 비우기
+	persitentUIMap.Empty();
+	popUpUIStack.Empty();
+	
+	//입력모드 초기화
+	APlayerController* pc = GetWorld()->GetFirstPlayerController();
+	if (pc)
+	{
+		pc->SetInputMode(FInputModeGameOnly());
+		pc->SetShowMouseCursor(false);
+	}
+	
+	KHS_SCREEN_INFO(TEXT("==== OnLevelChanged END! ===="));
 }

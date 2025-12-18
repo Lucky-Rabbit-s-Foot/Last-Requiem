@@ -64,14 +64,21 @@ void AK_DroneController::OnPossess(APawn* InPawn)
 
 void AK_DroneController::InitializePersistentUI()
 {
+	KHS_SCREEN_INFO(TEXT("==== Initialize Persistent UI START! ===="));
+	
 	UK_UIManagerSubsystem* UIManager = GetGameInstance()->GetSubsystem<UK_UIManagerSubsystem>();
 	if (UIManager)
 	{
-		UIManager->OpenUI<UK_HUDWidget>(hudWidget);
-		cachedUnitListUI = UIManager->OpenUI<UK_UnitListWidget>(unitListWidget);
+		UIManager->OpenUI<UK_HUDWidget>(hudUIFactory);
+		cachedUnitListUI = UIManager->OpenUI<UK_UnitListWidget>(unitListUIFactory);
+		
+		auto* hud = UIManager->GetOrCreateWidget<UK_HUDWidget>(hudUIFactory);
+		KHS_SCREEN_INFO(TEXT("HUD isOpen : %s, ISInViewport : %s"), hud->IsOpen()? TEXT("TRUE") : TEXT("False"), hud->IsInViewport()? TEXT("TRUE") : TEXT("FASLE"));
 		
 		BindPersistentUIDelegates();
 	}
+	
+	KHS_SCREEN_INFO(TEXT("==== Initialize Persistent UI END! ===="));
 }
 
 void AK_DroneController::BindPersistentUIDelegates()
@@ -257,7 +264,7 @@ void AK_DroneController::OnDroneDownReleased(const FInputActionValue& value)
 
 void AK_DroneController::OnToggleSituationMapUI(const FInputActionValue& value)
 {
-	if (!mapWidget)
+	if (!mapUIFactory)
 	{
 		KHS_WARN(TEXT("No Valid SituationMap Widget"));
 		return;
@@ -270,7 +277,7 @@ void AK_DroneController::OnToggleSituationMapUI(const FInputActionValue& value)
 		return;
 	}
 	
-	auto* minimapUI = UIManger->GetOrCreateWidget<UW_SituationMapWidget>(mapWidget);
+	auto* minimapUI = UIManger->GetOrCreateWidget<UW_SituationMapWidget>(mapUIFactory);
 	
 	if (!minimapUI)
 	{
@@ -290,7 +297,7 @@ void AK_DroneController::OnToggleSituationMapUI(const FInputActionValue& value)
 	{
 		//KHS_SCREEN_INFO(TEXT("미니맵 새로 열기 - 스택 크기 : %d"), UIManger->GetPopupStackSize());
 		//닫혀있으면 열고 델리게이트 구독
-		UIManger->OpenUI<UW_SituationMapWidget>(mapWidget);
+		UIManger->OpenUI<UW_SituationMapWidget>(mapUIFactory);
 		minimapUI->onCloseUIRequested.AddDynamic(this, &AK_DroneController::HandleUICloseRequest);
 		BindSituationMapUIDelegates(minimapUI);
 	}
@@ -316,7 +323,7 @@ void AK_DroneController::OnDroneUseSkill02(const FInputActionValue& value)
 
 void AK_DroneController::OnOpenSettingUI(const FInputActionValue& value)
 {
-	if (!settingWidget)
+	if (!settingUIFactory)
 	{
 		KHS_WARN(TEXT("No Valid SettingWidget"));
 		return;
@@ -329,7 +336,7 @@ void AK_DroneController::OnOpenSettingUI(const FInputActionValue& value)
 		return;
 	}
 	
-	auto* settingUI = UIManager->GetOrCreateWidget<UK_SettingWidget>(settingWidget);
+	auto* settingUI = UIManager->GetOrCreateWidget<UK_SettingWidget>(settingUIFactory);
 	if (!settingUI)
 	{
 		KHS_WARN(TEXT("No Valid Casted Widget"));
@@ -343,7 +350,7 @@ void AK_DroneController::OnOpenSettingUI(const FInputActionValue& value)
 	
 	SetPause(true);
 	
-	UIManager->OpenUI<UK_SettingWidget>(settingWidget);
+	UIManager->OpenUI<UK_SettingWidget>(settingUIFactory);
 	
 	settingUI->onCloseUIRequested.AddDynamic(this, &AK_DroneController::HandleUICloseRequest);
 	
@@ -485,7 +492,7 @@ void AK_DroneController::HandleUnitRetreatButtonClicked()
 
 void AK_DroneController::HandleTutorialButtonClicked()
 {
-	if (!tutorialWidget)
+	if (!tutorialUIFactory)
 	{
 		KHS_WARN(TEXT("Tutorial : No Valid Widget"));
 		return;
@@ -498,7 +505,7 @@ void AK_DroneController::HandleTutorialButtonClicked()
 		return;
 	}
 	
-	auto* tutorialUI = UIManager->OpenUI<UK_TutorialWidget>(tutorialWidget);
+	auto* tutorialUI = UIManager->OpenUI<UK_TutorialWidget>(tutorialUIFactory);
 	if (tutorialUI)
 	{
 		//닫기 델리게이트 구독
@@ -520,7 +527,8 @@ void AK_DroneController::HandleRestartButtonClicked()
 	//게임 재개
 	SetPause(false);
 	
-	//TODO 재시작하고나서 UI들 다 꺼진 문제들 얼른 해결해야함
+	//레벨 재시작
+	//-> UIManager에서 OnLevelChanged 호출되어 UI초기화 진행
 	UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName(), false));
 }
 
