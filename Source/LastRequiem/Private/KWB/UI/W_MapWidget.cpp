@@ -106,8 +106,15 @@ FReply UW_MapWidget::NativeOnMouseButtonDown ( const FGeometry& InGeometry , con
 	
 	UE_LOG ( LogTemp , Log , TEXT ( "Minimap Click: U=%.3f V=%.3f -> World=%s" ) ,
 		U , V , *WorldPos.ToString () );
-
+	/*if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage (
+			-1 , 2.f , FColor::Green ,
+			FString::Printf ( TEXT ( "WorldPos: %s" ) , *WorldPos.ToString () )
+		);
+	}*/
 	KHS_SCREEN_INFO ( TEXT ( "WorldPos: %s" ) , *WorldPos.ToString () );
+
 
 	// 좌클릭: 유닛 선택
 	if (PressedButton == EKeys::LeftMouseButton)
@@ -167,8 +174,6 @@ FVector UW_MapWidget::MapUVToWorld ( float U , float V ) const
 
 	return WorldPos;
 }
-
-
 
 // 레거시 : Overlap 사용해서 유닛 선택하기 -> 거리 계산으로 셀렉 동작하면 지울 예정
 //AActor* UW_MapWidget::FindClosestUnitNear ( const FVector& ClickWorld ) const

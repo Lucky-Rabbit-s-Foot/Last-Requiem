@@ -20,8 +20,6 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/SpotLightComponent.h"
 #include "Engine/OverlapResult.h"
-#include "Kismet/GameplayStatics.h"
-#include "Sound/SoundBase.h"
 
 // Sets default values
 AB_UnitBase::AB_UnitBase()
@@ -219,7 +217,7 @@ void AB_UnitBase::UnitDataUpdate ()
 	UnitUpdateData.MaxSanity = StatusComponent->MaxSanity;
 	UnitUpdateData.bIsInCombat = StatusComponent->bIsInCombat;
 	UnitUpdateData.bIsAlive = bIsAlive;
-	UnitUpdateData.bIsSpeaking = bIsSpeaking;
+	UnitUpdateData.bIsSpeaking = StatusComponent->bIsSpeaking;
 }
 
 void AB_UnitBase::UnitMentalCheck_Move(float InX, float InY)
@@ -532,22 +530,6 @@ void AB_UnitBase::OnRetreatButtonClicked_Unit ()
 	CommandRetreat ();
 }
 
-void AB_UnitBase::ReceiveSupport_HP ( float InValue )
-{
-	if (!StatusComponent || !bIsAlive) return;
-
-	float RecoverHPAmount = InValue * HPRecoveryRatio;
-	StatusComponent->RecoverHP ( RecoverHPAmount );
-}
-
-void AB_UnitBase::ReceiveSupport_Sanity ( float InValue )
-{
-
-	if (!StatusComponent || !bIsAlive) return;
-	float RecoverSanityAmount = InValue * SanityRecoveryRatio;
-	StatusComponent->RecoverSanity ( RecoverSanityAmount );
-}
-
 float AB_UnitBase::TakeDamage ( float DamageAmount , FDamageEvent const& DamageEvent , AController* EventInstigator , AActor* DamageCauser )
 {
 	float ActualDamage = Super::TakeDamage ( DamageAmount , DamageEvent , EventInstigator , DamageCauser );
@@ -811,56 +793,4 @@ void AB_UnitBase::OnCombatStateChanged_Wrapper ( bool bInCombat )
 	}
 
 	UnitDataUpdate ();
-}
-
-void AB_UnitBase::SetSelectedSprite ( bool bIsSelected )
-{
-	if (IndicatorSprite == nullptr) return;
-
-	IndicatorSprite->SetIndicatorState ( EIndicatorSpriteState::Selected );
-}
-
-
-void AB_UnitBase::SetSpeakingState ( bool bNewState )
-{
-	if (bIsSpeaking == bNewState) return;
-
-	bIsSpeaking = bNewState;
-
-	if (OnUnitSpeakDelegate.IsBound ())
-	{
-		OnUnitSpeakDelegate.Broadcast ( this , bIsSpeaking );
-	}
-	UnitDataUpdate ();
-	
-}
-
-void AB_UnitBase::PlayUnitVoice ( USoundBase* InVoiceSound )
-{
-	if (!bIsAlive || InVoiceSound == nullptr) return;
-
-	UGameplayStatics::SpawnSoundAttached ( InVoiceSound , GetMesh () , FName ( "HeadSocket" ) );
-
-	SetSpeakingState ( true );
-
-	float SoundDuration = InVoiceSound->GetDuration ();
-
-	if (SoundDuration <= 0.0f) SoundDuration = 1.0f;
-
-	GetWorld ()->GetTimerManager ().ClearTimer ( SpeakingTimerHandle );
-
-	GetWorld ()->GetTimerManager ().SetTimer (
-		SpeakingTimerHandle ,
-		this ,
-		&AB_UnitBase::StopUnitVoice , 
-		SoundDuration ,
-		false
-	);
-
-	UE_LOG ( LogTemp , Log , TEXT ( "[%s] 음성 재생 시작 (%.1f초)" ) , *GetName () , SoundDuration );
-}
-
-void AB_UnitBase::StopUnitVoice ()
-{
-	SetSpeakingState ( false );
 }

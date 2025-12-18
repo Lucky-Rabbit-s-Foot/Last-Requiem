@@ -61,7 +61,6 @@ private:
 	//Detection
 	FTimerHandle detectionTimerHandle; 
 	TSet<AActor*> previouslyDetectedUnits; //Detected Unit Set
-	TSet<AActor*> previouslyDetectedEnemys;
 
 protected:
 	//Components
