@@ -14,7 +14,7 @@ UIndicatorSpriteComponent::UIndicatorSpriteComponent ()
 	// Default Transform
 	DefaultRelativeTransform = FTransform (
 		FRotator ( 0.f , 0.f , -90.f ) ,	// 기준 순서 : Pitch, Yaw, Roll | 엔진에서는 Roll, Pitch, Yaw
-		FVector ( 0.f , 0.f , 300.f ) ,		// TEMP : 레벨 구성 완료 후 결정
+		FVector ( 0.f , 0.f , 3000.f ) ,		// TEMP : 레벨 구성 완료 후 결정 / 3000.0f로 테스트
 		FVector ( 0.35f , 0.35f , 0.35f )   // TEMP : 알파 게임 플레이 후 결정 !!사이즈 변경 시 W_MapWidget에서 UnitSelectionRadius 값 변경할 것!!
 	);
 
