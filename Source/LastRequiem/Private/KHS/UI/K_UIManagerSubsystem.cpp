@@ -8,15 +8,10 @@
 void UK_UIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-	
-	//레벨 전환 이벤트 구독
-	FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this, &UK_UIManagerSubsystem::OnLevelChanged);
 }
 
 void UK_UIManagerSubsystem::Deinitialize()
 {
-	FCoreUObjectDelegates::PostLoadMapWithWorld.RemoveAll(this);
-	
 	CloseAllPopupUI();
 	
 	for (auto& pair : cachedWidgets)
@@ -90,7 +85,6 @@ void UK_UIManagerSubsystem::CloseUIInternal(UK_BaseUIWidget* widget)
 	//Persistent 타입 UI일때
 	if (widget->UILayer == EUILayer::PERSISTENT)
 	{
-		//KHS_SCREEN_INFO(TEXT("PERSISTENT 타입 UI 제거"));
 		
 		widget->CloseUI();
 		widget->RemoveFromParent();
@@ -100,7 +94,6 @@ void UK_UIManagerSubsystem::CloseUIInternal(UK_BaseUIWidget* widget)
 	}
 	else //PopUp 타입 UI일때
 	{
-		//KHS_SCREEN_INFO(TEXT("POPUP 타입 UI 제거"));
 		//스택에서 제거
 		int32 idx = popUpUIStack.Find(widget);
 		if (idx != INDEX_NONE)
@@ -108,10 +101,6 @@ void UK_UIManagerSubsystem::CloseUIInternal(UK_BaseUIWidget* widget)
 			popUpUIStack.RemoveAt(idx);
 			widget->CloseUI();
 			widget->RemoveFromParent();
-			
-			//KHS_SCREEN_INFO(TEXT("위젯 제거됨 - IsInViewport: %s, IsVisible: %s"), 
-			//	widget->IsInViewport() ? TEXT("TRUE") : TEXT("FALSE"),
-			//	widget->IsVisible() ? TEXT("TRUE") : TEXT("FALSE"));
 			
 			//새로운 Top Refresh
 			RefreshTopPopupUI();
@@ -167,24 +156,24 @@ void UK_UIManagerSubsystem::RefreshTopPopupUI()
 	}
 }
 
-void UK_UIManagerSubsystem::OnLevelChanged(UWorld* world)
+void UK_UIManagerSubsystem::ResetAllUIStates()
 {
-	KHS_SCREEN_INFO(TEXT("==== OnLevelChanged START! ===="));
+	//KHS_SCREEN_INFO(TEXT("==== OnLevelChanged START! ===="));
 	
 	//캐싱된 인스턴스들 상태 초기화
 	for (auto& pair : cachedWidgets)
 	{
 		if (pair.Value)
 		{
-			KHS_SCREEN_INFO(TEXT("Widget: %s, IsOpen: %s, IsInViewport: %s"),
-				*pair.Value->GetName(),
-				pair.Value->IsOpen() ? TEXT("TRUE") : TEXT("FALSE"),
-				pair.Value->IsInViewport() ? TEXT("TRUE") : TEXT("FALSE"));
+			// KHS_SCREEN_INFO(TEXT("Widget: %s, IsOpen: %s, IsInViewport: %s"),
+			// 	*pair.Value->GetName(),
+			// 	pair.Value->IsOpen() ? TEXT("TRUE") : TEXT("FALSE"),
+			// 	pair.Value->IsInViewport() ? TEXT("TRUE") : TEXT("FALSE"));
 			if (pair.Value->IsOpen())
 			{
 				pair.Value->CloseUI();
-				KHS_SCREEN_INFO(TEXT("After CloseUI - IsOpen: %s"),
-					pair.Value->IsOpen() ? TEXT("TRUE") : TEXT("FALSE"));
+				// KHS_SCREEN_INFO(TEXT("After CloseUI - IsOpen: %s"),
+				// 	pair.Value->IsOpen() ? TEXT("TRUE") : TEXT("FALSE"));
 			}
 			
 			if (pair.Value->IsInViewport())
@@ -206,5 +195,5 @@ void UK_UIManagerSubsystem::OnLevelChanged(UWorld* world)
 		pc->SetShowMouseCursor(false);
 	}
 	
-	KHS_SCREEN_INFO(TEXT("==== OnLevelChanged END! ===="));
+	//KHS_SCREEN_INFO(TEXT("==== OnLevelChanged END! ===="));
 }

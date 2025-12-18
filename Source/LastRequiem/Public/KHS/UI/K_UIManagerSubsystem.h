@@ -36,8 +36,6 @@ private:
 	void NotifyInputModeChange();
 	// CloseUI 함수들 닫기 작업 내부 헬퍼함수.
 	void CloseUIInternal(UK_BaseUIWidget* widget);
-	// 레벨 전환시 호출되는 콜백함수
-	void OnLevelChanged(UWorld* world);
 	
 public:
 	template<typename T>
@@ -53,6 +51,9 @@ public:
 	void CloseTopPopupUI();
 	void CloseAllPopupUI();
 	void RefreshTopPopupUI();
+	
+	//레벨 전환시 모든UI상태 리셋 함수
+	void ResetAllUIStates(); 
 	
 	FORCEINLINE bool HasOpenPopupUI() const { return popUpUIStack.Num() > 0; }
 	FORCEINLINE int GetPopupStackSize() const { return popUpUIStack.Num(); }
