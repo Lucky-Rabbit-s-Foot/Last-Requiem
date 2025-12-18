@@ -34,7 +34,7 @@ UIndicatorSpriteComponent::UIndicatorSpriteComponent ()
 	// TEST : 확인 필요
 	bVisibleInSceneCaptureOnly = true;	// SceneCapture에서만 표시
 	bHiddenInGame = false;
-	SetVisibility ( true , true );
+	SetVisibility ( true , false );	// propagate 끔 => true -> false : P_Obstacle 디버그
 }
 
 void UIndicatorSpriteComponent::BeginPlay ()
@@ -60,18 +60,28 @@ void UIndicatorSpriteComponent::OnRegister ()
 {
 	Super::OnRegister ();
 
+	if (IsTemplate ()) return; // CDO/아키타입 방어
+
 	if (bApplyDefaultTransform)
 	{
 		// Default Transform 세팅
 		SetRelativeTransform ( DefaultRelativeTransform );
 	}
 
-	// SceneCapture 에서만 보이게 옵션이 켜져 있으면 적용
+	// SceneCapture에서만 보이게 옵션 켜져있을 시 적용
 	if (bVisibleOnlyInSceneCapture)
 	{
-		bVisibleInSceneCaptureOnly = true;  // UPrimitiveComponent 플래그
+		bVisibleInSceneCaptureOnly = true;	// UPrimitiveComponent 플래그
 		bHiddenInGame = false;
-		SetVisibility ( bSpriteOn , true );
+
+		// propagate 끔 => true -> false : P_Obstacle 디버그
+		SetVisibility ( bSpriteOn , false );
+	}
+	else
+	{
+		// 옵션이 꺼질 경우 대비해서 여기도 정리 추천
+		bVisibleInSceneCaptureOnly = false;
+		SetVisibility ( bSpriteOn , false );
 	}
 }
 
@@ -151,7 +161,7 @@ void UIndicatorSpriteComponent::SetSpriteOnOff ( bool bOn , bool bStopGlowWhenOf
 	bSpriteOn = bOn;
 
 	// SceneCapture 포함 렌더링 자체 On/Off
-	SetVisibility ( bSpriteOn , true );
+	SetVisibility ( bSpriteOn , false );	// propagate 끔 => true -> false : P_Obstacle 디버그
 
 	// Glow 같이 끄기
 	if (!bSpriteOn && bStopGlowWhenOff)
