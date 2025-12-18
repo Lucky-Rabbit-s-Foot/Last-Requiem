@@ -13,5 +13,6 @@ UCLASS()
 class LASTREQUIEM_API AW_SituationMapCamera : public ASceneCapture2D
 {
 	GENERATED_BODY()
+	// Temp;
 	
 };
