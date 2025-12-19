@@ -19,9 +19,11 @@
 #include "GameplayTagsManager.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SpotLightComponent.h"
+#include "Components/AudioComponent.h"  
 #include "Engine/OverlapResult.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
+#include "Sound/SoundAttenuation.h"
 
 // Sets default values
 AB_UnitBase::AB_UnitBase()
@@ -265,7 +267,12 @@ void AB_UnitBase::UnitMentalCheck_Move(float InX, float InY)
 	}
 	if (bCanMove)
 	{
+		PlayCommandSound(Cmd_MoveSound);
 		ProcessMoveCommand ( InX , InY );
+	}
+	else
+	{
+		PlayCommandSound(Cmd_DisobeySound);
 	}
 
 }
@@ -407,6 +414,8 @@ void AB_UnitBase::CommandMoveToLocation ( FVector TargetLocation )
 
 void AB_UnitBase::CommandAttackMove ( FVector TargetLocation )
 {
+	PlayCommandSound(Cmd_AttackSound);
+
 	AAIController* AIController = Cast<AAIController> ( GetController () );
 	if (AIController && AIController->GetBlackboardComponent ())
 	{
@@ -513,6 +522,7 @@ void AB_UnitBase::OnAttackButtonClicked_Unit ()
 
 void AB_UnitBase::OnStopButtonClicked_Unit ()
 {
+	PlayCommandSound(Cmd_StopSound);
 	bIsAttackMode = false;
 	UE_LOG ( LogTemp , Warning , TEXT ( "스땁" ));
 	CommandStop ();
@@ -520,6 +530,7 @@ void AB_UnitBase::OnStopButtonClicked_Unit ()
 
 void AB_UnitBase::OnHoldButtonClicked_Unit ()
 {
+	PlayCommandSound(Cmd_HoldSound);
 	bIsAttackMode = false;
 	UE_LOG ( LogTemp , Warning , TEXT ( "홀드" ));
 	CommandHold ();
@@ -527,6 +538,7 @@ void AB_UnitBase::OnHoldButtonClicked_Unit ()
 
 void AB_UnitBase::OnRetreatButtonClicked_Unit ()
 {
+	PlayCommandSound(Cmd_RetreatSound);
 	bIsAttackMode = false;
 	UE_LOG ( LogTemp , Warning , TEXT ( "후토ㅓㅣ" ));
 	CommandRetreat ();
@@ -803,7 +815,29 @@ void AB_UnitBase::PlayUnitVoice ( USoundBase* InVoiceSound )
 {
 	if (!bIsAlive || InVoiceSound == nullptr) return;
 
-	UGameplayStatics::SpawnSoundAttached ( InVoiceSound , GetMesh () , FName ( "HeadSocket" ) );
+	UAudioComponent* AudioComp = UGameplayStatics::SpawnSoundAttached(
+		InVoiceSound,                        // 소리 파일
+		GetMesh(),                           // 붙일 곳
+		FName("HeadSocket"),                 // 소켓 이름
+		FVector::ZeroVector,                 // 위치 오프셋
+		FRotator::ZeroRotator,               // 회전값
+		EAttachLocation::KeepRelativeOffset, // 붙이기 설정
+		false,                               // 액터 파괴 시 멈춤 여부
+		1.0f,                                // 볼륨 Multiplier
+		1.0f,                                // 피치 Multiplier
+		0.0f,                                // 시작 시간
+		UnitVoiceAttenuation                 // 감쇠 설정
+	);
+
+	if (AudioComp)
+	{
+		if (UnitSoundClass)
+		{
+			AudioComp->SoundClassOverride = UnitSoundClass;
+		}
+
+		AudioComp->Play();
+	}
 
 	SetSpeakingState ( true );
 
@@ -897,4 +931,23 @@ void AB_UnitBase::PlayVoiceForEvent(EUnitVoiceEvent InEvent)
 void AB_UnitBase::ResetCombatVoiceCooldown()
 {
 	bCanPlayCombatVoice = true;
+}
+
+void AB_UnitBase::PlayCommandSound(USoundBase* InSound)
+{
+	if (!InSound || !bIsAlive) return;
+
+	UAudioComponent* AudioComp = UGameplayStatics::SpawnSound2D(GetWorld(), InSound);
+
+	if (AudioComp)
+	{
+		// 2. [핵심] 변수(SoundClassOverride)에 직접 대입!
+		if (UnitCommandSoundClass)
+		{
+			AudioComp->SoundClassOverride = UnitCommandSoundClass;
+		}
+
+		// 3. 재생!
+		AudioComp->Play();
+	}
 }

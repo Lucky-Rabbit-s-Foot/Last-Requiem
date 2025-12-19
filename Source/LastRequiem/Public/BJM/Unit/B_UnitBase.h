@@ -16,7 +16,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams ( FOnUnitSpeak , AActor* , InSpeake
 
 class UB_UnitStatusComponent;
 class UIndicatorSpriteComponent;
-
+class UAudioComponent;
 
 UCLASS()
 class LASTREQUIEM_API AB_UnitBase : public ACharacter, public IGameplayTagAssetInterface
@@ -276,4 +276,16 @@ protected:
 
 	void ResetCombatVoiceCooldown ();
 
+protected:
+	void PlayCommandSound ( USoundBase* InSound );
+
+public:
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Sound Setting" )
+	USoundAttenuation* UnitVoiceAttenuation;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Sound Setting" )
+	USoundClass* UnitSoundClass;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Sound Setting" )
+	USoundClass* UnitCommandSoundClass;
 };
