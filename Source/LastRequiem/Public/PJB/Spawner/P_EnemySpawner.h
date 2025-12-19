@@ -20,6 +20,8 @@ public:
 	UFUNCTION ( BlueprintCallable , Category = "Factory" )
 	void SpawnEnemy ();
 
+	virtual void OnConstruction ( const FTransform& Transform ) override;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -29,6 +31,9 @@ protected:
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
 	FGameplayTag EnemyTagToSpawn;
 
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Components" )
+	TObjectPtr<class USphereComponent> SpawnRadiusVisualizer;
+		
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
 	UDataTable* EnemyDataTable;
 
@@ -37,7 +42,7 @@ protected:
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
 	float SpawnInterval = 5.0f;
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
-	float SpawnRadius = 500.0f;
+	float SpawnRadius = 300.0f;
 
 	FTimerHandle SpawnTimerHandle;
 

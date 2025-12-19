@@ -1,6 +1,7 @@
 ﻿#include "PJB/Spawner/P_EnemySpawner.h"
 
 #include "Components/ArrowComponent.h"
+#include "Components/SphereComponent.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "NavigationSystem.h"
@@ -14,6 +15,13 @@ AP_EnemySpawner::AP_EnemySpawner()
 	PrimaryActorTick.bCanEverTick = false;
 
 	InitArrowComponentForFindSpawner ();
+
+	SpawnRadiusVisualizer = CreateDefaultSubobject<USphereComponent> ( TEXT ( "SpawnRadiusVisualizer" ) );
+	SpawnRadiusVisualizer->SetupAttachment ( RootComponent );
+	
+	SpawnRadiusVisualizer->SetCollisionProfileName ( TEXT ( "NoCollision" ) );
+	SpawnRadiusVisualizer->SetHiddenInGame ( true );
+	SpawnRadiusVisualizer->ShapeColor = FColor::White;
 }
 
 void AP_EnemySpawner::InitArrowComponentForFindSpawner ()
@@ -99,5 +107,14 @@ void AP_EnemySpawner::SpawnEnemy ()
 				SpawnedEnemy->SpawnDefaultController ();
 			}
 		}
+	}
+}
+
+void AP_EnemySpawner::OnConstruction ( const FTransform& Transform )
+{
+	Super::OnConstruction ( Transform );
+	if (SpawnRadiusVisualizer)
+	{
+		SpawnRadiusVisualizer->SetSphereRadius ( SpawnRadius );
 	}
 }
