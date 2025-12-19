@@ -45,8 +45,9 @@ protected:
 	TObjectPtr<UStaticMeshComponent> Mesh = nullptr;
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Components" )
 	TObjectPtr<class UCapsuleComponent> CollisionComp = nullptr;
-//	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data|Sprite")
-//	TObjectPtr<class UIndicatorSpriteComponent> SpriteComp = nullptr;
+	// 포인트
+	UPROPERTY( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Sprite")
+	TObjectPtr<class UIndicatorSpriteComponent> SpriteComp = nullptr;
 
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Components" )
 	TObjectPtr<UGeometryCollectionComponent> GeometryComp = nullptr;
@@ -58,6 +59,9 @@ protected:
 	float MaxHealth = 300.0f;
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Health" )
 	float Health = 300.0f;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Range" )
+	float AggroRange = 500.0f;
 
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Config = "Data|Destruction" )
 	TSubclassOf<AActor> MasterFieldClass = nullptr;

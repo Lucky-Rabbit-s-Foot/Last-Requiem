@@ -3,7 +3,7 @@
 #include "LastRequiem.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
-//#include "KWB/Component/IndicatorSpriteComponent.h"
+#include "KWB/Component/IndicatorSpriteComponent.h" // 포인트
 
 AP_Obstacle::AP_Obstacle()
 {
@@ -19,8 +19,9 @@ AP_Obstacle::AP_Obstacle()
 	CollisionComp->SetupAttachment ( Mesh );
 
 	// TODO: Activate later if fixed indicator sprite issue
-//	SpriteComp = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "SpriteComp" ) );
-//	SpriteComp->SetupAttachment ( Mesh );
+	// 포인트
+	SpriteComp = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "SpriteComp" ) );
+	//SpriteComp->SetupAttachment ( Mesh );
 
 	GeometryComp = CreateDefaultSubobject<UGeometryCollectionComponent> ( TEXT ( "GeometryComp" ) );
 	GeometryComp->SetupAttachment ( Mesh );
@@ -71,10 +72,11 @@ void AP_Obstacle::OnBroken ()
 		Mesh->SetVisibility ( false );
 	}
 
-	//if (SpriteComp)
-	//{
-	//	SpriteComp->SetSpriteOnOff ( false );
-	//}
+	// 포인트
+	if (SpriteComp)
+	{
+		SpriteComp->SetSpriteOnOff ( false );
+	}
 
 	if (CollisionComp)
 	{

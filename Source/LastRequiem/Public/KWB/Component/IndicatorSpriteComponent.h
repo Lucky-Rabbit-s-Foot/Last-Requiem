@@ -9,6 +9,10 @@
 class UPaperSprite;
 class UMaterialInstanceDynamic;
 
+#if WITH_EDITOR
+struct FPropertyChangedEvent;
+#endif
+
 // 미니맵 아이콘 상태
 UENUM ()
 enum class EIndicatorSpriteState : uint8
@@ -30,6 +34,14 @@ public:
 	virtual void BeginPlay () override;
 	virtual void TickComponent ( float DeltaTime , ELevelTick TickType , FActorComponentTickFunction* ThisTickFunction ) override;
 	virtual void OnRegister () override;
+
+	// Default Transform을 OnRegister에서 직접 만지지 않기 위한 보조 훅
+	virtual void OnComponentCreated () override;
+	virtual void PostLoad () override;
+
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty ( FPropertyChangedEvent& PropertyChangedEvent ) override; // [ADDED]
+#endif
 
 	// --- 각 액터에서 사용할 API ---
 
@@ -91,26 +103,45 @@ protected:
 
 private:
 	// 현재 상태
-	EIndicatorSpriteState CurrentState;
+	EIndicatorSpriteState CurrentState = EIndicatorSpriteState::Normal;
 
 	// 스프라이트 온오프 플래그
 	bool bSpriteOn = true;
 
 	// Sprite 초기화 여부 (Fallback 로직 한 번만 돌리기 위함)
-	bool bSpritesInitialized;
+	bool bSpritesInitialized = false;
 
 	// Glow용
 	UPROPERTY ( Transient )
-	UMaterialInstanceDynamic* DynamicMID;
+	UMaterialInstanceDynamic* DynamicMID = nullptr;
 
-	bool  bGlowActive;
-	float GlowTime;
+	bool  bGlowActive = false;
+	float GlowTime = 0.0f;
 
-	FTimerHandle GlowTimer; // 일정 시간 후 Glow 끄기용
+	// 일정 시간 후 Glow 끄기용
+	FTimerHandle GlowTimer;
+
+	// OnRegister 재진입 가드 (스택 오버플로우 방지)
+	bool bInOnRegister = false;
+
+	// Default Transform 1회 적용 플래그
+	bool bDefaultTransformApplied = false;
 
 	// 내부 헬퍼 함수들
 	void InitializeSpritesIfNeeded ();
 	void UpdateSpriteForState ();
 	void UpdateGlow ( float DeltaTime );
 	void HandleGlowFinished ();
+
+	// 옵션에 맞게 가시성/SceneCapture 플래그 동기화
+	void ApplyVisibilityRules ();
+
+	// Glow용 MID 안전 생성
+	void EnsureDynamicMaterial ();
+
+	// Default Transform 안전 적용 (강제/비강제)
+	void ApplyDefaultTransformIfNeeded ( bool bForce );
+
+	// 다음 틱 콜백(=OnRegister 스택 밖)에서 Transform 적용
+	void ApplyDefaultTransformDeferred ();
 };
