@@ -242,4 +242,38 @@ public:
 
 	void StopUnitVoice ();
 
+protected:
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Unit|Sound Data" )
+	TMap<EUnitBehaviorState , FUnitVoiceProfile> UnitVoiceData;
+
+public:
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Sound Command" )
+	USoundBase* Cmd_MoveSound;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Sound Command" )
+	USoundBase* Cmd_StopSound;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Sound Command" )
+	USoundBase* Cmd_AttackSound;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Sound Command" )
+	USoundBase* Cmd_RetreatSound;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Sound Command" )
+	USoundBase* Cmd_HoldSound;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Sound Command" )
+	USoundBase* Cmd_DisobeySound;
+
+public:
+	UFUNCTION ( BlueprintCallable , Category = "Unit|Sound" )
+	void PlayVoiceForEvent ( EUnitVoiceEvent InEvent );
+
+protected:
+	FTimerHandle TimerHandle_CombatVoiceCooldown;
+
+	bool bCanPlayCombatVoice = true;
+
+	void ResetCombatVoiceCooldown ();
+
 };
