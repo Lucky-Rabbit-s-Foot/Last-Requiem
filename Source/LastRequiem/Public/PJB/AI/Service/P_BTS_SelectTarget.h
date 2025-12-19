@@ -25,7 +25,7 @@ protected:
 	FGameplayTag FortressTag;
 
 	UPROPERTY ( EditAnywhere , Category = "Data|AI|Settings" )
-	float ObstacleCheckRadius = 200.0f;
+	float ObstacleCheckRadius = 500.0f;
 
 	UPROPERTY ( EditAnywhere , Category = "Data|Blackboard" )
 	FBlackboardKeySelector TargetActorKey;

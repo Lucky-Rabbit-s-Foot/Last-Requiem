@@ -59,6 +59,9 @@ protected:
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Health" )
 	float Health = 300.0f;
 
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Range" )
+	float AggroRange = 500.0f;
+
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Config = "Data|Destruction" )
 	TSubclassOf<AActor> MasterFieldClass = nullptr;
 
