@@ -11,6 +11,7 @@ AP_Obstacle::AP_Obstacle()
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent> ( TEXT ( "Mesh" ) );
 	SetRootComponent ( Mesh );
+	
 	Mesh->SetCollisionProfileName ( FName ( "NoCollision" ) );
 	Mesh->SetCanEverAffectNavigation ( false );
 
@@ -18,10 +19,8 @@ AP_Obstacle::AP_Obstacle()
 	CollisionComp->SetCollisionProfileName ( TEXT ( "BlockAll" ) );
 	CollisionComp->SetupAttachment ( Mesh );
 
-	// TODO: Activate later if fixed indicator sprite issue
-	// 포인트
 	SpriteComp = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "SpriteComp" ) );
-	//SpriteComp->SetupAttachment ( Mesh );
+	SpriteComp->SetupAttachment ( Mesh );
 
 	GeometryComp = CreateDefaultSubobject<UGeometryCollectionComponent> ( TEXT ( "GeometryComp" ) );
 	GeometryComp->SetupAttachment ( Mesh );
@@ -29,6 +28,10 @@ AP_Obstacle::AP_Obstacle()
 	GeometryComp->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
 	GeometryComp->SetSimulatePhysics ( false );
 	GeometryComp->SetVisibility ( false );
+
+	AIControllerClass = nullptr;
+	AutoPossessPlayer = EAutoReceiveInput::Disabled;
+	AutoPossessAI = EAutoPossessAI::Disabled;
 }
 
 void AP_Obstacle::GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const
