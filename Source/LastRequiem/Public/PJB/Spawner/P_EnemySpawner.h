@@ -7,6 +7,8 @@
 
 #include "P_EnemySpawner.generated.h"
 
+class UP_SpawnerDataAsset;
+
 UCLASS()
 class LASTREQUIEM_API AP_EnemySpawner : public AActor
 {
@@ -38,11 +40,7 @@ protected:
 	UDataTable* EnemyDataTable;
 
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
-	float SpawnDelay = 1.0f;
-	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
-	float SpawnInterval = 5.0f;
-	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
-	float SpawnRadius = 300.0f;
+	TObjectPtr<UP_SpawnerDataAsset> DA;
 
 	FTimerHandle SpawnTimerHandle;
 

@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "NavigationSystem.h"
 #include "PJB/Data/P_DataTableRows.h"
+#include "PJB/Data/P_SpawnerDataAsset.h"
 #include "PJB/Enemy/P_EnemyBase.h"
 #include "PJB/System/P_GameStateBase.h"
 #include "KHS/Drone/K_Drone.h"
@@ -41,15 +42,15 @@ void AP_EnemySpawner::BeginPlay()
 
 void AP_EnemySpawner::StartSpawnEnemy ()
 {
-	if (SpawnInterval <= 0.0f || !EnemyDataTable) return;
+	if (DA->SpawnInterval <= 0.0f || !EnemyDataTable) return;
 
 	GetWorldTimerManager ().SetTimer (
 		SpawnTimerHandle ,
 		this ,
 		&AP_EnemySpawner::SpawnEnemy ,
-		SpawnInterval ,
+		DA->SpawnInterval ,
 		true ,
-		SpawnDelay
+		DA->SpawnDelay
 	);
 }
 
@@ -77,7 +78,7 @@ void AP_EnemySpawner::SpawnEnemy ()
 		if (UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent ( GetWorld () ))
 		{
 			FNavLocation RandomNavLocation;
-			if (NavSys->GetRandomPointInNavigableRadius ( SpawnLocation , SpawnRadius , RandomNavLocation ))
+			if (NavSys->GetRandomPointInNavigableRadius ( SpawnLocation , DA->SpawnRadius , RandomNavLocation ))
 			{
 				SpawnLocation = RandomNavLocation.Location;
 				SpawnLocation.Z += 50.0f;
@@ -115,6 +116,6 @@ void AP_EnemySpawner::OnConstruction ( const FTransform& Transform )
 	Super::OnConstruction ( Transform );
 	if (SpawnRadiusVisualizer)
 	{
-		SpawnRadiusVisualizer->SetSphereRadius ( SpawnRadius );
+		SpawnRadiusVisualizer->SetSphereRadius ( DA->SpawnRadius );
 	}
 }
