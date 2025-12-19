@@ -104,3 +104,34 @@ public:
 	UTexture2D* ProfileImage;
 
 };
+
+UENUM ( BlueprintType )
+enum class EUnitVoiceEvent : uint8
+{
+	SpotEnemy   UMETA ( DisplayName = "Spot Enemy" ) ,   // 적 발견
+	Combat      UMETA ( DisplayName = "Combat/Attack" ) ,// 공격/전투
+	Recovery    UMETA ( DisplayName = "Recovery" ) ,     // 회복 받음
+	Death       UMETA ( DisplayName = "Death" )         // 사망
+};
+
+USTRUCT ( BlueprintType )
+struct FUnitVoiceProfile
+{
+	GENERATED_BODY ()
+
+	// 적 발견했을 때
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite )
+	USoundBase* SpotEnemySound;
+
+	// 공격할 때
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite )
+	USoundBase* AttackSound;
+
+	// 회복 받았을 때
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite )
+	USoundBase* RecoverySound;
+
+	// 죽었을 때
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite )
+	USoundBase* DeathSound;
+};
