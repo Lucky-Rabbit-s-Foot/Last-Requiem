@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "KHS/UI/K_UnitSlotWiddget.h"
@@ -57,7 +57,7 @@ bool UK_UnitSlotWiddget::CanUpdateUIData(float TimeDelta)
 			HPBar->SetPercent(percent);
 		}
 		
-		currentDisplayedSP = FMath::FInterpTo(currentDisplayedSP, targetDisplayedSP, currentDisplayedSP, TimeDelta);
+		currentDisplayedSP = FMath::FInterpTo(currentDisplayedSP, targetDisplayedSP, TimeDelta , UI_INTERP_SPEED );
 		
 		if (SPBar)
 		{
