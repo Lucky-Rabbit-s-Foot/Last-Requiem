@@ -106,19 +106,19 @@ protected:
 	
 	//UI Classes
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|UI")
-	TSubclassOf<class UK_HUDWidget> hudWidget;
+	TSubclassOf<class UK_HUDWidget> hudUIFactory;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|UI")
-	TSubclassOf<class UK_UnitListWidget> unitListWidget;
+	TSubclassOf<class UK_UnitListWidget> unitListUIFactory;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|UI")
-	TSubclassOf<class UW_SituationMapWidget> mapWidget;
+	TSubclassOf<class UW_SituationMapWidget> mapUIFactory;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|UI")
-	TSubclassOf<class UK_SettingWidget> settingWidget;
+	TSubclassOf<class UK_SettingWidget> settingUIFactory;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|UI")
-	TSubclassOf<class UK_TutorialWidget> tutorialWidget;
+	TSubclassOf<class UK_TutorialWidget> tutorialUIFactory;
 	
 	//Input
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Input")

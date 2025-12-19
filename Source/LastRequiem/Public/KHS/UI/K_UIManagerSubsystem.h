@@ -52,6 +52,9 @@ public:
 	void CloseAllPopupUI();
 	void RefreshTopPopupUI();
 	
+	//레벨 전환시 모든UI상태 리셋 함수
+	void ResetAllUIStates(); 
+	
 	FORCEINLINE bool HasOpenPopupUI() const { return popUpUIStack.Num() > 0; }
 	FORCEINLINE int GetPopupStackSize() const { return popUpUIStack.Num(); }
 	
@@ -73,12 +76,12 @@ private:
 template<typename T>
 T* UK_UIManagerSubsystem::GetOrCreateWidget(TSubclassOf<T> widgetClass)
 {
-	TSubclassOf<UK_BaseUIWidget> targetClass = widgetClass;
+	TSubclassOf<UK_BaseUIWidget> targetClassFactory = widgetClass;
 	
 	//캐싱된 UI가 있으면 반환
-	if (cachedWidgets.Contains(targetClass))
+	if (cachedWidgets.Contains(targetClassFactory))
 	{
-		return Cast<T>(cachedWidgets[targetClass]);
+		return Cast<T>(cachedWidgets[targetClassFactory]);
 	}
 	
 	//없으면 생성 후 반환
@@ -91,7 +94,7 @@ T* UK_UIManagerSubsystem::GetOrCreateWidget(TSubclassOf<T> widgetClass)
 	T* newWidget = CreateWidget<T>(pc, widgetClass);
 	if (newWidget)
 	{
-		cachedWidgets.Add(targetClass, newWidget);
+		cachedWidgets.Add(targetClassFactory, newWidget);
 	}
 	return newWidget;
 }
@@ -120,11 +123,11 @@ T* UK_UIManagerSubsystem::OpenUI(TSubclassOf<T> targetClass)
 	//Persistent 타입 UI일때
 	if (baseWidget->UILayer == EUILayer::PERSISTENT)
 	{
-		TSubclassOf<UK_BaseUIWidget> baseClass = targetClass;;
+		TSubclassOf<UK_BaseUIWidget> baseClassFactory = targetClass;
 		//Map에 저장된 내용인지 확인 후
-		if (!persitentUIMap.Contains(baseClass))
+		if (!persitentUIMap.Contains(baseClassFactory))
 		{
-			persitentUIMap.Add(baseClass, baseWidget);
+			persitentUIMap.Add(baseClassFactory, baseWidget);
 		}
 		
 		//UI 켜기 및 뷰포트 추가
@@ -164,15 +167,15 @@ void UK_UIManagerSubsystem::CloseUI(TSubclassOf<T> targetClass)
 		return;
 	}
 	
-	TSubclassOf<UK_BaseUIWidget> baseClass = targetClass;
+	TSubclassOf<UK_BaseUIWidget> baseClassFactory = targetClass;
 	
 	// 캐싱중인 UI라면 리턴
-	if (!cachedWidgets.Contains(baseClass))
+	if (!cachedWidgets.Contains(baseClassFactory))
 	{
 		return;
 	}
 	
-	UK_BaseUIWidget* widget = cachedWidgets[baseClass];
+	UK_BaseUIWidget* widget = cachedWidgets[baseClassFactory];
 	
 	//실제 닫기 로직은 내부 헬퍼함수 호출
 	CloseUIInternal(widget);
