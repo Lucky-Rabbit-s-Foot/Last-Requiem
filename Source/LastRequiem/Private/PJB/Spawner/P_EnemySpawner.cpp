@@ -42,7 +42,7 @@ void AP_EnemySpawner::BeginPlay()
 
 void AP_EnemySpawner::StartSpawnEnemy ()
 {
-	if (DA->SpawnInterval <= 0.0f || !EnemyDataTable) return;
+	if (!DA || DA->SpawnInterval <= 0.0f || !EnemyDataTable) return;
 
 	GetWorldTimerManager ().SetTimer (
 		SpawnTimerHandle ,
@@ -111,11 +111,14 @@ void AP_EnemySpawner::SpawnEnemy ()
 	}
 }
 
-void AP_EnemySpawner::OnConstruction ( const FTransform& Transform )
+#if WITH_EDITOR
+void AP_EnemySpawner::PostEditChangeProperty ( FPropertyChangedEvent& PropertyChangedEvent )
 {
-	Super::OnConstruction ( Transform );
-	if (SpawnRadiusVisualizer)
+	Super::PostEditChangeProperty ( PropertyChangedEvent );
+
+	if (SpawnRadiusVisualizer && DA)
 	{
 		SpawnRadiusVisualizer->SetSphereRadius ( DA->SpawnRadius );
 	}
 }
+#endif

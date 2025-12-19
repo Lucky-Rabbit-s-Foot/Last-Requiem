@@ -22,7 +22,9 @@ public:
 	UFUNCTION ( BlueprintCallable , Category = "Factory" )
 	void SpawnEnemy ();
 
-	virtual void OnConstruction ( const FTransform& Transform ) override;
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty ( FPropertyChangedEvent& PropertyChangedEvent ) override;
+#endif
 
 protected:
 	virtual void BeginPlay() override;
@@ -33,7 +35,7 @@ protected:
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
 	FGameplayTag EnemyTagToSpawn;
 
-	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Components" )
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Components" )
 	TObjectPtr<class USphereComponent> SpawnRadiusVisualizer;
 		
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
