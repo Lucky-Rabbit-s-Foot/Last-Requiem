@@ -10,7 +10,6 @@
 
 class UAIPerceptionComponent;
 class UAISenseConfig_Sight;
-class UAISenseConfig_Damage;
 class UBehaviorTree;
 
 UCLASS()
@@ -32,16 +31,13 @@ protected:
 
 private:
 	void InitSightConfig ();
-	void InitDamageConfig ();
-
+	
 protected:
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|AI|Perception" )
 	TObjectPtr<UAIPerceptionComponent> AIPerceptionComp;
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|AI|Perception" )
 	TObjectPtr<UAISenseConfig_Sight> SightConfig;
-	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|AI|Perception" )
-	TObjectPtr<UAISenseConfig_Damage> DamageConfig;
-
+	
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|AI" )
 	TObjectPtr<UBehaviorTree> BehaviorTree;
 
@@ -53,7 +49,7 @@ protected:
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|AI|Perception" )
 	float LoseSightRadius = 2000.0f;
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|AI|Perception" )
-	float ViewAngleDegree = 90.0f;
+	float ViewAngleDegree = 180.0f;
 
 	float StuckTimer = 0.0f;
 	FVector LastLocation;

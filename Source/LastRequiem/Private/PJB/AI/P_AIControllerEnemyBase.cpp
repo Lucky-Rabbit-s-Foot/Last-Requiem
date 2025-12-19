@@ -2,9 +2,7 @@
 
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
-#include "Perception/AISenseConfig_Damage.h"
 #include "Perception/AISense_Sight.h"
-#include "Perception/AISense_Damage.h"
 
 #include "Navigation/PathFollowingComponent.h"
 #include "BehaviorTree/BehaviorTree.h"
@@ -18,11 +16,8 @@ AP_AIControllerEnemyBase::AP_AIControllerEnemyBase ()
 {
 	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent> ( TEXT ( "AIPerception" ) );
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight> ( TEXT ( "SenseSight" ) );
-	DamageConfig = CreateDefaultSubobject<UAISenseConfig_Damage> ( TEXT ( "SenseDamage" ) );
 
 	InitSightConfig ();
-	InitDamageConfig ();
-
 	InitPerceptionComponent ();
 }
 
@@ -55,7 +50,6 @@ void AP_AIControllerEnemyBase::InitPerceptionComponent ()
 {
 	if (!AIPerceptionComp) return;
 
-	AIPerceptionComp->ConfigureSense ( *DamageConfig );
 	AIPerceptionComp->ConfigureSense ( *SightConfig );
 	AIPerceptionComp->SetDominantSense ( SightConfig->GetSenseImplementation () );
 }
@@ -71,9 +65,4 @@ void AP_AIControllerEnemyBase::InitSightConfig ()
 	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
 	SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
 	SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
-}
-
-void AP_AIControllerEnemyBase::InitDamageConfig ()
-{
-	if (!DamageConfig) return;
 }
