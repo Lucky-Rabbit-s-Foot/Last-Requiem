@@ -11,19 +11,7 @@ void UW_ShowNameWidget::NativeConstruct ()
 {
 	Super::NativeConstruct ();
 
-	CurrentState = InitialState;
-	ApplyVisibility ( false );
-
-	if (OwnerUnit.IsValid ())
-	{
-		SetUnitNameText ( OwnerUnit.Get () );
-		KHS_INFO ( TEXT ( "ShowName: %s 연결 됨." ) , *OwnerUnit->GetName () );
-	}
-	else
-	{
-		KHS_INFO ( TEXT ( "ShowName: 유닛이 연결되지 않았습니다." ) );
-	}
-
+	SetVisibility ( ESlateVisibility::HitTestInvisible );
 }
 
 void UW_ShowNameWidget::InitializeOwner ( AActor* InOwnerUnit )
@@ -83,6 +71,11 @@ void UW_ShowNameWidget::PlayPopupAnimation ()
 
 void UW_ShowNameWidget::ToggleShowNameWidget ()
 {
-	const bool bCurrentlyVisible = (GetVisibility () != ESlateVisibility::Collapsed);
-	SetShowNameState ( bCurrentlyVisible ? EUnitShowNameState::UNDETECTED : EUnitShowNameState::DETECTED );
+	const ESlateVisibility Cur = GetVisibility ();
+	const bool bIsShown =
+		(Cur != ESlateVisibility::Collapsed) &&
+		(Cur != ESlateVisibility::Hidden);
+
+	SetVisibility ( bIsShown ? ESlateVisibility::Collapsed
+		: ESlateVisibility::HitTestInvisible );
 }

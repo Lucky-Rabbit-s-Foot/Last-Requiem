@@ -16,7 +16,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams ( FOnUnitSpeak , AActor* , InSpeake
 
 class UB_UnitStatusComponent;
 class UIndicatorSpriteComponent;
-
+// 포인트
+class UWidgetComponent;
+class UW_ShowNameWidget;
 
 UCLASS()
 class LASTREQUIEM_API AB_UnitBase : public ACharacter, public IGameplayTagAssetInterface
@@ -55,6 +57,13 @@ public:
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
 	FGameplayTagContainer GameplayTags;
 
+	// 포인트
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Unit|Component" )
+	UWidgetComponent* ShowNameWidget = nullptr;
+	// 드론 감지 상태 캐시(중복 호출 방지)
+	UPROPERTY ( VisibleInstanceOnly , Category = "Unit|UI" )
+	bool bDetectedByDroneCached = false;
+
 	// 위젯 찾으려고 타이머 설정한거(위젯찾으면 사라짐)
 	//FTimerHandle FindWidgetTimerHandle;
 
@@ -92,6 +101,10 @@ public:
 	virtual void OnConstruction ( const FTransform& Transform ) override;
 
 	void UnitDataUpdate ();
+
+	// 포인트
+	UFUNCTION ( BlueprintCallable , Category = "Unit|UI" )
+	void SetDetectedByDrone ( bool bDetected );
 protected:
 
 public:

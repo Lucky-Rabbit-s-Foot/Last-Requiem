@@ -22,6 +22,9 @@
 #include "Engine/OverlapResult.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
+// 포인트
+#include "Components/WidgetComponent.h"
+#include "KWB/UI/W_ShowNameWidget.h" 
 
 // Sets default values
 AB_UnitBase::AB_UnitBase()
@@ -57,6 +60,21 @@ AB_UnitBase::AB_UnitBase()
 	IndicatorSprite = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "IndicatorSprite" ) );
 	IndicatorSprite->SetupAttachment ( RootComponent );
 
+	// 포인트
+	ShowNameWidget = CreateDefaultSubobject<UWidgetComponent> ( TEXT ( "ShowNameWidget" ) );
+	ShowNameWidget->SetupAttachment ( RootComponent ); // 또는 GetMesh()에 붙여도 됨
+	ShowNameWidget->SetWidgetSpace ( EWidgetSpace::Screen ); // 기능을 못 하고 있음
+
+	ShowNameWidget->SetWidgetSpace ( EWidgetSpace::World );
+	ShowNameWidget->SetDrawAtDesiredSize ( true );
+	ShowNameWidget->SetTwoSided ( true );
+
+	// 머리 위로 올리고 싶으면 대략 이런 식으로 오프셋
+	ShowNameWidget->SetRelativeLocation ( FVector ( 0.f , 0.f , 120.f ) );
+
+	// 시작은 숨김
+	ShowNameWidget->SetHiddenInGame ( true );
+	ShowNameWidget->SetVisibility ( false );
 }
 
 void AB_UnitBase::GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const
@@ -96,6 +114,22 @@ void AB_UnitBase::BeginPlay()
 
 	UnitDataUpdate ();
 
+	// 포인트
+	if (ShowNameWidget)
+	{
+		// 혹시 위젯 생성이 안 되어 있으면 강제로 초기화
+		ShowNameWidget->InitWidget ();
+
+		// 시작은 숨김
+		ShowNameWidget->SetHiddenInGame ( true );
+		ShowNameWidget->SetVisibility ( false );
+
+		if (UW_ShowNameWidget* W = Cast<UW_ShowNameWidget> ( ShowNameWidget->GetUserWidgetObject () ))
+		{
+			// 유닛 이름 세팅 (아래 3번에서 W_ShowNameWidget 시그니처도 꼭 수정 필요)
+			W->SetUnitNameText ( this );
+		}
+	}
 }
 
 // Called every frame
@@ -220,6 +254,50 @@ void AB_UnitBase::UnitDataUpdate ()
 	UnitUpdateData.bIsInCombat = StatusComponent->bIsInCombat;
 	UnitUpdateData.bIsAlive = bIsAlive;
 	UnitUpdateData.bIsSpeaking = bIsSpeaking;
+}
+
+// 포인트
+void AB_UnitBase::SetDetectedByDrone ( bool bDetected )
+{
+	// 중복 호출 방지 (드론이 1초마다 스캔하므로 필수에 가까움)
+	if (bDetectedByDroneCached == bDetected)
+	{
+		return;
+	}
+	bDetectedByDroneCached = bDetected;
+
+	if (!ShowNameWidget)
+	{
+		return;
+	}
+
+	// WidgetClass가 지정 안 되어 있으면 UserWidget 인스턴스가 생성되지 않음
+	if (ShowNameWidget->GetWidgetClass () == nullptr)
+	{
+		// 여기서 로그 찍으면 블루프린트 세팅 실수 바로 잡을 수 있음
+		UE_LOG ( LogTemp , Error , TEXT ( "[UnitBase] ShowNameWidget WidgetClass is null. BP에서 ShowNameWidget 컴포넌트의 Widget Class를 WBP_ShowNameWidget으로 지정해야 합니다." ) );
+		return;
+	}
+
+	// 혹시 아직 인스턴스가 없으면 생성 보장
+	if (ShowNameWidget->GetUserWidgetObject () == nullptr)
+	{
+		ShowNameWidget->InitWidget ();
+	}
+
+	// 컴포넌트 레벨에서 표시/숨김 (가장 확실하고 단순)
+	ShowNameWidget->SetHiddenInGame ( !bDetected );
+	ShowNameWidget->SetVisibility ( bDetected , true );
+
+	// 탐지되면 텍스트 갱신 + 팝업
+	if (bDetected)
+	{
+		if (UW_ShowNameWidget* W = Cast<UW_ShowNameWidget> ( ShowNameWidget->GetUserWidgetObject () ))
+		{
+			W->SetUnitNameText ( this );   // 이름은 여기서 보장
+			W->PlayPopupAnimation ();
+		}
+	}
 }
 
 void AB_UnitBase::UnitMentalCheck_Move(float InX, float InY)

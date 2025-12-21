@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "KHS/Drone/K_Drone.h"
@@ -216,6 +216,9 @@ void AK_Drone::InitializeDetectedUnitSlot()
 			currentDetectedUnits.Add(detectedActor);
 			//broadcast
 			onUnitDetected.Broadcast(detectedActor);
+
+			// W(251219) : W_ShowNameWidget에서 사용할 용도
+			detectedUnit->SetDetectedByDrone ( true );
 		}
 	}
 	
@@ -275,6 +278,12 @@ void AK_Drone::UpdateDetectedUnitSlot()
 			currentDetectedUnits.Add(detectedActor);
 			//broadcast
 			onUnitDetected.Broadcast(detectedActor);
+
+			// W(251219) : W_ShowNameWidget에서 사용할 용도
+			if (!previouslyDetectedUnits.Contains ( detectedActor ))
+			{
+				detectedUnit->SetDetectedByDrone ( true );
+			}
 		}
 		
 		//(251217 수정) 에너미 탐지 추가
@@ -295,6 +304,12 @@ void AK_Drone::UpdateDetectedUnitSlot()
 			//KHS_SCREEN_INFO(TEXT("에너미 탐지벗어남 - %p"), detectedActor);
 			//broadcast
 			onUnitLostDetection.Broadcast(detectedActor);
+
+			// W(251219) : W_ShowNameWidget에서 사용할 용도
+			if (AB_UnitBase* lostUnit = Cast<AB_UnitBase> ( detectedActor ))
+			{
+				lostUnit->SetDetectedByDrone ( false );
+			}
 		}
 	}
 	
