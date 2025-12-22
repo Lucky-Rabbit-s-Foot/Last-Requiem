@@ -1,19 +1,19 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
-#include "W_ShoNameTestPawn.generated.h"
+#include "W_ShowNameTestPawn.generated.h"
 
 UCLASS()
-class LASTREQUIEM_API AW_ShoNameTestPawn : public APawn
+class LASTREQUIEM_API AW_ShowNameTestPawn : public APawn
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this pawn's properties
-	AW_ShoNameTestPawn();
+	AW_ShowNameTestPawn();
 
 protected:
 	// Called when the game starts or when spawned
