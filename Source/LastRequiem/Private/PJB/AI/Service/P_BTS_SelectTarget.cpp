@@ -82,16 +82,10 @@ void UP_BTS_SelectTarget::FindObstacle ( AP_AIControllerEnemyBase* AIC , APawn* 
 	for (AActor* Actor : PerceivedActors)
 	{
 		if (!IsValid ( Actor )) continue;
-		UE_LOG(LogTemp, Log, TEXT(" - Seeing: %s"), *Actor->GetName());
 
 		if (!HasGameplayTag ( Actor , ObstacleTag )) continue;
 
-		UE_LOG ( LogTemp , Log , TEXT ( "   -> [MATCH] Obstacle Tag Found: %s" ) , *Actor->GetName () );
-
 		float DistSq = FVector::DistSquared ( OwnLocation , Actor->GetActorLocation () );
-		
-		UE_LOG ( LogTemp , Log , TEXT ( "      DistSq: %f / Limit: %f" ) , DistSq , ClosestDistSq );
-
 		if (DistSq < ClosestDistSq)
 		{
 			ClosestDistSq = DistSq;
