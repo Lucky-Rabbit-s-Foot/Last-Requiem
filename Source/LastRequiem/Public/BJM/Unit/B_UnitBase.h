@@ -16,7 +16,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams ( FOnUnitSpeak , AActor* , InSpeake
 
 class UB_UnitStatusComponent;
 class UIndicatorSpriteComponent;
-
+class UAudioComponent;
 
 UCLASS()
 class LASTREQUIEM_API AB_UnitBase : public ACharacter, public IGameplayTagAssetInterface
@@ -241,5 +241,61 @@ public:
 	void PlayUnitVoice ( USoundBase* InVoiceSound );
 
 	void StopUnitVoice ();
+
+protected:
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Unit|Sound Data" )
+	TMap<EUnitBehaviorState , FUnitVoiceProfile> UnitVoiceData;
+
+public:
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Sound Command" )
+	USoundBase* Cmd_MoveSound;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Sound Command" )
+	USoundBase* Cmd_StopSound;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Sound Command" )
+	USoundBase* Cmd_AttackSound;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Sound Command" )
+	USoundBase* Cmd_RetreatSound;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Sound Command" )
+	USoundBase* Cmd_HoldSound;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Sound Command" )
+	USoundBase* Cmd_DisobeySound;
+
+public:
+	UFUNCTION ( BlueprintCallable , Category = "Unit|Sound" )
+	void PlayVoiceForEvent ( EUnitVoiceEvent InEvent );
+
+protected:
+	FTimerHandle TimerHandle_CombatVoiceCooldown;
+
+	bool bCanPlayCombatVoice = true;
+
+	void ResetCombatVoiceCooldown ();
+
+protected:
+	void PlayCommandSound ( USoundBase* InSound );
+
+public:
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Sound Setting" )
+	USoundAttenuation* UnitVoiceAttenuation;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Sound Setting" )
+	USoundConcurrency* UnitVoiceConcurrency;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Sound Setting" )
+	USoundClass* UnitSoundClass;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Sound Setting" )
+	USoundClass* UnitCommandSoundClass;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Sound" )
+	USoundBase* WeaponFireSound;
+
+	UFUNCTION ( BlueprintCallable )
+	void PlayWeaponFireSound ();
 
 };

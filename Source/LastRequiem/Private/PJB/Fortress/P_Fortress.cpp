@@ -9,6 +9,12 @@ AP_Fortress::AP_Fortress()
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent> ( TEXT ( "Mesh" ) );
 	SetRootComponent ( Mesh );
 
+	GeometryComp = CreateDefaultSubobject<UGeometryCollectionComponent> ( TEXT ( "GeometryComp" ) );
+	GeometryComp->SetupAttachment ( Mesh );
+
+	GeometryComp->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
+	GeometryComp->SetSimulatePhysics ( false );
+	GeometryComp->SetVisibility ( false );
 }
 
 void AP_Fortress::GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const
@@ -52,7 +58,36 @@ void AP_Fortress::OnTakeDamage ( AActor* DamagedActor , float Damage , const UDa
 
 void AP_Fortress::OnBroken ()
 {
+	if (bIsBroken) return;
 	bIsBroken = true;
+
+	GameplayTags.Reset ();
+
+	if (Mesh)
+	{
+		Mesh->SetVisibility ( false );
+	}
+
+	if (GeometryComp)
+	{
+		GeometryComp->SetVisibility ( true );
+		GeometryComp->SetCollisionEnabled ( ECollisionEnabled::QueryAndPhysics );
+		GeometryComp->SetCollisionProfileName ( FName ( "Destructible" ) );
+		GeometryComp->SetSimulatePhysics ( true );
+	}
+
+	if (MasterFieldClass)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		GetWorld ()->SpawnActor<AActor> (
+			MasterFieldClass ,
+			GetActorLocation () ,
+			GetActorRotation () ,
+			SpawnParams
+		);
+	}
+
 	OnFortressBrokenDelegate.Broadcast ( this );
-	Destroy ();
+	SetLifeSpan ( 3.0f );
 }

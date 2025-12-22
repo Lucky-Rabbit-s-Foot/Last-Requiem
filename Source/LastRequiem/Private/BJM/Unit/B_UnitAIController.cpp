@@ -133,10 +133,10 @@ void AB_UnitAIController::CheckNearbyEnemies ()
 			BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
 			ClearFocus ( EAIFocusPriority::Gameplay );
 
-			if (AB_UnitBase* MyUnit = Cast<AB_UnitBase> ( MyPawn ))
-			{
-				MyUnit->SetCombatState_Unit ( false );
-			}
+			//if (AB_UnitBase* MyUnit = Cast<AB_UnitBase> ( MyPawn ))
+			//{
+			//	MyUnit->SetCombatState_Unit ( false );
+			//}
 
 			UE_LOG ( LogTemp , Warning , TEXT ( "타겟이 너무 멀어짐 -> 추격 포기" ) );
 		}
@@ -220,6 +220,11 @@ void AB_UnitAIController::CheckNearbyEnemies ()
 
 		if (MyUnitBase)
 		{
+			if (MyUnitBase->StatusComponent && !MyUnitBase->StatusComponent->bIsInCombat)
+			{
+				MyUnitBase->PlayVoiceForEvent ( EUnitVoiceEvent::SpotEnemy );
+			}
+
 			MyUnitBase->SetCombatState_Unit ( true );
 
 			if (MyUnitBase->StatusComponent)
@@ -251,6 +256,13 @@ void AB_UnitAIController::CheckNearbyEnemies ()
 			UE_LOG ( LogTemp , Warning , TEXT ( "적(%s) 발견! 공격 개시" ) , *ClosestTarget->GetName () );
 		}
 	}
+	else
+	{
+		if (MyUnitBase)
+		{
+			MyUnitBase->SetCombatState_Unit ( false );
+		}
+	}
 }
 
 void AB_UnitAIController::OnTargetDetected(AActor* InActor, FAIStimulus InStimulus)
@@ -279,6 +291,17 @@ void AB_UnitAIController::OnTargetDetected(AActor* InActor, FAIStimulus InStimul
 			{
 				return;
 			}
+
+			if (AB_UnitBase* MyUnit = Cast<AB_UnitBase> ( GetPawn () ))
+			{
+				if (!MyUnit->StatusComponent->bIsInCombat)
+				{
+					MyUnit->PlayVoiceForEvent ( EUnitVoiceEvent::SpotEnemy );
+				}
+
+				MyUnit->SetCombatState_Unit ( true );
+			}
+
 		}
 		else
 		{

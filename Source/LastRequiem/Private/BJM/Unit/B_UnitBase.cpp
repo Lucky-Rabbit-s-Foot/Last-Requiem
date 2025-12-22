@@ -19,9 +19,11 @@
 #include "GameplayTagsManager.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SpotLightComponent.h"
+#include "Components/AudioComponent.h"  
 #include "Engine/OverlapResult.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
+#include "Sound/SoundAttenuation.h"
 
 // Sets default values
 AB_UnitBase::AB_UnitBase()
@@ -265,7 +267,12 @@ void AB_UnitBase::UnitMentalCheck_Move(float InX, float InY)
 	}
 	if (bCanMove)
 	{
+		PlayCommandSound(Cmd_MoveSound);
 		ProcessMoveCommand ( InX , InY );
+	}
+	else
+	{
+		PlayCommandSound(Cmd_DisobeySound);
 	}
 
 }
@@ -407,6 +414,8 @@ void AB_UnitBase::CommandMoveToLocation ( FVector TargetLocation )
 
 void AB_UnitBase::CommandAttackMove ( FVector TargetLocation )
 {
+	PlayCommandSound(Cmd_AttackSound);
+
 	AAIController* AIController = Cast<AAIController> ( GetController () );
 	if (AIController && AIController->GetBlackboardComponent ())
 	{
@@ -513,6 +522,7 @@ void AB_UnitBase::OnAttackButtonClicked_Unit ()
 
 void AB_UnitBase::OnStopButtonClicked_Unit ()
 {
+	PlayCommandSound(Cmd_StopSound);
 	bIsAttackMode = false;
 	UE_LOG ( LogTemp , Warning , TEXT ( "스땁" ));
 	CommandStop ();
@@ -520,6 +530,7 @@ void AB_UnitBase::OnStopButtonClicked_Unit ()
 
 void AB_UnitBase::OnHoldButtonClicked_Unit ()
 {
+	PlayCommandSound(Cmd_HoldSound);
 	bIsAttackMode = false;
 	UE_LOG ( LogTemp , Warning , TEXT ( "홀드" ));
 	CommandHold ();
@@ -527,6 +538,7 @@ void AB_UnitBase::OnHoldButtonClicked_Unit ()
 
 void AB_UnitBase::OnRetreatButtonClicked_Unit ()
 {
+	PlayCommandSound(Cmd_RetreatSound);
 	bIsAttackMode = false;
 	UE_LOG ( LogTemp , Warning , TEXT ( "후토ㅓㅣ" ));
 	CommandRetreat ();
@@ -538,6 +550,7 @@ void AB_UnitBase::ReceiveSupport_HP ( float InValue )
 
 	float RecoverHPAmount = InValue * HPRecoveryRatio;
 	StatusComponent->RecoverHP ( RecoverHPAmount );
+	PlayVoiceForEvent(EUnitVoiceEvent::Recovery);
 }
 
 void AB_UnitBase::ReceiveSupport_Sanity ( float InValue )
@@ -546,6 +559,7 @@ void AB_UnitBase::ReceiveSupport_Sanity ( float InValue )
 	if (!StatusComponent || !bIsAlive) return;
 	float RecoverSanityAmount = InValue * SanityRecoveryRatio;
 	StatusComponent->RecoverSanity ( RecoverSanityAmount );
+	PlayVoiceForEvent(EUnitVoiceEvent::Recovery);
 }
 
 float AB_UnitBase::TakeDamage ( float DamageAmount , FDamageEvent const& DamageEvent , AController* EventInstigator , AActor* DamageCauser )
@@ -563,50 +577,28 @@ float AB_UnitBase::TakeDamage ( float DamageAmount , FDamageEvent const& DamageE
 
 void AB_UnitBase::UnitAttack(AActor* TargetActor)
 {
-	//if (TargetActor == nullptr || !bIsAlive) return;
-
-	//if (StatusComponent)
-	//{
-	//	if (StatusComponent->CurrentState == EUnitBehaviorState::Panic)
-	//	{
-	//		return;
-	//	}
-	//}
-
-
-	//FVector LookDir = TargetActor->GetActorLocation () - GetActorLocation ();
-	//LookDir.Z = 0.0f;
-	//FRotator TargetRot = FRotationMatrix::MakeFromX ( LookDir ).Rotator ();
-	//SetActorRotation ( TargetRot );
-
-	//UGameplayStatics::ApplyDamage (
-	//	TargetActor,
-	//	AttackDamage,    
-	//	GetController(),
-	//	this,
-	//	UDamageType::StaticClass () // 데미지 유형
-	//);
-
-	//UE_LOG ( LogTemp , Warning , TEXT ( "% s 공격!" ) , *TargetActor->GetName () );
-
-
-	//FVector MuzzleLoc = GetActorLocation ();
-	//if (GetMesh ()->DoesSocketExist ( MuzzleSocketName ))
-	//{
-	//	MuzzleLoc = GetMesh ()->GetSocketLocation ( MuzzleSocketName );
-	//}
-	//DrawDebugLine ( GetWorld () , MuzzleLoc , TargetActor->GetActorLocation () , FColor::Red , false , 0.2f , 0 , 1.0f );
-
-	//UAISense_Damage::ReportDamageEvent (
-	//	GetWorld () ,
-	//	TargetActor ,                     // 맞은 놈 (적 AI)
-	//	this ,                            // 때린 놈 (플레이어)
-	//	10.0f ,                           // 데미지 양
-	//	this->GetActorLocation () ,       // 때린 위치
-	//	TargetActor->GetActorLocation ()  // 맞은 위치
-	//);
 
 	if (!TargetActor || !bIsAlive) return;
+
+	IGameplayTagAssetInterface* TagInterface = Cast<IGameplayTagAssetInterface> ( TargetActor );
+	if (TagInterface)
+	{
+		FGameplayTag EnemyTag = FGameplayTag::RequestGameplayTag ( FName ( "Enemy" ) );
+		FGameplayTagContainer TargetTags;
+		TagInterface->GetOwnedGameplayTags ( TargetTags );
+
+		if (!TargetTags.HasTag ( EnemyTag ))
+		{
+			CurrentAttackTarget = nullptr;
+
+			AAIController* AIC = Cast<AAIController> ( GetController () );
+			if (AIC && AIC->GetBlackboardComponent ())
+			{
+				AIC->GetBlackboardComponent ()->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
+			}
+			return;
+		}
+	}
 
 	SetCombatState_Unit ( true );
 
@@ -620,10 +612,12 @@ void AB_UnitBase::UnitAttack(AActor* TargetActor)
 	if (AnimInstance && AttackMontage)
 	{
 		AnimInstance->Montage_Play ( AttackMontage );
+		PlayVoiceForEvent(EUnitVoiceEvent::Combat);
 	}
 	else
 	{
 		OnAttackHit_Unit ();
+		PlayVoiceForEvent(EUnitVoiceEvent::Combat);
 	}
 }
 
@@ -715,6 +709,8 @@ void AB_UnitBase::OnDie_Unit ()
 	{
 		return;
 	}
+
+	PlayVoiceForEvent(EUnitVoiceEvent::Death);
 	bIsAlive = false;
 
 	// 우빈님 추가
@@ -839,7 +835,30 @@ void AB_UnitBase::PlayUnitVoice ( USoundBase* InVoiceSound )
 {
 	if (!bIsAlive || InVoiceSound == nullptr) return;
 
-	UGameplayStatics::SpawnSoundAttached ( InVoiceSound , GetMesh () , FName ( "HeadSocket" ) );
+	UAudioComponent* AudioComp = UGameplayStatics::SpawnSoundAttached(
+		InVoiceSound,                        // 소리 파일
+		GetMesh(),                           // 붙일 곳
+		FName("HeadSocket"),                 // 소켓 이름
+		FVector::ZeroVector,                 // 위치 오프셋
+		FRotator::ZeroRotator,               // 회전값
+		EAttachLocation::KeepRelativeOffset, // 붙이기 설정
+		false,                               // 액터 파괴 시 멈춤 여부
+		1.0f,                                // 볼륨 Multiplier
+		1.0f,                                // 피치 Multiplier
+		0.0f,                                // 시작 시간
+		UnitVoiceAttenuation,                // 감쇠 설정
+		UnitVoiceConcurrency				 // 동시성 설정
+	);
+
+	if (AudioComp)
+	{
+		if (UnitSoundClass)
+		{
+			AudioComp->SoundClassOverride = UnitSoundClass;
+		}
+
+		AudioComp->Play();
+	}
 
 	SetSpeakingState ( true );
 
@@ -863,4 +882,120 @@ void AB_UnitBase::PlayUnitVoice ( USoundBase* InVoiceSound )
 void AB_UnitBase::StopUnitVoice ()
 {
 	SetSpeakingState ( false );
+}
+
+void AB_UnitBase::PlayVoiceForEvent(EUnitVoiceEvent InEvent)
+{
+	if (!StatusComponent || !bIsAlive) return;
+
+	if (bIsSpeaking)
+	{
+		if (InEvent == EUnitVoiceEvent::Recovery || InEvent == EUnitVoiceEvent::Combat)
+		{
+			return;
+		}
+
+	}
+
+	EUnitBehaviorState CurrentMentalState = StatusComponent->CurrentState;
+	if (!UnitVoiceData.Contains(CurrentMentalState)) return;
+
+	FUnitVoiceProfile VoiceProfile = UnitVoiceData[CurrentMentalState];
+	USoundBase* SoundToPlay = nullptr;
+
+	switch (InEvent)
+	{
+	case EUnitVoiceEvent::SpotEnemy:
+		SoundToPlay = VoiceProfile.SpotEnemySound;
+
+		bCanPlayCombatVoice = false;
+		GetWorld()->GetTimerManager().SetTimer(
+			TimerHandle_CombatVoiceCooldown,
+			this,
+			&AB_UnitBase::ResetCombatVoiceCooldown,
+			5.0f, 
+			false
+		);
+		break;
+
+	case EUnitVoiceEvent::Combat:
+		if (bCanPlayCombatVoice)
+		{
+			SoundToPlay = VoiceProfile.AttackSound;
+
+			bCanPlayCombatVoice = false;
+			GetWorld()->GetTimerManager().SetTimer(
+				TimerHandle_CombatVoiceCooldown,
+				this,
+				&AB_UnitBase::ResetCombatVoiceCooldown,
+				7.0f,
+				false
+			);
+		}
+		break;
+
+	case EUnitVoiceEvent::Recovery:
+		SoundToPlay = VoiceProfile.RecoverySound;
+		break;
+
+	case EUnitVoiceEvent::Death:
+		SoundToPlay = VoiceProfile.DeathSound;
+		break;
+	}
+
+	if (SoundToPlay)
+	{
+		PlayUnitVoice(SoundToPlay);
+	}
+}
+
+void AB_UnitBase::ResetCombatVoiceCooldown()
+{
+	bCanPlayCombatVoice = true;
+}
+
+void AB_UnitBase::PlayCommandSound(USoundBase* InSound)
+{
+	if (!InSound || !bIsAlive) return;
+
+	UAudioComponent* AudioComp = UGameplayStatics::SpawnSound2D (
+		GetWorld () ,
+		InSound ,
+		1.0f ,  // Volume
+		1.0f ,  // Pitch
+		0.0f ,  // StartTime
+		UnitVoiceConcurrency
+	);
+
+
+	if (AudioComp)
+	{
+		if (UnitCommandSoundClass)
+		{
+			AudioComp->SoundClassOverride = UnitCommandSoundClass;
+		}
+
+		// 3. 재생!
+		AudioComp->Play();
+	}
+}
+
+void AB_UnitBase::PlayWeaponFireSound ()
+{
+	if (!WeaponFireSound) return;
+
+	UGameplayStatics::SpawnSoundAttached (
+		WeaponFireSound ,
+		GetMesh () ,
+		FName ( "Muzzle" ) ,
+		FVector::ZeroVector ,
+		FRotator::ZeroRotator ,
+		EAttachLocation::KeepRelativeOffset ,
+		true , // bStopWhenAttachedToDestroyed
+		1.0f , // Volume
+		1.0f , // Pitch
+		0.0f , // StartTime
+		nullptr // Attenuation
+	);
+
 }

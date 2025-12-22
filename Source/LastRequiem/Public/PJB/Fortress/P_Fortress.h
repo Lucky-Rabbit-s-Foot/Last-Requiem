@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "GameplayTagContainer.h"
 #include "GameplayTagAssetInterface.h"
+#include "GeometryCollection/GeometryCollectionComponent.h"
 
 #include "P_Fortress.generated.h"
 
@@ -43,6 +44,11 @@ protected:
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Components" )
 	TObjectPtr<UStaticMeshComponent> Mesh = nullptr;
 	
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Components" )
+	TObjectPtr<UGeometryCollectionComponent> GeometryComp = nullptr;
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Config = "Data|Destruction" )
+	TSubclassOf<AActor> MasterFieldClass = nullptr;
+
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
 	FGameplayTagContainer GameplayTags;
 
