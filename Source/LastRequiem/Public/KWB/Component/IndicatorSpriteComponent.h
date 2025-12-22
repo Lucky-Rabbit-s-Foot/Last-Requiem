@@ -40,7 +40,7 @@ public:
 	virtual void PostLoad () override;
 
 #if WITH_EDITOR
-	virtual void PostEditChangeProperty ( FPropertyChangedEvent& PropertyChangedEvent ) override; // [ADDED]
+	virtual void PostEditChangeProperty ( FPropertyChangedEvent& PropertyChangedEvent ) override;
 #endif
 
 	// --- 각 액터에서 사용할 API ---
