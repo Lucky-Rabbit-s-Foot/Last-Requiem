@@ -538,6 +538,7 @@ void AB_UnitBase::ReceiveSupport_HP ( float InValue )
 
 	float RecoverHPAmount = InValue * HPRecoveryRatio;
 	StatusComponent->RecoverHP ( RecoverHPAmount );
+	PlayVoiceForEvent(EUnitVoiceEvent::Recovery);
 }
 
 void AB_UnitBase::ReceiveSupport_Sanity ( float InValue )
@@ -546,6 +547,7 @@ void AB_UnitBase::ReceiveSupport_Sanity ( float InValue )
 	if (!StatusComponent || !bIsAlive) return;
 	float RecoverSanityAmount = InValue * SanityRecoveryRatio;
 	StatusComponent->RecoverSanity ( RecoverSanityAmount );
+	PlayVoiceForEvent(EUnitVoiceEvent::Recovery);
 }
 
 float AB_UnitBase::TakeDamage ( float DamageAmount , FDamageEvent const& DamageEvent , AController* EventInstigator , AActor* DamageCauser )
@@ -563,48 +565,6 @@ float AB_UnitBase::TakeDamage ( float DamageAmount , FDamageEvent const& DamageE
 
 void AB_UnitBase::UnitAttack(AActor* TargetActor)
 {
-	//if (TargetActor == nullptr || !bIsAlive) return;
-
-	//if (StatusComponent)
-	//{
-	//	if (StatusComponent->CurrentState == EUnitBehaviorState::Panic)
-	//	{
-	//		return;
-	//	}
-	//}
-
-
-	//FVector LookDir = TargetActor->GetActorLocation () - GetActorLocation ();
-	//LookDir.Z = 0.0f;
-	//FRotator TargetRot = FRotationMatrix::MakeFromX ( LookDir ).Rotator ();
-	//SetActorRotation ( TargetRot );
-
-	//UGameplayStatics::ApplyDamage (
-	//	TargetActor,
-	//	AttackDamage,    
-	//	GetController(),
-	//	this,
-	//	UDamageType::StaticClass () // 데미지 유형
-	//);
-
-	//UE_LOG ( LogTemp , Warning , TEXT ( "% s 공격!" ) , *TargetActor->GetName () );
-
-
-	//FVector MuzzleLoc = GetActorLocation ();
-	//if (GetMesh ()->DoesSocketExist ( MuzzleSocketName ))
-	//{
-	//	MuzzleLoc = GetMesh ()->GetSocketLocation ( MuzzleSocketName );
-	//}
-	//DrawDebugLine ( GetWorld () , MuzzleLoc , TargetActor->GetActorLocation () , FColor::Red , false , 0.2f , 0 , 1.0f );
-
-	//UAISense_Damage::ReportDamageEvent (
-	//	GetWorld () ,
-	//	TargetActor ,                     // 맞은 놈 (적 AI)
-	//	this ,                            // 때린 놈 (플레이어)
-	//	10.0f ,                           // 데미지 양
-	//	this->GetActorLocation () ,       // 때린 위치
-	//	TargetActor->GetActorLocation ()  // 맞은 위치
-	//);
 
 	if (!TargetActor || !bIsAlive) return;
 
@@ -620,10 +580,12 @@ void AB_UnitBase::UnitAttack(AActor* TargetActor)
 	if (AnimInstance && AttackMontage)
 	{
 		AnimInstance->Montage_Play ( AttackMontage );
+		PlayVoiceForEvent(EUnitVoiceEvent::Combat);
 	}
 	else
 	{
 		OnAttackHit_Unit ();
+		PlayVoiceForEvent(EUnitVoiceEvent::Combat);
 	}
 }
 
@@ -715,6 +677,8 @@ void AB_UnitBase::OnDie_Unit ()
 	{
 		return;
 	}
+
+	PlayVoiceForEvent(EUnitVoiceEvent::Death);
 	bIsAlive = false;
 
 	// 우빈님 추가
@@ -863,4 +827,74 @@ void AB_UnitBase::PlayUnitVoice ( USoundBase* InVoiceSound )
 void AB_UnitBase::StopUnitVoice ()
 {
 	SetSpeakingState ( false );
+}
+
+void AB_UnitBase::PlayVoiceForEvent(EUnitVoiceEvent InEvent)
+{
+	if (!StatusComponent || !bIsAlive) return;
+
+	if (bIsSpeaking)
+	{
+		if (InEvent == EUnitVoiceEvent::Recovery || InEvent == EUnitVoiceEvent::Combat)
+		{
+			return;
+		}
+
+	}
+
+	EUnitBehaviorState CurrentMentalState = StatusComponent->CurrentState;
+	if (!UnitVoiceData.Contains(CurrentMentalState)) return;
+
+	FUnitVoiceProfile VoiceProfile = UnitVoiceData[CurrentMentalState];
+	USoundBase* SoundToPlay = nullptr;
+
+	switch (InEvent)
+	{
+	case EUnitVoiceEvent::SpotEnemy:
+		SoundToPlay = VoiceProfile.SpotEnemySound;
+
+		bCanPlayCombatVoice = false;
+		GetWorld()->GetTimerManager().SetTimer(
+			TimerHandle_CombatVoiceCooldown,
+			this,
+			&AB_UnitBase::ResetCombatVoiceCooldown,
+			5.0f, 
+			false
+		);
+		break;
+
+	case EUnitVoiceEvent::Combat:
+		if (bCanPlayCombatVoice)
+		{
+			SoundToPlay = VoiceProfile.AttackSound;
+
+			bCanPlayCombatVoice = false;
+			GetWorld()->GetTimerManager().SetTimer(
+				TimerHandle_CombatVoiceCooldown,
+				this,
+				&AB_UnitBase::ResetCombatVoiceCooldown,
+				7.0f,
+				false
+			);
+		}
+		break;
+
+	case EUnitVoiceEvent::Recovery:
+		SoundToPlay = VoiceProfile.RecoverySound;
+		break;
+
+	case EUnitVoiceEvent::Death:
+		SoundToPlay = VoiceProfile.DeathSound;
+		break;
+	}
+
+	if (SoundToPlay)
+	{
+		PlayUnitVoice(SoundToPlay);
+	}
+}
+
+void AB_UnitBase::ResetCombatVoiceCooldown()
+{
+	bCanPlayCombatVoice = true;
 }
