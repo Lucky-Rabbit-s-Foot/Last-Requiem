@@ -18,7 +18,7 @@ class LASTREQUIEM_API AP_AIControllerEnemyBase : public ADetourCrowdAIController
 	GENERATED_BODY()
 	
 public:
-	AP_AIControllerEnemyBase ();
+	AP_AIControllerEnemyBase ( const FObjectInitializer& ObjectInitializer );
 
 	void SetCachedFortressByGameState ();
 	AActor* GetCachedFortress () { return CachedFortress.Get (); }
@@ -36,7 +36,7 @@ protected:
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|AI|Perception" )
 	TObjectPtr<UAIPerceptionComponent> AIPerceptionComp;
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|AI|Perception" )
-	TObjectPtr<UAISenseConfig_Sight> SightConfig;
+	TObjectPtr<UAISenseConfig_Sight> SightConfig_v2;
 	
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|AI" )
 	TObjectPtr<UBehaviorTree> BehaviorTree;

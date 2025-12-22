@@ -34,18 +34,48 @@ void UP_BTS_SelectTarget::TickNode ( UBehaviorTreeComponent& OwnerComp , uint8* 
 	AActor* FinalTarget = nullptr;
 	int32 FinalTypeInt = 0;
 
-	FindObstacle ( AIC, OwnedPawn , FinalTarget , FinalTypeInt );
-	FindUnits ( AIC , OwnedPawn , FinalTarget , FinalTypeInt );
-	FindFortress ( AIC , FinalTarget , FinalTypeInt );
+	AActor* CurrentTarget = Cast<AActor> ( BB->GetValueAsObject ( TargetActorKey.SelectedKeyName ) );
+	bool bShouldKeepCurrentTarget = false;
 
-	BB->SetValueAsObject ( TargetActorKey.SelectedKeyName , FinalTarget );
-	if (FinalTarget)
+	if (IsValid ( CurrentTarget ) && HasGameplayTag ( CurrentTarget , ObstacleTag ))
 	{
-		BB->SetValueAsInt ( TagKey.SelectedKeyName , FinalTypeInt );
+		if (AP_Obstacle* CurrentObstacle = Cast<AP_Obstacle> ( CurrentTarget ))
+		{
+			if (!CurrentObstacle->IsBroken ())
+			{
+				float DistSq = FVector::DistSquared ( OwnedPawn->GetActorLocation () , CurrentObstacle->GetActorLocation () );
+
+				float KeepRadius = ObstacleCheckRadius * 2.0f;
+				float KeepRangeSq = KeepRadius * KeepRadius;
+
+				if (DistSq <= KeepRangeSq)
+				{
+					FinalTarget = CurrentTarget;
+					FinalTypeInt = 2;
+					bShouldKeepCurrentTarget = true;
+				}
+			}
+		}
 	}
-	else
+
+	if (!bShouldKeepCurrentTarget)
 	{
-		BB->ClearValue ( TagKey.SelectedKeyName );
+		FindObstacle ( AIC , OwnedPawn , FinalTarget , FinalTypeInt );
+		FindUnits ( AIC , OwnedPawn , FinalTarget , FinalTypeInt );
+		FindFortress ( AIC , FinalTarget , FinalTypeInt );
+	}
+
+	if (BB->GetValueAsObject ( TargetActorKey.SelectedKeyName ) != FinalTarget)
+	{
+		BB->SetValueAsObject ( TargetActorKey.SelectedKeyName , FinalTarget );
+		if (FinalTarget)
+		{
+			BB->SetValueAsInt ( TagKey.SelectedKeyName , FinalTypeInt );
+		}
+		else
+		{
+			BB->ClearValue ( TagKey.SelectedKeyName );
+		}
 	}
 }
 
