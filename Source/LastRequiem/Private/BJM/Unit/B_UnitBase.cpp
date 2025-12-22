@@ -580,6 +580,26 @@ void AB_UnitBase::UnitAttack(AActor* TargetActor)
 
 	if (!TargetActor || !bIsAlive) return;
 
+	IGameplayTagAssetInterface* TagInterface = Cast<IGameplayTagAssetInterface> ( TargetActor );
+	if (TagInterface)
+	{
+		FGameplayTag EnemyTag = FGameplayTag::RequestGameplayTag ( FName ( "Enemy" ) );
+		FGameplayTagContainer TargetTags;
+		TagInterface->GetOwnedGameplayTags ( TargetTags );
+
+		if (!TargetTags.HasTag ( EnemyTag ))
+		{
+			CurrentAttackTarget = nullptr;
+
+			AAIController* AIC = Cast<AAIController> ( GetController () );
+			if (AIC && AIC->GetBlackboardComponent ())
+			{
+				AIC->GetBlackboardComponent ()->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
+			}
+			return;
+		}
+	}
+
 	SetCombatState_Unit ( true );
 
 	CurrentAttackTarget = TargetActor;
@@ -826,7 +846,8 @@ void AB_UnitBase::PlayUnitVoice ( USoundBase* InVoiceSound )
 		1.0f,                                // 볼륨 Multiplier
 		1.0f,                                // 피치 Multiplier
 		0.0f,                                // 시작 시간
-		UnitVoiceAttenuation                 // 감쇠 설정
+		UnitVoiceAttenuation,                // 감쇠 설정
+		UnitVoiceConcurrency				 // 동시성 설정
 	);
 
 	if (AudioComp)
@@ -937,11 +958,18 @@ void AB_UnitBase::PlayCommandSound(USoundBase* InSound)
 {
 	if (!InSound || !bIsAlive) return;
 
-	UAudioComponent* AudioComp = UGameplayStatics::SpawnSound2D(GetWorld(), InSound);
+	UAudioComponent* AudioComp = UGameplayStatics::SpawnSound2D (
+		GetWorld () ,
+		InSound ,
+		1.0f ,  // Volume
+		1.0f ,  // Pitch
+		0.0f ,  // StartTime
+		UnitVoiceConcurrency
+	);
+
 
 	if (AudioComp)
 	{
-		// 2. [핵심] 변수(SoundClassOverride)에 직접 대입!
 		if (UnitCommandSoundClass)
 		{
 			AudioComp->SoundClassOverride = UnitCommandSoundClass;
@@ -950,4 +978,24 @@ void AB_UnitBase::PlayCommandSound(USoundBase* InSound)
 		// 3. 재생!
 		AudioComp->Play();
 	}
+}
+
+void AB_UnitBase::PlayWeaponFireSound ()
+{
+	if (!WeaponFireSound) return;
+
+	UGameplayStatics::SpawnSoundAttached (
+		WeaponFireSound ,
+		GetMesh () ,
+		FName ( "Muzzle" ) ,
+		FVector::ZeroVector ,
+		FRotator::ZeroRotator ,
+		EAttachLocation::KeepRelativeOffset ,
+		true , // bStopWhenAttachedToDestroyed
+		1.0f , // Volume
+		1.0f , // Pitch
+		0.0f , // StartTime
+		nullptr // Attenuation
+	);
+
 }
