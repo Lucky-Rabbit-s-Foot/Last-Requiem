@@ -5,7 +5,7 @@
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "NavigationSystem.h"
-#include "PJB/Data/P_DataTableRows.h"
+#include "PJB/Data/P_SpawnDataRow.h"
 #include "PJB/Data/P_SpawnerDataAsset.h"
 #include "PJB/Enemy/P_EnemyBase.h"
 #include "PJB/System/P_GameStateBase.h"
@@ -37,27 +37,39 @@ void AP_EnemySpawner::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	StartSpawnEnemy ();
+	if (AP_GameStateBase* GS = GetWorld ()->GetGameState<AP_GameStateBase> ())
+	{
+		GS->OnWaveStart.AddDynamic ( this , &AP_EnemySpawner::StartSpawning );
+		GS->OnWaveEnd.AddDynamic ( this , &AP_EnemySpawner::StopSpawning );
+	}
 }
 
-void AP_EnemySpawner::StartSpawnEnemy ()
+void AP_EnemySpawner::StartSpawning ()
 {
-	if (!DA || DA->SpawnInterval <= 0.0f || !EnemyDataTable) return;
+	AP_GameStateBase* GS = GetWorld ()->GetGameState<AP_GameStateBase> ();
+	if (!GS) return;
+
+	EnemyDataTable = GS->CurrentWaveSpawnData;
+	if (!EnemyDataTable) return;
 
 	GetWorldTimerManager ().SetTimer (
 		SpawnTimerHandle ,
 		this ,
 		&AP_EnemySpawner::SpawnEnemy ,
-		DA->SpawnInterval ,
+		GS->CurrentSpawnInterval ,
 		true ,
-		DA->SpawnDelay
+		0.0f
 	);
 }
 
+void AP_EnemySpawner::StopSpawning ()
+{
+	GetWorldTimerManager ().ClearTimer ( SpawnTimerHandle );
+}
 
 void AP_EnemySpawner::SpawnEnemy ()
 {
-	if (!EnemyDataTable || !EnemyTagToSpawn.IsValid ()) return;
+	if (!EnemyDataTable) return;
 	
 	FP_EnemySpawnRow* SelectedRow = nullptr;
 
@@ -67,7 +79,7 @@ void AP_EnemySpawner::SpawnEnemy ()
 
 	for(FP_EnemySpawnRow* Row : AllRows)
 	{
-		if (!Row || !Row->EnemyTag.MatchesTag ( EnemyTagToSpawn )) continue;
+		if (!Row) continue;
 
 		SelectedRow = Row;
 		if (!SelectedRow || !SelectedRow->EnemyClass || !SelectedRow->EnemyDataAsset) return;

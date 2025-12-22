@@ -29,21 +29,21 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	void StartSpawnEnemy ();
+	UFUNCTION ()
+	void StartSpawning ();
+	UFUNCTION ()
+	void StopSpawning ();
 
 protected:
-	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
-	FGameplayTag EnemyTagToSpawn;
-
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Components" )
 	TObjectPtr<class USphereComponent> SpawnRadiusVisualizer;
 		
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
 	UDataTable* EnemyDataTable;
 
-	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
-	TObjectPtr<UP_SpawnerDataAsset> DA;
-
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UP_SpawnerDataAsset* DA;
+	
 	FTimerHandle SpawnTimerHandle;
 
 private:
