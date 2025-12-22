@@ -1,10 +1,12 @@
 ﻿#include "PJB/Spawner/P_EnemySpawner.h"
 
 #include "Components/ArrowComponent.h"
+#include "Components/SphereComponent.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "NavigationSystem.h"
 #include "PJB/Data/P_DataTableRows.h"
+#include "PJB/Data/P_SpawnerDataAsset.h"
 #include "PJB/Enemy/P_EnemyBase.h"
 #include "PJB/System/P_GameStateBase.h"
 #include "KHS/Drone/K_Drone.h"
@@ -14,6 +16,13 @@ AP_EnemySpawner::AP_EnemySpawner()
 	PrimaryActorTick.bCanEverTick = false;
 
 	InitArrowComponentForFindSpawner ();
+
+	SpawnRadiusVisualizer = CreateDefaultSubobject<USphereComponent> ( TEXT ( "SpawnRadiusVisualizer" ) );
+	SpawnRadiusVisualizer->SetupAttachment ( RootComponent );
+	
+	SpawnRadiusVisualizer->SetCollisionProfileName ( TEXT ( "NoCollision" ) );
+	SpawnRadiusVisualizer->SetHiddenInGame ( true );
+	SpawnRadiusVisualizer->ShapeColor = FColor::White;
 }
 
 void AP_EnemySpawner::InitArrowComponentForFindSpawner ()
@@ -33,15 +42,15 @@ void AP_EnemySpawner::BeginPlay()
 
 void AP_EnemySpawner::StartSpawnEnemy ()
 {
-	if (SpawnInterval <= 0.0f || !EnemyDataTable) return;
+	if (!DA || DA->SpawnInterval <= 0.0f || !EnemyDataTable) return;
 
 	GetWorldTimerManager ().SetTimer (
 		SpawnTimerHandle ,
 		this ,
 		&AP_EnemySpawner::SpawnEnemy ,
-		SpawnInterval ,
+		DA->SpawnInterval ,
 		true ,
-		SpawnDelay
+		DA->SpawnDelay
 	);
 }
 
@@ -69,7 +78,7 @@ void AP_EnemySpawner::SpawnEnemy ()
 		if (UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent ( GetWorld () ))
 		{
 			FNavLocation RandomNavLocation;
-			if (NavSys->GetRandomPointInNavigableRadius ( SpawnLocation , SpawnRadius , RandomNavLocation ))
+			if (NavSys->GetRandomPointInNavigableRadius ( SpawnLocation , DA->SpawnRadius , RandomNavLocation ))
 			{
 				SpawnLocation = RandomNavLocation.Location;
 				SpawnLocation.Z += 50.0f;
@@ -101,3 +110,15 @@ void AP_EnemySpawner::SpawnEnemy ()
 		}
 	}
 }
+
+#if WITH_EDITOR
+void AP_EnemySpawner::PostEditChangeProperty ( FPropertyChangedEvent& PropertyChangedEvent )
+{
+	Super::PostEditChangeProperty ( PropertyChangedEvent );
+
+	if (SpawnRadiusVisualizer && DA)
+	{
+		SpawnRadiusVisualizer->SetSphereRadius ( DA->SpawnRadius );
+	}
+}
+#endif
