@@ -45,7 +45,7 @@ void UP_BTS_SelectTarget::TickNode ( UBehaviorTreeComponent& OwnerComp , uint8* 
 			{
 				float DistSq = FVector::DistSquared ( OwnedPawn->GetActorLocation () , CurrentObstacle->GetActorLocation () );
 
-				float KeepRadius = ObstacleCheckRadius * 2.0f;
+				float KeepRadius = 1000.0f * 2.0f;
 				float KeepRangeSq = KeepRadius * KeepRadius;
 
 				if (DistSq <= KeepRangeSq)
@@ -106,7 +106,7 @@ void UP_BTS_SelectTarget::FindObstacle ( AP_AIControllerEnemyBase* AIC , APawn* 
 	TArray<AActor*> PerceivedActors;
 	PerceptionComp->GetKnownPerceivedActors ( nullptr , PerceivedActors );
 
-	float ClosestDistSq = ObstacleCheckRadius * ObstacleCheckRadius;
+	float ClosestDistSq = FLT_MAX;
 	FVector OwnLocation = OwnedPawn->GetActorLocation ();
 
 	for (AActor* Actor : PerceivedActors)
@@ -114,6 +114,12 @@ void UP_BTS_SelectTarget::FindObstacle ( AP_AIControllerEnemyBase* AIC , APawn* 
 		if (!IsValid ( Actor )) continue;
 
 		if (!HasGameplayTag ( Actor , ObstacleTag )) continue;
+
+		AP_Obstacle* ObstacleActor = Cast<AP_Obstacle> ( Actor );
+		if (ObstacleActor && ObstacleActor->IsBroken ())
+		{
+			continue;
+		}
 
 		float DistSq = FVector::DistSquared ( OwnLocation , Actor->GetActorLocation () );
 		if (DistSq < ClosestDistSq)

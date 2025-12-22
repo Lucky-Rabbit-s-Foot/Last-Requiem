@@ -3,6 +3,7 @@
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "PJB/Enemy/P_EnemyBase.h"
+#include "PJB/Obstacle/P_Obstacle.h"
 
 UP_BTS_CheckAttackRange::UP_BTS_CheckAttackRange ()
 {
@@ -21,9 +22,25 @@ void UP_BTS_CheckAttackRange::TickNode ( UBehaviorTreeComponent& OwnerComp , uin
 
 	AP_EnemyBase* EnemyPawn = Cast<AP_EnemyBase> ( OwnedPawn );
 	AActor* Target = Cast<AActor> ( BB->GetValueAsObject ( TargetActorKey.SelectedKeyName ) );
-	if (!EnemyPawn || !Target)
+	if (!EnemyPawn || !IsValid(Target))
 	{
 		BB->ClearValue ( CanAttackKey.SelectedKeyName );
+		return;
+	}
+
+	bool bIsTargetValid = true;
+	if (AP_Obstacle* ObstacleTarget = Cast<AP_Obstacle> ( Target ))
+	{
+		if (ObstacleTarget->IsBroken ())
+		{
+			bIsTargetValid = false;
+		}
+	}
+
+	if (!bIsTargetValid)
+	{
+		BB->ClearValue ( CanAttackKey.SelectedKeyName );
+		BB->ClearValue ( TargetActorKey.SelectedKeyName );
 		return;
 	}
 
