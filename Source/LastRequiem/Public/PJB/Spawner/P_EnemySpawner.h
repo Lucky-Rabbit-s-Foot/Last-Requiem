@@ -7,6 +7,8 @@
 
 #include "P_EnemySpawner.generated.h"
 
+class UP_SpawnerDataAsset;
+
 UCLASS()
 class LASTREQUIEM_API AP_EnemySpawner : public AActor
 {
@@ -20,6 +22,10 @@ public:
 	UFUNCTION ( BlueprintCallable , Category = "Factory" )
 	void SpawnEnemy ();
 
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty ( FPropertyChangedEvent& PropertyChangedEvent ) override;
+#endif
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -29,15 +35,14 @@ protected:
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
 	FGameplayTag EnemyTagToSpawn;
 
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Components" )
+	TObjectPtr<class USphereComponent> SpawnRadiusVisualizer;
+		
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
 	UDataTable* EnemyDataTable;
 
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
-	float SpawnDelay = 1.0f;
-	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
-	float SpawnInterval = 5.0f;
-	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
-	float SpawnRadius = 500.0f;
+	TObjectPtr<UP_SpawnerDataAsset> DA;
 
 	FTimerHandle SpawnTimerHandle;
 

@@ -3,6 +3,7 @@
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "PJB/Enemy/P_EnemyBase.h"
+#include "PJB/Obstacle/P_Obstacle.h"
 
 UP_BTS_CheckAttackRange::UP_BTS_CheckAttackRange ()
 {
@@ -20,47 +21,67 @@ void UP_BTS_CheckAttackRange::TickNode ( UBehaviorTreeComponent& OwnerComp , uin
 	if (!OwnedPawn || !BB) return;
 
 	AP_EnemyBase* EnemyPawn = Cast<AP_EnemyBase> ( OwnedPawn );
-	if (!EnemyPawn) return;
-
 	AActor* Target = Cast<AActor> ( BB->GetValueAsObject ( TargetActorKey.SelectedKeyName ) );
+	if (!EnemyPawn || !IsValid(Target))
+	{
+		BB->ClearValue ( CanAttackKey.SelectedKeyName );
+		return;
+	}
+
+	bool bIsTargetValid = true;
+	if (AP_Obstacle* ObstacleTarget = Cast<AP_Obstacle> ( Target ))
+	{
+		if (ObstacleTarget->IsBroken ())
+		{
+			bIsTargetValid = false;
+		}
+	}
+
+	if (!bIsTargetValid)
+	{
+		BB->ClearValue ( CanAttackKey.SelectedKeyName );
+		BB->ClearValue ( TargetActorKey.SelectedKeyName );
+		return;
+	}
 
 	bool bInRange = false;
-	if (Target)
-	{
-		float AttackRange = EnemyPawn->GetAttackRange ();
-		float AttackRangeSq = AttackRange * AttackRange;
-		
-		float DistSq = FLT_MAX;
-		FVector MyLocation = OwnedPawn->GetActorLocation ();
+	bool bWasAttacking = BB->GetValueAsBool ( CanAttackKey.SelectedKeyName );
 
-		UPrimitiveComponent* TargetRoot = Cast<UPrimitiveComponent> ( Target->GetRootComponent () );
-		if (TargetRoot)
+	float AttackRange = EnemyPawn->GetAttackRange ();
+	float CheckRange = bWasAttacking ? AttackRange + 50.0f : AttackRange;
+	float CheckRangeSq = CheckRange * CheckRange;
+
+	float DistSq = FLT_MAX;
+	FVector MyLocation = OwnedPawn->GetActorLocation ();
+
+	UPrimitiveComponent* TargetRoot = Cast<UPrimitiveComponent> ( Target->GetRootComponent () );
+	if (TargetRoot)
+	{
+		FVector ClosestPoint;
+		if (TargetRoot->GetClosestPointOnCollision ( MyLocation , ClosestPoint ) > 0.0f)
 		{
-			FVector ClosestPoint;
-			float DistToTarget = 0.0f;
-			if(TargetRoot->GetClosestPointOnCollision(MyLocation, ClosestPoint) > 0.0f )
-			{
-				DistSq = FVector::DistSquared ( MyLocation , ClosestPoint );
-			}
-			else
-			{
-				DistSq = OwnedPawn->GetSquaredDistanceTo ( Target );
-			}
+			DistSq = FVector::DistSquared ( MyLocation , ClosestPoint );
 		}
 		else
 		{
 			DistSq = OwnedPawn->GetSquaredDistanceTo ( Target );
 		}
-		float BufferSq = 5.0f * 5.0f;
-		bInRange = (DistSq <= (AttackRangeSq + BufferSq));
-	}
-
-	if (bInRange)
-	{
-		BB->SetValueAsBool ( CanAttackKey.SelectedKeyName , bInRange );
 	}
 	else
 	{
-		BB->ClearValue ( CanAttackKey.SelectedKeyName );
+		DistSq = OwnedPawn->GetSquaredDistanceTo ( Target );
+	}
+	bInRange = (DistSq <= CheckRangeSq);
+
+	if (bInRange != bWasAttacking)
+	{
+		if (bInRange)
+		{
+			BB->SetValueAsBool ( CanAttackKey.SelectedKeyName , true );
+		}
+		else
+		{
+			BB->ClearValue ( CanAttackKey.SelectedKeyName );
+		}
 	}
 }

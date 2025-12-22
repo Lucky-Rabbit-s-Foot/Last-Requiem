@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "GameFramework/Pawn.h"
 #include "GameplayTagContainer.h"
 #include "GameplayTagAssetInterface.h"
 #include "GeometryCollection/GeometryCollectionComponent.h"
@@ -11,7 +11,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnObstacleBrokenDelegate , AActor* , InActor );
 
 UCLASS()
-class LASTREQUIEM_API AP_Obstacle : public AActor, public IGameplayTagAssetInterface
+class LASTREQUIEM_API AP_Obstacle : public APawn, public IGameplayTagAssetInterface
 {
 	GENERATED_BODY()
 	
@@ -45,7 +45,6 @@ protected:
 	TObjectPtr<UStaticMeshComponent> Mesh = nullptr;
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Components" )
 	TObjectPtr<class UCapsuleComponent> CollisionComp = nullptr;
-	// 포인트
 	UPROPERTY( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Sprite")
 	TObjectPtr<class UIndicatorSpriteComponent> SpriteComp = nullptr;
 

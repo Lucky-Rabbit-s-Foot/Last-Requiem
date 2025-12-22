@@ -25,94 +25,57 @@ void UP_BTS_SelectTarget::TickNode ( UBehaviorTreeComponent& OwnerComp , uint8* 
 	Super::TickNode ( OwnerComp , NodeMemory , DeltaSeconds );
 
 	AP_AIControllerEnemyBase* AIC = Cast<AP_AIControllerEnemyBase> ( OwnerComp.GetAIOwner () );
-	APawn* OwnedPawn = AIC ? AIC->GetPawn () : nullptr;
+	if (!AIC) return;
+
+	APawn* OwnedPawn = AIC->GetPawn ();
 	UBlackboardComponent* BB = OwnerComp.GetBlackboardComponent ();
-	if (!AIC || !OwnedPawn || !BB) return;
+	if (!OwnedPawn || !BB) return;
 
 	AActor* FinalTarget = nullptr;
 	int32 FinalTypeInt = 0;
 
-	UAIPerceptionComponent* PerceptionComp = AIC->FindComponentByClass<UAIPerceptionComponent> ();
-	if (PerceptionComp)
+	AActor* CurrentTarget = Cast<AActor> ( BB->GetValueAsObject ( TargetActorKey.SelectedKeyName ) );
+	bool bShouldKeepCurrentTarget = false;
+
+	if (IsValid ( CurrentTarget ) && HasGameplayTag ( CurrentTarget , ObstacleTag ))
 	{
-		TArray<AActor*> PerceivedActors;
-		PerceptionComp->GetKnownPerceivedActors ( nullptr , PerceivedActors ); // 시각+청각 등 모든 감각
-
-		float ClosestDistSq = FLT_MAX;
-		FVector OwnLocation = OwnedPawn->GetActorLocation ();
-
-		for (AActor* Actor : PerceivedActors)
+		if (AP_Obstacle* CurrentObstacle = Cast<AP_Obstacle> ( CurrentTarget ))
 		{
-			if (!HasGameplayTag ( Actor , UnitTag )) continue;
-
-			float DistSq = FVector::DistSquared ( OwnLocation , Actor->GetActorLocation () );
-			if (DistSq < ClosestDistSq)
+			if (!CurrentObstacle->IsBroken ())
 			{
-				ClosestDistSq = DistSq;
-				FinalTarget = Actor;
-				FinalTypeInt = 1;
-			}
-		}
-	}
+				float DistSq = FVector::DistSquared ( OwnedPawn->GetActorLocation () , CurrentObstacle->GetActorLocation () );
 
-	if (!FinalTarget)
-	{
-		TArray<FOverlapResult> Overlaps;
-		FCollisionQueryParams Params;
-		Params.AddIgnoredActor ( OwnedPawn );
+				float KeepRadius = 1000.0f * 2.0f;
+				float KeepRangeSq = KeepRadius * KeepRadius;
 
-		bool bHit = GetWorld ()->OverlapMultiByObjectType (
-			Overlaps ,
-			OwnedPawn->GetActorLocation () ,
-			FQuat::Identity ,
-			FCollisionObjectQueryParams ( FCollisionObjectQueryParams::AllDynamicObjects ) ,
-			FCollisionShape::MakeSphere ( ObstacleCheckRadius ) ,
-			Params
-		);
-
-		if (bHit)
-		{
-			float MinDistSq = FLT_MAX;
-			FVector OwnLocation = OwnedPawn->GetActorLocation ();
-
-			for (const FOverlapResult& Result : Overlaps)
-			{
-				AActor* Actor = Result.GetActor ();
-				if (!IsValid ( Actor ) || !HasGameplayTag ( Actor , ObstacleTag )) continue;
-				
-				if (AP_Obstacle* Obstacle = Cast<AP_Obstacle> ( Actor ))
+				if (DistSq <= KeepRangeSq)
 				{
-					if (Obstacle->IsBroken ()) continue;
-				}
-
-				float DistSq = FVector::DistSquared ( OwnLocation , Actor->GetActorLocation () );
-				if(DistSq < MinDistSq)
-				{
-					MinDistSq = DistSq;
-					FinalTarget = Actor;
+					FinalTarget = CurrentTarget;
 					FinalTypeInt = 2;
+					bShouldKeepCurrentTarget = true;
 				}
 			}
 		}
 	}
 
-	if (!FinalTarget)
+	if (!bShouldKeepCurrentTarget)
 	{
-		FinalTarget = AIC->GetCachedFortress ();
+		FindObstacle ( AIC , OwnedPawn , FinalTarget , FinalTypeInt );
+		FindUnits ( AIC , OwnedPawn , FinalTarget , FinalTypeInt );
+		FindFortress ( AIC , FinalTarget , FinalTypeInt );
+	}
+
+	if (BB->GetValueAsObject ( TargetActorKey.SelectedKeyName ) != FinalTarget)
+	{
+		BB->SetValueAsObject ( TargetActorKey.SelectedKeyName , FinalTarget );
 		if (FinalTarget)
 		{
-			FinalTypeInt = 3;
+			BB->SetValueAsInt ( TagKey.SelectedKeyName , FinalTypeInt );
 		}
-	}
-
-	BB->SetValueAsObject ( TargetActorKey.SelectedKeyName , FinalTarget );
-	if (FinalTarget)
-	{
-		BB->SetValueAsInt ( TagKey.SelectedKeyName , FinalTypeInt );
-	}
-	else
-	{
-		BB->ClearValue ( TagKey.SelectedKeyName );
+		else
+		{
+			BB->ClearValue ( TagKey.SelectedKeyName );
+		}
 	}
 }
 
@@ -131,4 +94,77 @@ bool UP_BTS_SelectTarget::HasGameplayTag ( AActor* Actor , FGameplayTag Tag ) co
 	UAbilitySystemComponent* ASC = ASI->GetAbilitySystemComponent ();
 	if (!ASC) return false;
 	return ASC->HasMatchingGameplayTag ( Tag );
+}
+
+void UP_BTS_SelectTarget::FindObstacle ( AP_AIControllerEnemyBase* AIC , APawn* OwnedPawn , AActor*& FinalTarget , int32& FinalTypeInt )
+{
+	if (FinalTarget) return;
+
+	UAIPerceptionComponent* PerceptionComp = AIC->FindComponentByClass<UAIPerceptionComponent> ();
+	if (!PerceptionComp) return;
+
+	TArray<AActor*> PerceivedActors;
+	PerceptionComp->GetKnownPerceivedActors ( nullptr , PerceivedActors );
+
+	float ClosestDistSq = FLT_MAX;
+	FVector OwnLocation = OwnedPawn->GetActorLocation ();
+
+	for (AActor* Actor : PerceivedActors)
+	{
+		if (!IsValid ( Actor )) continue;
+
+		if (!HasGameplayTag ( Actor , ObstacleTag )) continue;
+
+		AP_Obstacle* ObstacleActor = Cast<AP_Obstacle> ( Actor );
+		if (ObstacleActor && ObstacleActor->IsBroken ())
+		{
+			continue;
+		}
+
+		float DistSq = FVector::DistSquared ( OwnLocation , Actor->GetActorLocation () );
+		if (DistSq < ClosestDistSq)
+		{
+			ClosestDistSq = DistSq;
+			FinalTarget = Actor;
+			FinalTypeInt = 2;
+		}
+	}
+}
+
+void UP_BTS_SelectTarget::FindUnits ( AP_AIControllerEnemyBase* AIC , APawn* OwnedPawn , AActor*& FinalTarget , int32& FinalTypeInt )
+{
+	if (FinalTarget) return;
+
+	UAIPerceptionComponent* PerceptionComp = AIC->FindComponentByClass<UAIPerceptionComponent> ();
+	if (!PerceptionComp) return;
+
+	TArray<AActor*> PerceivedActors;
+	PerceptionComp->GetKnownPerceivedActors ( nullptr , PerceivedActors ); // 시각+청각 등 모든 감각
+
+	float ClosestDistSq = FLT_MAX;
+	FVector OwnLocation = OwnedPawn->GetActorLocation ();
+
+	for (AActor* Actor : PerceivedActors)
+	{
+		if (!HasGameplayTag ( Actor , UnitTag )) continue;
+
+		float DistSq = FVector::DistSquared ( OwnLocation , Actor->GetActorLocation () );
+		if (DistSq < ClosestDistSq)
+		{
+			ClosestDistSq = DistSq;
+			FinalTarget = Actor;
+			FinalTypeInt = 1;
+		}
+	}
+}
+
+void UP_BTS_SelectTarget::FindFortress ( AP_AIControllerEnemyBase* AIC , AActor*& FinalTarget , int32& FinalTypeInt )
+{
+	if (FinalTarget) return;
+
+	FinalTarget = AIC->GetCachedFortress ();
+	if (FinalTarget)
+	{
+		FinalTypeInt = 3;
+	}
 }

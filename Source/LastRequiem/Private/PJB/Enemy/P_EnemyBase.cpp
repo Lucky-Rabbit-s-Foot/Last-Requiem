@@ -27,6 +27,7 @@ AP_EnemyBase::AP_EnemyBase()
 
 	InitRotationSetting ();
 
+	GetCharacterMovement ()->bUseRVOAvoidance = false;
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 }
 
