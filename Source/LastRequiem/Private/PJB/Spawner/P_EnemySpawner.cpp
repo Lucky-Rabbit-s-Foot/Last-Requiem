@@ -93,7 +93,7 @@ void AP_EnemySpawner::SpawnEnemy ()
 			if (NavSys->GetRandomPointInNavigableRadius ( SpawnLocation , DA->SpawnRadius , RandomNavLocation ))
 			{
 				SpawnLocation = RandomNavLocation.Location;
-				SpawnLocation.Z += 50.0f;
+				SpawnLocation.Z = GetActorLocation().Z + 50.0f;
 			}
 		}
 		SpawnTransform.SetLocation ( SpawnLocation );
