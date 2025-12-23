@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "KHS/Drone/K_Drone.h"
@@ -8,13 +8,13 @@
 #include "BJM/Unit/B_UnitMentalTypes.h"
 
 #include "KWB/Component/IndicatorSpriteComponent.h"
+#include "TimerManager.h" // (20251223) W : 드론 스킬 쿨타임 용도
 
 #include "Camera/CameraComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "KHS/Util/K_LoggingSystem.h"
-#include "KWB/Component/IndicatorSpriteComponent.h"
 #include "PJB/Enemy/P_EnemyBase.h"
 
 
@@ -72,6 +72,9 @@ void AK_Drone::BeginPlay()
 void AK_Drone::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	GetWorldTimerManager().ClearTimer(detectionTimerHandle);
+	// (20251223) W : 드론 스킬 타이머 정리
+	GetWorldTimerManager ().ClearTimer ( Skill01CooldownTimerHandle );
+	GetWorldTimerManager ().ClearTimer ( Skill02CooldownTimerHandle );
 	
 	Super::EndPlay(EndPlayReason);
 }
@@ -312,6 +315,44 @@ void AK_Drone::UpdateDetectedUnitSlot()
 	previouslyDetectedEnemys = currentDetectedEnemys;
 }
 
+// (20251223) W : 드론 스킬 용도 (Start)
+void AK_Drone::StartSkill01Cooldown ()
+{
+	if (Skill01CooldownDuration <= 0.0f) return;
+
+	GetWorldTimerManager ().SetTimer (
+		Skill01CooldownTimerHandle ,
+		this ,
+		&AK_Drone::OnSkill01CooldownFinished ,
+		Skill01CooldownDuration ,
+		false
+	);
+}
+
+void AK_Drone::StartSkill02Cooldown ()
+{
+	if (Skill02CooldownDuration <= 0.0f) return;
+
+	GetWorldTimerManager ().SetTimer (
+		Skill02CooldownTimerHandle ,
+		this ,
+		&AK_Drone::OnSkill02CooldownFinished ,
+		Skill02CooldownDuration ,
+		false
+	);
+}
+
+void AK_Drone::OnSkill01CooldownFinished ()
+{
+	// 만료되면 inactive가 되긴 하지만, 명시적 Clear로 관리 편하게
+	GetWorldTimerManager ().ClearTimer ( Skill01CooldownTimerHandle );
+}
+
+void AK_Drone::OnSkill02CooldownFinished ()
+{
+	GetWorldTimerManager ().ClearTimer ( Skill02CooldownTimerHandle );
+}
+// (20251223) W : 드론 스킬 용도 (End)
 
 void AK_Drone::Move(const FVector2D& inputValue)
 {
@@ -325,6 +366,12 @@ void AK_Drone::UpDown(float inputValue)
 
 void AK_Drone::UseSkill01()
 {
+	// (20251223) W : 드론 스킬 용도
+	if (!IsSkill01Ready ())
+	{
+		return;
+	}
+
 	//previouslyDetectedUnits을 순회하면서 유닛들에게 회복명령
 	for (AActor* actor : previouslyDetectedUnits)
 	{
@@ -336,10 +383,19 @@ void AK_Drone::UseSkill01()
 		
 		unit->ReceiveSupport_HP(droneData->RECOVER_HEALTH_AMOUNT);
 	}
+
+	// (20251223) W : 드론 스킬 용도
+	StartSkill01Cooldown ();
 }
 
 void AK_Drone::UseSkill02()
 {
+	// (20251223) W : 드론 스킬 용도
+	if (!IsSkill02Ready ())
+	{
+		return;
+	}
+
 	for (AActor* actor : previouslyDetectedUnits)
 	{
 		AB_UnitBase* unit = Cast<AB_UnitBase>(actor);
@@ -350,5 +406,56 @@ void AK_Drone::UseSkill02()
 		
 		unit->ReceiveSupport_Sanity(droneData->RECOVER_SANITY_AMOUNT);
 	}
+
+	// (20251223) W : 드론 스킬 용도
+	StartSkill02Cooldown ();
 }
+
+// (20251223) W : 드론 스킬 용도 (Start)
+bool AK_Drone::IsSkill01Ready () const
+{
+	const UWorld* World = GetWorld ();
+	if (!World) return true;
+
+	return !World->GetTimerManager ().IsTimerActive ( Skill01CooldownTimerHandle );
+}
+
+float AK_Drone::GetSkill01CooldownRemaining () const
+{
+	const UWorld* World = GetWorld ();
+	if (!World) return 0.0f;
+
+	const float Remaining = World->GetTimerManager ().GetTimerRemaining ( Skill01CooldownTimerHandle );
+	return FMath::Max ( 0.0f , Remaining );
+}
+
+float AK_Drone::GetSkill01CooldownRatioRemaining () const
+{
+	if (Skill01CooldownDuration <= 0.0f) return 0.0f;
+	return FMath::Clamp ( GetSkill01CooldownRemaining () / Skill01CooldownDuration , 0.0f , 1.0f );
+}
+
+bool AK_Drone::IsSkill02Ready () const
+{
+	const UWorld* World = GetWorld ();
+	if (!World) return true;
+
+	return !World->GetTimerManager ().IsTimerActive ( Skill02CooldownTimerHandle );
+}
+
+float AK_Drone::GetSkill02CooldownRemaining () const
+{
+	const UWorld* World = GetWorld ();
+	if (!World) return 0.0f;
+
+	const float Remaining = World->GetTimerManager ().GetTimerRemaining ( Skill02CooldownTimerHandle );
+	return FMath::Max ( 0.0f , Remaining );
+}
+
+float AK_Drone::GetSkill02CooldownRatioRemaining () const
+{
+	if (Skill02CooldownDuration <= 0.0f) return 0.0f;
+	return FMath::Clamp ( GetSkill02CooldownRemaining () / Skill02CooldownDuration , 0.0f , 1.0f );
+}
+// (20251223) W : 드론 스킬 용도 (End)
 
