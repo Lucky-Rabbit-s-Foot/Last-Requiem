@@ -68,6 +68,12 @@ protected:
 	TObjectPtr<class UP_CombatComponent> CombatComp = nullptr;
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Sprite" )
 	TObjectPtr<class UIndicatorSpriteComponent> SpriteComp = nullptr;
+	
+	UPROPERTY (VisibleAnywhere, BlueprintReadOnly, Category = "Data|Weapon" )
+	TObjectPtr<class USkeletalMeshComponent> WeaponMeshComp = nullptr;
+	UPROPERTY (VisibleAnywhere, BlueprintReadOnly, Category = "Data|Weapon")
+	TObjectPtr<class UNiagaraComponent> MuzzleFlashComp = nullptr;
+
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
 	FGameplayTagContainer GameplayTags;
 
