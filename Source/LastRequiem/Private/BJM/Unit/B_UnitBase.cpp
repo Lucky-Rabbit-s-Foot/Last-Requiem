@@ -16,6 +16,8 @@
 #include "Perception/AISense_Damage.h"
 #include "TimerManager.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "BehaviorTree/BehaviorTreeComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameplayTagsManager.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SpotLightComponent.h"
@@ -713,6 +715,13 @@ void AB_UnitBase::OnDie_Unit ()
 	PlayVoiceForEvent(EUnitVoiceEvent::Death);
 	bIsAlive = false;
 
+	if (UAnimInstance* AnimInstance = GetMesh ()->GetAnimInstance ())
+	{
+		AnimInstance->StopAllMontages ( 0.2f );
+	}
+
+	CurrentAttackTarget = nullptr;
+
 	// 우빈님 추가
 	if (IndicatorSprite)
 	{
@@ -771,22 +780,66 @@ void AB_UnitBase::OnDie_Unit ()
 	FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
 	GameplayTags.RemoveTag ( UnitTag );
 
-	// 이동 뺌
+	// --- [핵심 수정 부분] AI 및 이동 완전 정지 ---
 	if (AAIController* AIController = Cast<AAIController> ( GetController () ))
 	{
+		// 1. 적대 대상 정보 제거 (Behavior Tree가 반응하지 않도록)
+		if (UBlackboardComponent* BBComp = AIController->GetBlackboardComponent ())
+		{
+			BBComp->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
+			BBComp->SetValueAsVector ( TEXT ( "TargetLocation" ) , GetActorLocation () ); // 이동 목표를 현재 위치로
+		}
+
+		// 2. BrainComponent(BehaviorTree) 강제 정지
+		// UnPossess만으로는 트리가 즉시 멈추지 않을 수 있습니다.
+		if (UBehaviorTreeComponent* BTComp = Cast<UBehaviorTreeComponent> ( AIController->GetBrainComponent () ))
+		{
+			BTComp->StopTree ( EBTStopMode::Safe );
+		}
+
+		// 3. 컨트롤러의 이동 명령 정지
 		AIController->StopMovement ();
+
+		// 4. 빙의 해제
 		AIController->UnPossess ();
+
+		// 5. (선택사항) 죽은 유닛의 AI 컨트롤러는 필요 없으므로 파괴
+		AIController->Destroy ();
 	}
 
+	// --- [중요] 캐릭터 무브먼트 컴포넌트 비활성화 ---
+	// AI 컨트롤러가 없어져도 물리적 관성이나 남은 이동 명령으로 미끄러질 수 있습니다.
+	if (GetCharacterMovement ())
+	{
+		GetCharacterMovement ()->StopMovementImmediately ();
+		GetCharacterMovement ()->DisableMovement ();
+		GetCharacterMovement ()->SetComponentTickEnabled ( false ); // 틱 업데이트 중지
+	}
+
+	// 캡슐 콜리전 해제
 	GetCapsuleComponent ()->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
 	GetCapsuleComponent ()->SetCollisionResponseToAllChannels ( ECR_Ignore );
 
-	//GetMesh ()->SetCollisionProfileName ( TEXT ( "Ragdoll" ) );
-	//GetMesh ()->SetSimulatePhysics ( true );
+	// SetLifeSpan ( 5.0f ); // 시체 5초 뒤 삭제
 
-	//SetLifeSpan ( 5.0f );
+	UE_LOG ( LogTemp , Warning , TEXT ( "%s 사망 처리 완료" ) , *GetName () );
 
-	UE_LOG ( LogTemp , Warning , TEXT ( "%s 태그 제거" ) , *GetName () );
+	//// 이동 뺌
+	//if (AAIController* AIController = Cast<AAIController> ( GetController () ))
+	//{
+	//	AIController->StopMovement ();
+	//	AIController->UnPossess ();
+	//}
+
+	//GetCapsuleComponent ()->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
+	//GetCapsuleComponent ()->SetCollisionResponseToAllChannels ( ECR_Ignore );
+
+	////GetMesh ()->SetCollisionProfileName ( TEXT ( "Ragdoll" ) );
+	////GetMesh ()->SetSimulatePhysics ( true );
+
+	////SetLifeSpan ( 5.0f );
+
+	//UE_LOG ( LogTemp , Warning , TEXT ( "%s 태그 제거" ) , *GetName () );
 }
 
 void AB_UnitBase::OnHPChanged_Wrapper ( float InCurrentHP , float InMaxHP )
