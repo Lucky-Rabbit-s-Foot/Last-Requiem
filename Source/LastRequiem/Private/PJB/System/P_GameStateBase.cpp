@@ -8,5 +8,4 @@ AP_GameStateBase::AP_GameStateBase ()
 void AP_GameStateBase::AddScore ( int32 Amount )
 {
 	TotalScore += Amount;
-	OnChangeScore.Broadcast ( TotalScore );
 }
