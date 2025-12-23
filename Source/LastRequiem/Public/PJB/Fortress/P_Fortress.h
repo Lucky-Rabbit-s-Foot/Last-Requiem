@@ -57,6 +57,9 @@ protected:
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Health" )
 	float Health = 300.0f;
 
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|SpanTime" )
+	float LifeSpanTimeAfterBroken = 3.0f;
+
 private:
 	bool bIsBroken = false;
 };
