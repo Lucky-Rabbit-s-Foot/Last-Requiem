@@ -122,7 +122,8 @@ FReply UW_MapWidget::NativeOnMouseButtonDown ( const FGeometry& InGeometry , con
 		else
 		{
 			// 빈 곳 클릭 시 선택 해제
-			SelectedUnit = nullptr;
+			// SelectedUnit = nullptr;
+			ClearUnitSelection ();
 			KHS_INFO ( TEXT ( "No unit at clicked position" ) );
 		}
 
@@ -137,7 +138,7 @@ FReply UW_MapWidget::NativeOnMouseButtonDown ( const FGeometry& InGeometry , con
 			OnMapMoveCommand.Broadcast ( SelectedUnit.Get () , ClickedWorldLocation );
 			KHS_INFO ( TEXT ( "Move command: %s to %s" ) ,
 				*SelectedUnit->GetName () , *ClickedWorldLocation.ToString () );
-			ClearUnitSelection (); // 명령 내린 후에는 저장된 유닛 비우기
+			ClearUnitSelection (); // 명령 내린 후에는 저장된 유닛 비우기 => 이거 없으면 선택 유지 -> 추후 테스트 해보고 결정
 		}
 
 		return FReply::Handled ();
