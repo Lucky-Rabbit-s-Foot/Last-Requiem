@@ -8,6 +8,7 @@
 
 ALR_GameMode::ALR_GameMode ()
 {
+	PrimaryActorTick.bCanEverTick = true;
 }
 
 void ALR_GameMode::BeginPlay ()
@@ -32,7 +33,6 @@ void ALR_GameMode::Tick ( float DeltaSeconds )
 		if (GetWorldTimerManager ().IsTimerActive ( PhaseTimerHandle ))
 		{
 			GS->RemainingTime = GetWorldTimerManager ().GetTimerRemaining ( PhaseTimerHandle );
-			LOG_MESSAGE ( Log , TEXT ( "Remaining Time: %.2f" ) , GS->RemainingTime );
 		}
 	}
 }
