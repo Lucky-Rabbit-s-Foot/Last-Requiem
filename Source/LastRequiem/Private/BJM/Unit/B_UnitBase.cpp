@@ -26,6 +26,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
 #include "Sound/SoundAttenuation.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
 
 // Sets default values
 AB_UnitBase::AB_UnitBase()
@@ -36,6 +38,10 @@ AB_UnitBase::AB_UnitBase()
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent> ( TEXT ( "WeaponMesh" ) );
 	WeaponMesh->SetupAttachment ( GetMesh () , FName ( "WeaponSocket" ) );
 	WeaponMesh->SetCollisionProfileName ( TEXT ( "NoCollision" ) );
+
+	NiagaraComp = CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraEffect_V3"));
+	NiagaraComp->SetupAttachment(WeaponMesh, FName("Muzzle"));
+	NiagaraComp->bAutoActivate = false;
 
 	GunFlashlight = CreateDefaultSubobject<USpotLightComponent> ( TEXT ( "GunFlashlight" ) );
 	GunFlashlight->SetupAttachment ( WeaponMesh , FName ( "Flash" ) );
@@ -73,7 +79,6 @@ void AB_UnitBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	
 	//GetWorld ()->GetTimerManager ().SetTimer (
 	//	FindWidgetTimerHandle ,
 	//	this ,
@@ -553,6 +558,7 @@ void AB_UnitBase::ReceiveSupport_HP ( float InValue )
 	float RecoverHPAmount = InValue * HPRecoveryRatio;
 	StatusComponent->RecoverHP ( RecoverHPAmount );
 	PlayVoiceForEvent(EUnitVoiceEvent::Recovery);
+	PlayHealingHPEffect();
 }
 
 void AB_UnitBase::ReceiveSupport_Sanity ( float InValue )
@@ -562,6 +568,7 @@ void AB_UnitBase::ReceiveSupport_Sanity ( float InValue )
 	float RecoverSanityAmount = InValue * SanityRecoveryRatio;
 	StatusComponent->RecoverSanity ( RecoverSanityAmount );
 	PlayVoiceForEvent(EUnitVoiceEvent::Recovery);
+	PlayHealingSanityEffect();
 }
 
 float AB_UnitBase::TakeDamage ( float DamageAmount , FDamageEvent const& DamageEvent , AController* EventInstigator , AActor* DamageCauser )
@@ -615,6 +622,9 @@ void AB_UnitBase::UnitAttack(AActor* TargetActor)
 	{
 		AnimInstance->Montage_Play ( AttackMontage );
 		PlayVoiceForEvent(EUnitVoiceEvent::Combat);
+
+		PlayMuzzleEffect();
+
 	}
 	else
 	{
@@ -645,6 +655,9 @@ void AB_UnitBase::OnAttackHit_Unit ()
 	}
 
 	UE_LOG ( LogTemp , Warning , TEXT ( "타격" ) );
+	PlayMuzzleEffect();
+
+
 }
 
 void AB_UnitBase::SetCombatState_Unit ( bool bInCombat )
@@ -725,8 +738,8 @@ void AB_UnitBase::OnDie_Unit ()
 	// 우빈님 추가
 	if (IndicatorSprite)
 	{
-		IndicatorSprite->SetIndicatorState ( EIndicatorSpriteState::Dead );
-		IndicatorSprite->StopGlow ();
+		bIsSelectedByPlayer = false;  
+		RefreshIndicatorState();
 	}
 
 
@@ -780,35 +793,27 @@ void AB_UnitBase::OnDie_Unit ()
 	FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
 	GameplayTags.RemoveTag ( UnitTag );
 
-	// --- [핵심 수정 부분] AI 및 이동 완전 정지 ---
 	if (AAIController* AIController = Cast<AAIController> ( GetController () ))
 	{
-		// 1. 적대 대상 정보 제거 (Behavior Tree가 반응하지 않도록)
 		if (UBlackboardComponent* BBComp = AIController->GetBlackboardComponent ())
 		{
 			BBComp->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
 			BBComp->SetValueAsVector ( TEXT ( "TargetLocation" ) , GetActorLocation () ); // 이동 목표를 현재 위치로
 		}
 
-		// 2. BrainComponent(BehaviorTree) 강제 정지
-		// UnPossess만으로는 트리가 즉시 멈추지 않을 수 있습니다.
 		if (UBehaviorTreeComponent* BTComp = Cast<UBehaviorTreeComponent> ( AIController->GetBrainComponent () ))
 		{
 			BTComp->StopTree ( EBTStopMode::Safe );
 		}
 
-		// 3. 컨트롤러의 이동 명령 정지
 		AIController->StopMovement ();
 
-		// 4. 빙의 해제
 		AIController->UnPossess ();
 
-		// 5. (선택사항) 죽은 유닛의 AI 컨트롤러는 필요 없으므로 파괴
 		AIController->Destroy ();
 	}
 
-	// --- [중요] 캐릭터 무브먼트 컴포넌트 비활성화 ---
-	// AI 컨트롤러가 없어져도 물리적 관성이나 남은 이동 명령으로 미끄러질 수 있습니다.
+
 	if (GetCharacterMovement ())
 	{
 		GetCharacterMovement ()->StopMovementImmediately ();
@@ -854,19 +859,21 @@ void AB_UnitBase::OnSanityChanged_Wrapper ( float InCurrentSanity , float InMaxS
 
 void AB_UnitBase::OnCombatStateChanged_Wrapper ( bool bInCombat )
 {
-	if (IndicatorSprite)
-	{
-		IndicatorSprite->SetIndicatorState ( bInCombat ? EIndicatorSpriteState::Combat : EIndicatorSpriteState::Normal );
-	}
-
-	UnitDataUpdate ();
+	RefreshIndicatorState();
+	UnitDataUpdate();
 }
 
 void AB_UnitBase::SetSelectedSprite ( bool bIsSelected )
 {
-	if (IndicatorSprite == nullptr) return;
+	if (!bIsAlive)
+	{
+		bIsSelectedByPlayer = false;
+		RefreshIndicatorState();
+		return;
+	}
 
-	IndicatorSprite->SetIndicatorState ( EIndicatorSpriteState::Selected );
+	bIsSelectedByPlayer = bIsSelected;
+	RefreshIndicatorState(); 
 }
 
 
@@ -1033,6 +1040,109 @@ void AB_UnitBase::PlayCommandSound(USoundBase* InSound)
 	}
 }
 
+void AB_UnitBase::PlayMuzzleEffect()
+{
+	if (MuzzleFlashVFX == nullptr || WeaponMesh == nullptr) return;
+
+	if (NiagaraComp->GetAsset() != MuzzleFlashVFX)
+	{
+		NiagaraComp->SetAsset(MuzzleFlashVFX);
+	}
+
+
+	NiagaraComp->Activate(true);
+
+	UE_LOG(LogTemp, Warning, TEXT("이펙트 발동! 위치: %s"), *NiagaraComp->GetComponentLocation().ToString());
+
+	//UNiagaraFunctionLibrary::SpawnSystemAttached(
+	//	MuzzleFlashVFX,
+	//	WeaponMesh,
+	//	FName("Muzzle"),
+	//	FVector::ZeroVector,
+	//	FRotator::ZeroRotator,
+	//	EAttachLocation::KeepRelativeOffset,
+	//	true
+	//);
+}
+
+void AB_UnitBase::PlayFootstepSound()
+{
+	if (FootstepSound == nullptr) return;
+
+	// 1. 소리 재생 (내 발 밑에서)
+	UGameplayStatics::SpawnSoundAtLocation(
+		this,
+		FootstepSound,
+		GetActorLocation() - FVector(0, 0, 90.0f),
+		FRotator::ZeroRotator,
+		1.0f, 
+		1.0f, 
+		0.0f,
+		UnitVoiceAttenuation 
+	);
+}
+
+void AB_UnitBase::PlayHealingHPEffect()
+{
+	if (HealingHP == nullptr) return;
+
+	UNiagaraFunctionLibrary::SpawnSystemAttached(
+		HealingHP,                 
+		GetMesh(),                 
+		FName("root"),            
+		FVector::ZeroVector,        
+		FRotator::ZeroRotator,     
+		EAttachLocation::SnapToTarget, 
+		true                      
+	);
+}
+
+void AB_UnitBase::PlayHealingSanityEffect()
+{
+	if (HealingSanity == nullptr) return;
+
+	UNiagaraFunctionLibrary::SpawnSystemAttached(
+		HealingSanity,
+		GetMesh(),
+		FName("root"),
+		FVector::ZeroVector,
+		FRotator::ZeroRotator,
+		EAttachLocation::SnapToTarget,
+		true
+	);
+}
+
+void AB_UnitBase::RefreshIndicatorState()
+{
+	if (!IndicatorSprite)
+		return;
+
+	// 1) Dead가 최우선
+	if (!bIsAlive)
+	{
+		IndicatorSprite->SetIndicatorState(EIndicatorSpriteState::Dead);
+		return;
+	}
+
+	// 2) Combat (StatusComponent 기준)
+	const bool bInCombat = (StatusComponent && StatusComponent->bIsInCombat);
+	if (bInCombat)
+	{
+		IndicatorSprite->SetIndicatorState(EIndicatorSpriteState::Combat);
+		return;
+	}
+
+	// 3) Selected
+	if (bIsSelectedByPlayer)
+	{
+		IndicatorSprite->SetIndicatorState(EIndicatorSpriteState::Selected);
+		return;
+	}
+
+	// 4) Normal
+	IndicatorSprite->SetIndicatorState(EIndicatorSpriteState::Normal);
+}
+
 void AB_UnitBase::PlayWeaponFireSound ()
 {
 	if (!WeaponFireSound) return;
@@ -1051,4 +1161,6 @@ void AB_UnitBase::PlayWeaponFireSound ()
 		nullptr // Attenuation
 	);
 
+
 }
+
