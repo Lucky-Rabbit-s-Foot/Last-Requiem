@@ -213,21 +213,8 @@ void UIndicatorSpriteComponent::SetIndicatorState ( EIndicatorSpriteState NewSta
 	InitializeSpritesIfNeeded ();
 	UpdateSpriteForState ();
 
-	// 상태 기반 자동 Glow
-	switch (CurrentState)
-	{
-	case EIndicatorSpriteState::Selected:
-		StartGlow ( -1.0f );
-		break;
-
-	case EIndicatorSpriteState::Combat:
-		StartGlow ( -1.0f );
-		break;
-
-	default: // Normal, Dead
-		StopGlow ();
-		break;
-	}
+	// 상태 기반 자동 Glow On/Off
+	ApplyAutoGlowByState ();
 }
 
 void UIndicatorSpriteComponent::ApplyAutoGlowByState ()
