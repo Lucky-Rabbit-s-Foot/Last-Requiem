@@ -1,0 +1,49 @@
+﻿#pragma once
+
+#include "CoreMinimal.h"
+#include "KHS/UI/K_BaseUIWidget.h"
+
+#include "P_ScoreBoard.generated.h"
+
+class UP_ScoreBlock;
+class UTextBlock;
+class UP_ScoringDataAsset;
+
+UCLASS()
+class LASTREQUIEM_API UP_ScoreBoard : public UK_BaseUIWidget
+{
+	GENERATED_BODY()
+	
+public:
+	virtual void NativeConstruct () override;
+
+	UFUNCTION(BlueprintCallable, Category = "UI|Score" )
+	void UpdateAllScores ( FP_GameResultData& Count , FP_GameResultData& Modifier );
+
+	void SetScore ( UP_ScoreBlock* Title, FString TitleText , int32 PlayTimeSec , int32 Modifier);
+
+protected:
+	// Play Score
+	UPROPERTY ( meta = (BindWidget) )
+	UP_ScoreBlock* PlayTime;
+	UPROPERTY ( meta = (BindWidget) )
+	UP_ScoreBlock* HealthRecovery;
+	UPROPERTY ( meta = (BindWidget) )
+	UP_ScoreBlock* SanityRecovery;
+	UPROPERTY ( meta = (BindWidget) )
+	UP_ScoreBlock* DestroyObject;
+
+	// Kill Score
+	UPROPERTY ( meta = (BindWidget) )
+	UP_ScoreBlock* MeleeCount;
+	UPROPERTY ( meta = (BindWidget) )
+	UP_ScoreBlock* EnhancedMeleeCount;
+	UPROPERTY ( meta = (BindWidget) )
+	UP_ScoreBlock* RangeCount;
+	UPROPERTY ( meta = (BindWidget) )
+	UP_ScoreBlock* EnhancedRangeCount;
+
+	// Total Score
+	UPROPERTY ( meta = (BindWidget) )
+	UTextBlock* TotalScore;
+};

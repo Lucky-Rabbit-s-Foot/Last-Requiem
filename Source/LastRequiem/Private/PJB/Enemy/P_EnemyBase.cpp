@@ -170,11 +170,6 @@ void AP_EnemyBase::OnDie ()
 
 	OnDeactivate ();
 
-	if (AP_GameStateBase* GS = GetWorld () ? GetWorld ()->GetGameState<AP_GameStateBase> () : nullptr)
-	{
-		GS->AddScore ( Score );
-	}
-
 	OnEnemyDieDelegate.Broadcast ( this );
 }
 

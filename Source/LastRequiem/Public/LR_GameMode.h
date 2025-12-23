@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "PJB/Data/P_ScoringDataAsset.h"
 
 #include "LR_GameMode.generated.h"
 
@@ -29,7 +30,10 @@ private:
 	FTimerHandle PhaseTimerHandle;
 
 	UPROPERTY ( EditDefaultsOnly , Category = "Data|Wave" )
-	UDataTable* WaveDataTable;
+	TObjectPtr<UDataTable> WaveDataTable;
+
+	UPROPERTY ( EditDefaultsOnly , Category = "Data|Score" )
+	TObjectPtr<UP_ScoringDataAsset> ScoringDataAsset;
 
 	void StartPreparation ();
 	void StartWave ();
