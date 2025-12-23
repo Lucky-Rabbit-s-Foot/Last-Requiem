@@ -41,7 +41,7 @@ protected:
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
 	UDataTable* EnemyDataTable;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly , Category = "Data|SpawnSettings" )
 	UP_SpawnerDataAsset* DA;
 	
 	FTimerHandle SpawnTimerHandle;

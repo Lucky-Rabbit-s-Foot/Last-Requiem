@@ -93,31 +93,34 @@ void AP_EnemySpawner::SpawnEnemy ()
 			if (NavSys->GetRandomPointInNavigableRadius ( SpawnLocation , DA->SpawnRadius , RandomNavLocation ))
 			{
 				SpawnLocation = RandomNavLocation.Location;
-				SpawnLocation.Z = GetActorLocation().Z + 50.0f;
+				SpawnLocation.Z = GetActorLocation().Z + 100.0f;
 			}
 		}
 		SpawnTransform.SetLocation ( SpawnLocation );
 
-		AP_EnemyBase* SpawnedEnemy = GetWorld ()->SpawnActorDeferred<AP_EnemyBase> (
-			SelectedRow->EnemyClass ,
-			SpawnTransform ,
-			nullptr ,
-			nullptr ,
-			ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn
-		);
-		
-		if (SpawnedEnemy)
+		for (int i = 0; i < SelectedRow->SpawnCount; ++i)
 		{
-			SpawnedEnemy->InitEnemyData ( SelectedRow->EnemyDataAsset );
-			if (AK_Drone* Drone = Cast<AK_Drone> ( UGameplayStatics::GetPlayerPawn ( GetWorld () , 0 ) ) )
-			{
-				SpawnedEnemy->BindDrone ( Drone );
-			}
+			AP_EnemyBase* SpawnedEnemy = GetWorld ()->SpawnActorDeferred<AP_EnemyBase> (
+				SelectedRow->EnemyClass ,
+				SpawnTransform ,
+				nullptr ,
+				nullptr ,
+				ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn
+			);
 
-			UGameplayStatics::FinishSpawningActor ( SpawnedEnemy , SpawnTransform );
-			if (SpawnedEnemy->GetController () == nullptr)
+			if (SpawnedEnemy)
 			{
-				SpawnedEnemy->SpawnDefaultController ();
+				SpawnedEnemy->InitEnemyData ( SelectedRow->EnemyDataAsset );
+				if (AK_Drone* Drone = Cast<AK_Drone> ( UGameplayStatics::GetPlayerPawn ( GetWorld () , 0 ) ))
+				{
+					SpawnedEnemy->BindDrone ( Drone );
+				}
+
+				UGameplayStatics::FinishSpawningActor ( SpawnedEnemy , SpawnTransform );
+				if (SpawnedEnemy->GetController () == nullptr)
+				{
+					SpawnedEnemy->SpawnDefaultController ();
+				}
 			}
 		}
 	}
