@@ -5,7 +5,7 @@
 #include "GameplayTagContainer.h"
 #include "PJB/Data/P_EnemyDataAsset.h"
 
-#include "P_DataTableRows.generated.h"
+#include "P_SpawnDataRow.generated.h"
 
 USTRUCT ( BlueprintType )
 struct FP_EnemySpawnRow : public FTableRowBase
@@ -14,11 +14,11 @@ struct FP_EnemySpawnRow : public FTableRowBase
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FGameplayTag EnemyTag = FGameplayTag::EmptyTag;
-
+	TSubclassOf<APawn> EnemyClass = nullptr;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UP_EnemyDataAsset* EnemyDataAsset = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<APawn> EnemyClass = nullptr;
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite )
+	int32 SpawnCount = 1;
 };
