@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -57,6 +57,12 @@ private:
 	void BindSettingUIDelegates(class UK_SettingWidget* settingUI);
 	void UnbindSettingUIDelegates();
 	
+	// (20251224) W : Unit Orders(Keyboard)
+	void OnUnitOrderAttack ( const FInputActionValue& value );
+	void OnUnitOrderStop ( const FInputActionValue& value );
+	void OnUnitOrderHold ( const FInputActionValue& value );
+	void OnUnitOrderRetreat ( const FInputActionValue& value );
+
 	//Common
 	UFUNCTION() //UI 닫기 요청시 공통 델리게이트 핸들러 함수
 	void HandleUICloseRequest(class UK_BaseUIWidget* requestWidget);
@@ -144,5 +150,17 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Input")
 	TObjectPtr<class UInputAction> IA_Setting;
-	
+
+	// (20251224) W : 명령 버튼 키보드 입력 추가 용도
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Input")
+	TObjectPtr<class UInputAction> IA_OrderAttack;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Input")
+	TObjectPtr<class UInputAction> IA_OrderStop;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Input")
+	TObjectPtr<class UInputAction> IA_OrderHold;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Input")
+	TObjectPtr<class UInputAction> IA_OrderRetreat;
 };
