@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -31,6 +31,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "LR|Move", meta=(ClampMin="0.0", ToolTip = "Drone Flight Max Height"))
 	float DRONE_FLIGHT_MAX_HEIGHT = 2000.f;
 	
+	// (20251224) P : 드론 이동 (Start)
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "LR|Move" , meta = (ClampMin = "0.0" , ToolTip = "Drone Flight Min Height") )
+	float DRONE_FLIGHT_MIN_HEIGHT = 400.f;
+	// (20251224) P : 드론 이동 (End)
+
 	//DETECTION
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "LR|Detection", meta=(ClampMin="0.0", ToolTip = "Drone Detection Initial Capsule Radius"))
 	float DRONE_DETECTION_INITIAL_RADIUS = 10000.f;
