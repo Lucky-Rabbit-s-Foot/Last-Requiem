@@ -36,6 +36,9 @@ AP_EnemyBase::AP_EnemyBase()
 	MuzzleFlashComp->SetupAttachment ( WeaponMeshComp );
 	MuzzleFlashComp->bAutoActivate = false;
 
+	AuraEffect = CreateDefaultSubobject<UNiagaraComponent> ( TEXT ( "Aura Effect" ) );
+	AuraEffect->SetupAttachment ( GetMesh () );
+
 	InitRotationSetting ();
 
 	GetCharacterMovement ()->bUseRVOAvoidance = false;
@@ -95,7 +98,13 @@ void AP_EnemyBase::InitEnemyData(UP_EnemyDataAsset* InData)
 	{
 		GetMesh()->SetAnimInstanceClass ( InData->AnimInstanceClass );
 	}
-		
+	
+	if (InData->Aura)
+	{
+		AuraEffect->SetAsset ( InData->Aura );
+		AuraEffect->Activate ( true );
+	}
+
 	GetCharacterMovement ()->MaxWalkSpeed = InData->BaseSpeed;
 	BaseMoveSpeed = InData->BaseSpeed;
 	CombatMoveSpeed = InData->CombatSpeed;

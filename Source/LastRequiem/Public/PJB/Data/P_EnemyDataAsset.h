@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "NiagaraSystem.h"
 
 #include "P_EnemyDataAsset.generated.h"
 
@@ -15,6 +16,8 @@ public:
 	USkeletalMesh* SkeletalMesh;
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Visual" )
 	TSubclassOf<UAnimInstance> AnimInstanceClass;
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Visual" )
+	UNiagaraSystem* Aura;
 
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|ID" )
 	int32 EnemyID = 0;
