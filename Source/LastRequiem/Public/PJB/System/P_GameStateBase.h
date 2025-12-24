@@ -27,6 +27,10 @@ public:
 
 	UFUNCTION()
 	void CountEnemyKill ( int32 InEnemyID );
+	UFUNCTION ()
+	void CountRecoveryHealth ();
+	UFUNCTION ()
+	void CountRecoverySanity ();
 
 	FOnGameEventSignature OnGameStart;
 	FOnGameEventSignature OnWaveStart;

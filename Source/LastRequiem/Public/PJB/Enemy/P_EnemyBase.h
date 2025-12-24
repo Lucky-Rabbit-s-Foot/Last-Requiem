@@ -83,6 +83,9 @@ protected:
 	UPROPERTY (VisibleAnywhere, BlueprintReadOnly, Category = "Data|Weapon")
 	TObjectPtr<class UNiagaraComponent> MuzzleFlashComp = nullptr;
 
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|VFX" )
+	TObjectPtr<class UNiagaraComponent> AuraEffect = nullptr;
+
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
 	FGameplayTagContainer GameplayTags;
 
