@@ -55,7 +55,13 @@ void AK_Drone::BeginPlay()
 		animInst->Montage_JumpToSection(FName("Start"));
 	}
 	
-	
+	// (20251224) P : 드론 충돌 (Start)
+	if(UPrimitiveComponent* primComp = Cast<UPrimitiveComponent>(GetRootComponent()))
+	{
+		DefaultLinearDamping = primComp->GetLinearDamping ();
+	}
+	// (20251224) P : 드론 충돌 (End)
+
 	//Unit 최초 탐색 후
 	//타이머로 n초마다 UpdateDetectedUnitSlot 호출
 	InitializeDetectedUnitSlot();
@@ -87,6 +93,30 @@ void AK_Drone::Tick(float DeltaTime)
 	UpdateDroneMovement(DeltaTime);
 	UpdateDroneRotation(DeltaTime);
 }
+
+// (20251224) P : 드론 충돌 (Start)
+void AK_Drone::NotifyHit ( UPrimitiveComponent* MyComp , AActor* Other , UPrimitiveComponent* OtherComp , bool bSelfMoved , FVector HitLocation , FVector HitNormal , FVector NormalImpulse , const FHitResult& Hit )
+{
+	Super::NotifyHit ( MyComp , Other , OtherComp , bSelfMoved , HitLocation , HitNormal , NormalImpulse , Hit );
+
+	if (Other && Cast<ACharacter> ( Other ))
+	{
+		if(GetWorldTimerManager ().IsTimerActive ( DampingRestoreTimer ))
+		{
+			return;
+		}
+		MyComp->SetLinearDamping ( 10.0f );
+		GetWorldTimerManager ().SetTimer ( 
+			DampingRestoreTimer , 
+			FTimerDelegate::CreateLambda ( 
+				[ this , MyComp ]() { MyComp->SetLinearDamping ( DefaultLinearDamping ); } 
+			) ,
+			0.2f , 
+			false 
+		);
+	}
+}
+// (20251224) P : 드론 충돌 (End)
 
 void AK_Drone::InitializeDefaultComponents()
 {
