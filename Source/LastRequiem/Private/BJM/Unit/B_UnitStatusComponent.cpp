@@ -157,7 +157,7 @@ void UB_UnitStatusComponent::RecoverSanity ( float InAmount )
 
 }
 
-void UB_UnitStatusComponent::ResetCombatState()
+void UB_UnitStatusComponent::ResetCombatState() 
 {
 	SetCombatState ( false );
 	UE_LOG(LogTemp, Warning, TEXT("전투 모드 비활성화"));

@@ -62,4 +62,7 @@ protected:
 
 private:
 	bool bIsBroken = false;
+
+public:
+	float GetHealthPercent () const { return Health / MaxHealth; }
 };
