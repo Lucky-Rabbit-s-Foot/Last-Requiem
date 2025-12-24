@@ -55,7 +55,7 @@ void AP_EnemySpawner::StartSpawning ()
 	GetWorldTimerManager ().SetTimer (
 		SpawnTimerHandle ,
 		this ,
-		&AP_EnemySpawner::SpawnEnemy ,
+		&AP_EnemySpawner::SpawnEnemies ,
 		GS->CurrentSpawnInterval ,
 		true ,
 		0.0f
@@ -67,26 +67,19 @@ void AP_EnemySpawner::StopSpawning ()
 	GetWorldTimerManager ().ClearTimer ( SpawnTimerHandle );
 }
 
-void AP_EnemySpawner::SpawnEnemy ()
+void AP_EnemySpawner::SpawnEnemies ()
 {
 	if (!EnemyDataTable) return;
 	
-	FP_EnemySpawnRow* SelectedRow = nullptr;
-
 	static const FString ContextString ( TEXT ( "EnemySpawnContext" ) );
 	TArray<FP_EnemySpawnRow*> AllRows;
 	EnemyDataTable->GetAllRows<FP_EnemySpawnRow> ( ContextString , AllRows );
 
 	for(FP_EnemySpawnRow* Row : AllRows)
 	{
-		if (!Row) continue;
-
-		SelectedRow = Row;
-		if (!SelectedRow || !SelectedRow->EnemyClass || !SelectedRow->EnemyDataAsset) return;
+		if (!Row || !Row->EnemyClass || !Row->EnemyDataAsset) return;
 
 		FVector SpawnLocation = GetActorLocation ();
-		FTransform SpawnTransform = GetActorTransform ();
-
 		if (UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent ( GetWorld () ))
 		{
 			FNavLocation RandomNavLocation;
@@ -96,32 +89,37 @@ void AP_EnemySpawner::SpawnEnemy ()
 				SpawnLocation.Z = GetActorLocation().Z + 100.0f;
 			}
 		}
-		SpawnTransform.SetLocation ( SpawnLocation );
-
-		for (int i = 0; i < SelectedRow->SpawnCount; ++i)
+		
+		FTransform SpawnTransform ( GetActorRotation () , SpawnLocation );
+		for (int i = 0; i < Row->SpawnCount; ++i)
 		{
-			AP_EnemyBase* SpawnedEnemy = GetWorld ()->SpawnActorDeferred<AP_EnemyBase> (
-				SelectedRow->EnemyClass ,
-				SpawnTransform ,
-				nullptr ,
-				nullptr ,
-				ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn
-			);
+			SpawnEachEnemy ( Row , SpawnTransform );
+		}
+	}
+}
 
-			if (SpawnedEnemy)
-			{
-				SpawnedEnemy->InitEnemyData ( SelectedRow->EnemyDataAsset );
-				if (AK_Drone* Drone = Cast<AK_Drone> ( UGameplayStatics::GetPlayerPawn ( GetWorld () , 0 ) ))
-				{
-					SpawnedEnemy->BindDrone ( Drone );
-				}
+void AP_EnemySpawner::SpawnEachEnemy ( FP_EnemySpawnRow* SelectedRow , FTransform& SpawnTransform )
+{
+	AP_EnemyBase* SpawnedEnemy = GetWorld ()->SpawnActorDeferred<AP_EnemyBase> (
+		SelectedRow->EnemyClass ,
+		SpawnTransform ,
+		nullptr ,
+		nullptr ,
+		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn
+	);
 
-				UGameplayStatics::FinishSpawningActor ( SpawnedEnemy , SpawnTransform );
-				if (SpawnedEnemy->GetController () == nullptr)
-				{
-					SpawnedEnemy->SpawnDefaultController ();
-				}
-			}
+	if (SpawnedEnemy)
+	{
+		SpawnedEnemy->InitEnemyData ( SelectedRow->EnemyDataAsset );
+		if (AK_Drone* Drone = Cast<AK_Drone> ( UGameplayStatics::GetPlayerPawn ( GetWorld () , 0 ) ))
+		{
+			SpawnedEnemy->BindDrone ( Drone );
+		}
+
+		UGameplayStatics::FinishSpawningActor ( SpawnedEnemy , SpawnTransform );
+		if (SpawnedEnemy->GetController () == nullptr)
+		{
+			SpawnedEnemy->SpawnDefaultController ();
 		}
 	}
 }

@@ -4,6 +4,8 @@
 #include "BJM/Unit/B_UnitStatusComponent.h"
 #include "BJM/Unit/B_UnitBase.h"
 
+#include "PJB/System/P_GameStateBase.h"
+
 // Sets default values for this component's properties
 UB_UnitStatusComponent::UB_UnitStatusComponent()
 {
@@ -66,6 +68,16 @@ void UB_UnitStatusComponent::ReduceHP (float InDamage)
 void UB_UnitStatusComponent::ModifySanity (float InAmount)
 {
 	CurrentSanity = FMath::Clamp(CurrentSanity + InAmount, 0.0f, MaxSanity);
+
+	if (CurrentSanity + InAmount >= MaxSanity)
+	{
+		AP_GameStateBase* GS = GetWorld ()->GetGameState<AP_GameStateBase> ();
+		if (GS)
+		{
+			GS->CountRecoverySanity ();
+		}
+	}
+
 
 	if (OnSanityChanged.IsBound())
 	{
@@ -138,6 +150,15 @@ void UB_UnitStatusComponent::SetCombatState(bool bNewState)
 void UB_UnitStatusComponent::RecoverHP ( float InAmount )
 {
 	if (InAmount <= 0.0f) return;
+
+	if (CurrentHP + InAmount >= MaxHP)
+	{
+		AP_GameStateBase* GS = GetWorld ()->GetGameState<AP_GameStateBase> ();
+		if (GS)
+		{
+			GS->CountRecoveryHealth ();
+		}
+	}
 
 	CurrentHP = FMath::Clamp ( CurrentHP + InAmount , 0.0f , MaxHP );
 

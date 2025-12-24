@@ -117,11 +117,11 @@ void AB_UIAnnouncer::HandleCoreDamaged ( AP_Fortress* Fortress )
 		PlayVoice ( CoreHP_10 );
 		bPlayed10 = true;
 	}
-	else if( Ratio <= 0.0f && !bPlayed0 )
-	{
-		PlayVoice ( GameOver_CoreDestroyed );
-		bPlayed0 = true;
-	}
+	//else if( Ratio <= 0.0f && !bPlayed0 )
+	//{
+	//	PlayVoice ( GameOver_CoreDestroyed );
+	//	bPlayed0 = true;
+	//}
 }
 
 void AB_UIAnnouncer::HandleCoreBroken ( AP_Fortress* Fortress )
