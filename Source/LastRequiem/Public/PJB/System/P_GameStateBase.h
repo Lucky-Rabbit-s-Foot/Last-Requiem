@@ -25,6 +25,9 @@ class LASTREQUIEM_API AP_GameStateBase : public AGameStateBase
 public:
 	AP_GameStateBase ();
 
+	UFUNCTION()
+	void CountEnemyKill ( int32 InEnemyID );
+
 	FOnGameEventSignature OnGameStart;
 	FOnGameEventSignature OnWaveStart;
 	FOnGameEventSignature OnWaveEnd;
@@ -45,6 +48,10 @@ public:
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "GameFlow" )
 	float CurrentSpawnInterval = 15.0f;
 
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "GameFlow" )
+	float RealGameTimeSeconds = 0.0f;
+
+	void SetPlayTime ();
 	void RegisterFortress ( AActor* InFortress ) { Fortress = InFortress; }
 	AActor* GetFortress () const { return Fortress.Get (); }
 

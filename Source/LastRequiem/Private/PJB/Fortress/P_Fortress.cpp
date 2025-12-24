@@ -1,5 +1,6 @@
 ﻿#include "PJB/Fortress/P_Fortress.h"
 
+#include "LR_GameMode.h"
 #include "PJB/System/P_GameStateBase.h"
 
 AP_Fortress::AP_Fortress()
@@ -34,6 +35,11 @@ void AP_Fortress::BeginPlay()
 	Health = MaxHealth;
 	OnTakeAnyDamage.AddDynamic ( this , &AP_Fortress::OnTakeDamage );
 
+	if (ALR_GameMode* GM = Cast<ALR_GameMode> ( GetWorld ()->GetAuthGameMode () ) )
+	{
+		OnFortressBrokenDelegate.AddDynamic ( GM , &ALR_GameMode::OnGameOver );
+	}
+
 	Mesh->SetCanEverAffectNavigation ( false );
 
 	static FGameplayTag FortressTag = FGameplayTag::RequestGameplayTag ( FName ( "Fortress" ) );
@@ -52,7 +58,7 @@ void AP_Fortress::OnTakeDamage ( AActor* DamagedActor , float Damage , const UDa
 	}
 	else
 	{
-		OnFortressDamagedDelegate.Broadcast ( this );
+		OnFortressDamagedDelegate.Broadcast ();
 	}
 }
 
@@ -88,6 +94,6 @@ void AP_Fortress::OnBroken ()
 		);
 	}
 
-	OnFortressBrokenDelegate.Broadcast ( this );
+	OnFortressBrokenDelegate.Broadcast ();
 	SetLifeSpan ( LifeSpanTimeAfterBroken );
 }

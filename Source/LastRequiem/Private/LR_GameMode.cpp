@@ -35,6 +35,7 @@ void ALR_GameMode::Tick ( float DeltaSeconds )
 		{
 			GS->RemainingTime = GetWorldTimerManager ().GetTimerRemaining ( PhaseTimerHandle );
 		}
+		GS->RealGameTimeSeconds += DeltaSeconds;
 	}
 }
 
@@ -108,9 +109,16 @@ void ALR_GameMode::OnGameOver ()
 	ULR_GameInstance* GI = Cast<ULR_GameInstance> ( GetGameInstance () );
 	if (!GS || !GI) return;
 	
-	GS->OnGameOver.Broadcast ();
 	
+	GS->OnGameOver.Broadcast ();
+	GS->SetPlayTime ();
+
 	GI->GameResultCount.SetCountResult ( GS->GameResultData );
-	GI->GameResultCount.SetScoreResult ( GS->GameResultData, ScoringDataAsset );
-	//UGameplayStatics::OpenLevel ( this , FName ( TEXT ( "GameResultMap" ) ) );
+	GI->GameResultScore.SetScoreResult ( GS->GameResultData, ScoringDataAsset );
+
+	FTimerHandle WaitHandle;
+	GetWorldTimerManager ().SetTimer ( WaitHandle , FTimerDelegate::CreateLambda ( [this]()
+		{
+			UGameplayStatics::OpenLevel ( this , FName ( TEXT ( "GameOverLevel" ) ) );
+		} ) , GameOverDelayTime , false );
 }
