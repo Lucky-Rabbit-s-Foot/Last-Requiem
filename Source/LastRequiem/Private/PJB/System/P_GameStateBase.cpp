@@ -2,10 +2,31 @@
 
 AP_GameStateBase::AP_GameStateBase ()
 {
-	TotalScore = 0;
+	GameResultData.ResetResult ();
 }
 
-void AP_GameStateBase::AddScore ( int32 Amount )
+void AP_GameStateBase::CountEnemyKill ( int32 InEnemyID )
 {
-	TotalScore += Amount;
+	switch (InEnemyID)
+	{
+	case 1:
+		GameResultData.Melee++;
+		break;
+	case 2:
+		GameResultData.EnMelee++;
+		break;
+	case 3:
+		GameResultData.Range++;
+		break;
+	case 4:
+		GameResultData.EnRange++;
+		break;
+	default:
+		break;
+	}
+}
+
+void AP_GameStateBase::SetPlayTime ()
+{
+	GameResultData.PlayTime = FMath::RoundToInt ( RealGameTimeSeconds );
 }

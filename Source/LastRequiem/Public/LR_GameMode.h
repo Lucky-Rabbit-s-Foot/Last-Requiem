@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "PJB/Data/P_ScoringDataAsset.h"
 
 #include "LR_GameMode.generated.h"
 
@@ -14,6 +15,9 @@ public:
 	ALR_GameMode ();
 	virtual void Tick ( float DeltaSeconds ) override;
 
+	UFUNCTION ()
+	void OnGameOver ();
+
 protected:
 	virtual void BeginPlay () override;
 
@@ -24,15 +28,20 @@ protected:
 	UPROPERTY ( EditDefaultsOnly , Category = "Data|Wave" )
 	float WaveTime = 20.0f;
 
+	UPROPERTY ( EditDefaultsOnly , Category = "Data|GameOver" )
+	float GameOverDelayTime = 5.0f;
+
 	int32 TotalWaves = 0;
 private:
 	FTimerHandle PhaseTimerHandle;
 
 	UPROPERTY ( EditDefaultsOnly , Category = "Data|Wave" )
-	UDataTable* WaveDataTable;
+	TObjectPtr<UDataTable> WaveDataTable;
+
+	UPROPERTY ( EditDefaultsOnly , Category = "Data|Score" )
+	TObjectPtr<UP_ScoringDataAsset> ScoringDataAsset;
 
 	void StartPreparation ();
 	void StartWave ();
 	void EndWave ();
-	void OnGameOver ();
 };

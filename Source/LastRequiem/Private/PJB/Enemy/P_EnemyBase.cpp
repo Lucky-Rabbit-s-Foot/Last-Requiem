@@ -5,6 +5,10 @@
 #include "PaperSpriteComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "NiagaraSystem.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+
 #include "PJB/AI/P_AIControllerEnemyBase.h"
 #include "PJB/Component/P_CombatComponent.h"
 #include "PJB/Data/P_EnemyDataAsset.h"
@@ -25,6 +29,13 @@ AP_EnemyBase::AP_EnemyBase()
 	SpriteComp = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "Indicator Sprite Component" ) );
 	SpriteComp->SetupAttachment ( GetRootComponent () );
 
+	WeaponMeshComp = CreateDefaultSubobject<USkeletalMeshComponent> ( TEXT ( "Weapon Mesh" ) );
+	WeaponMeshComp->SetupAttachment ( GetMesh () );
+
+	MuzzleFlashComp = CreateDefaultSubobject<UNiagaraComponent> ( TEXT ( "Muzzle Flash" ) );
+	MuzzleFlashComp->SetupAttachment ( WeaponMeshComp );
+	MuzzleFlashComp->bAutoActivate = false;
+
 	InitRotationSetting ();
 
 	GetCharacterMovement ()->bUseRVOAvoidance = false;
@@ -39,6 +50,11 @@ void AP_EnemyBase::BeginPlay ()
 	SpriteComp->SetSpriteOnOff ( false );
 	InitGameplayTag ();
 	OnTakeAnyDamage.AddDynamic ( this , &AP_EnemyBase::OnTakeDamage );
+
+	if (AP_GameStateBase* GS = Cast<AP_GameStateBase> ( UGameplayStatics::GetGameState ( GetWorld () ) ))
+	{
+		OnEnemyDieDelegate.AddDynamic ( GS , &AP_GameStateBase::CountEnemyKill );
+	}
 }
 
 void AP_EnemyBase::Tick(float DeltaTime)
@@ -87,8 +103,8 @@ void AP_EnemyBase::InitEnemyData(UP_EnemyDataAsset* InData)
 	CachedAttackRange = InData->AttackRange;
 	CachedAttackMontage = InData->AttackMontage;
 
-	Score = InData->Score;
-
+	EnemyID = InData->EnemyID;
+	
 	if (CombatComp)
 	{
 		CombatComp->InitStats ( InData->MaxHealth , InData->AttackRange , InData->AttackPower );
@@ -159,12 +175,7 @@ void AP_EnemyBase::OnDie ()
 
 	OnDeactivate ();
 
-	if (AP_GameStateBase* GS = GetWorld () ? GetWorld ()->GetGameState<AP_GameStateBase> () : nullptr)
-	{
-		GS->AddScore ( Score );
-	}
-
-	OnEnemyDieDelegate.Broadcast ( this );
+	OnEnemyDieDelegate.Broadcast ( EnemyID );
 }
 
 void AP_EnemyBase::OnDeactivate()

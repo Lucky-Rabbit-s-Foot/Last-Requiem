@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameStateBase.h"
 #include "PJB/Data/P_SpawnDataRow.h"
+#include "PJB/Data/P_GameResultData.h"
 
 #include "P_GameStateBase.generated.h"
 
@@ -24,6 +25,9 @@ class LASTREQUIEM_API AP_GameStateBase : public AGameStateBase
 public:
 	AP_GameStateBase ();
 
+	UFUNCTION()
+	void CountEnemyKill ( int32 InEnemyID );
+
 	FOnGameEventSignature OnGameStart;
 	FOnGameEventSignature OnWaveStart;
 	FOnGameEventSignature OnWaveEnd;
@@ -44,16 +48,14 @@ public:
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "GameFlow" )
 	float CurrentSpawnInterval = 15.0f;
 
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "GameFlow" )
+	float RealGameTimeSeconds = 0.0f;
+
+	void SetPlayTime ();
 	void RegisterFortress ( AActor* InFortress ) { Fortress = InFortress; }
 	AActor* GetFortress () const { return Fortress.Get (); }
 
-	UFUNCTION ( BlueprintCallable , Category = "Data|Score" )
-	void AddScore ( int32 Amount );
-	UFUNCTION ( BlueprintPure , Category = "Data|Score" )
-	int32 GetScore () const { return TotalScore; }
-
-	UPROPERTY(VisibleAnywhere , BlueprintReadOnly , Category = "Data|Score" )
-	int32 TotalScore = 0;
+	FP_GameResultData GameResultData;
 
 private:
 	TWeakObjectPtr<AActor> Fortress;

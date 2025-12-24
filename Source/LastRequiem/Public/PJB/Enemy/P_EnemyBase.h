@@ -7,7 +7,16 @@
 
 #include "P_EnemyBase.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnemyDieDelegate, AActor*, InActor);
+UENUM (BlueprintType)
+enum class EP_EnemyType : uint8
+{
+	Melee		UMETA ( DisplayName = "Melee" ) ,
+	Range		UMETA ( DisplayName = "Range" ) ,
+	EnhancedMelee	UMETA ( DisplayName = "EnhancedMelee" ) ,
+	EnhancedRange	UMETA ( DisplayName = "EnhancedRange" )
+};
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnemyDieDelegate, int32, InID);
 
 UCLASS()
 class LASTREQUIEM_API AP_EnemyBase : public ACharacter , public IGameplayTagAssetInterface
@@ -68,17 +77,23 @@ protected:
 	TObjectPtr<class UP_CombatComponent> CombatComp = nullptr;
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Sprite" )
 	TObjectPtr<class UIndicatorSpriteComponent> SpriteComp = nullptr;
+	
+	UPROPERTY (VisibleAnywhere, BlueprintReadOnly, Category = "Data|Weapon" )
+	TObjectPtr<class USkeletalMeshComponent> WeaponMeshComp = nullptr;
+	UPROPERTY (VisibleAnywhere, BlueprintReadOnly, Category = "Data|Weapon")
+	TObjectPtr<class UNiagaraComponent> MuzzleFlashComp = nullptr;
+
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
 	FGameplayTagContainer GameplayTags;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|ID" )
+	int32 EnemyID = 0;
 
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Movement" )
 	float BaseMoveSpeed = 100.0f;
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Movement" )
 	float CombatMoveSpeed = 100.0f;
-
-	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Score" )
-	int32 Score = 100;
-
+	
 	// Cached combat data
 	float CachedAttackRange = 100.0f;
 	UPROPERTY ()

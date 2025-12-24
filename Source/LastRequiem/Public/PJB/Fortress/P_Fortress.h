@@ -8,8 +8,8 @@
 
 #include "P_Fortress.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnFortressDamagedDelegate , AActor* , InActor );
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnFortressBrokenDelegate , AActor* , InActor );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnFortressDamagedDelegate );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnFortressBrokenDelegate );
 
 UCLASS()
 class LASTREQUIEM_API AP_Fortress : public AActor , public IGameplayTagAssetInterface
@@ -56,6 +56,9 @@ protected:
 	float MaxHealth = 300.0f;
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Health" )
 	float Health = 300.0f;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpanTime" )
+	float LifeSpanTimeAfterBroken = 3.0f;
 
 private:
 	bool bIsBroken = false;
