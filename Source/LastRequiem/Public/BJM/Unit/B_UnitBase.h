@@ -8,6 +8,7 @@
 #include "GameplayTagAssetInterface.h"
 #include "B_UnitAIController.h"
 #include "NiagaraSystem.h"
+#include "Delegates/Delegate.h"
 
 #include "B_UnitBase.generated.h"
 
@@ -18,6 +19,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams ( FOnUnitSpeak , AActor* , InSpeake
 class UB_UnitStatusComponent;
 class UIndicatorSpriteComponent;
 class UAudioComponent;
+class UWidgetComponent;
+class UW_ShowNameWidget;
+class AK_Drone;
 
 UCLASS()
 class LASTREQUIEM_API AB_UnitBase : public ACharacter, public IGameplayTagAssetInterface
@@ -33,6 +37,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void EndPlay ( const EEndPlayReason::Type EndPlayReason ) override;
 
 public:	
 	// Called every frame
@@ -79,6 +84,12 @@ public:
 
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Data" )
 	FText MyUnitName;
+
+	UPROPERTY ( EditDefaultsOnly , BlueprintReadOnly , Category = "Unit|UI" )
+	TSubclassOf<UW_ShowNameWidget> ShowNameWidgetClass;
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Unit|UI" )
+	UWidgetComponent* ShowNameWidgetComponent = nullptr;
 
 	UFUNCTION ( BlueprintCallable , Category = "Unit|Data" )
 	FUnitProfileData GetUnitProfileData ();
@@ -239,6 +250,19 @@ public:
 
 protected:
 	FTimerHandle SpeakingTimerHandle;
+
+	void InitializeShowNameWidget ();
+	void BindDroneDetection ();
+	void UnbindDroneDetection ();
+	void HandleDroneUnitDetected ( AActor* DetectedActor );
+	void HandleDroneUnitLost ( AActor* LostActor );
+
+	UPROPERTY ( Transient )
+	TObjectPtr<UW_ShowNameWidget> ShowNameWidget = nullptr;
+
+	TWeakObjectPtr<AK_Drone> BoundDrone;
+	FDelegateHandle UnitDetectedHandle;
+	FDelegateHandle UnitLostHandle;
 
 public:
 	UFUNCTION ( BlueprintCallable , Category = "Unit|Action" )
