@@ -29,6 +29,9 @@
 #include "Sound/SoundAttenuation.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
+#include "Components/WidgetComponent.h"
+#include "KWB/UI/W_ShowNameWidget.h"
+#include "KHS/Drone/K_Drone.h"
 
 // Sets default values
 AB_UnitBase::AB_UnitBase()
@@ -68,6 +71,12 @@ AB_UnitBase::AB_UnitBase()
 	IndicatorSprite = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "IndicatorSprite" ) );
 	IndicatorSprite->SetupAttachment ( RootComponent );
 
+	ShowNameWidgetComponent = CreateDefaultSubobject<UWidgetComponent> ( TEXT ( "ShowNameWidget" ) );
+	ShowNameWidgetComponent->SetupAttachment ( RootComponent );
+	ShowNameWidgetComponent->SetWidgetSpace ( EWidgetSpace::Screen );
+	ShowNameWidgetComponent->SetDrawAtDesiredSize ( true );
+	ShowNameWidgetComponent->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
+	ShowNameWidgetComponent->SetRelativeLocation ( FVector ( 0.0f , 0.0f , 120.0f ) );
 }
 
 void AB_UnitBase::GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const
@@ -105,7 +114,15 @@ void AB_UnitBase::BeginPlay()
 	}
 
 	UnitDataUpdate ();
+	InitializeShowNameWidget ();
+	BindDroneDetection ();
+}
 
+void AB_UnitBase::EndPlay ( const EEndPlayReason::Type EndPlayReason )
+{
+	UnbindDroneDetection ();
+
+	Super::EndPlay ( EndPlayReason );
 }
 
 // Called every frame
@@ -122,6 +139,87 @@ void AB_UnitBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+void AB_UnitBase::InitializeShowNameWidget ()
+{
+	if (!ShowNameWidgetComponent)
+	{
+		return;
+	}
+
+	if (ShowNameWidgetClass)
+	{
+		ShowNameWidgetComponent->SetWidgetClass ( ShowNameWidgetClass );
+	}
+
+	ShowNameWidgetComponent->InitWidget ();
+	ShowNameWidget = Cast<UW_ShowNameWidget> ( ShowNameWidgetComponent->GetUserWidgetObject () );
+	if (ShowNameWidget)
+	{
+		ShowNameWidget->InitializeOwner ( this );
+		ShowNameWidget->SetShowNameState ( EUnitShowNameState::UNDETECTED , false );
+	}
+}
+
+void AB_UnitBase::BindDroneDetection ()
+{
+	if (BoundDrone.IsValid ())
+	{
+		return;
+	}
+
+	AK_Drone* Drone = Cast<AK_Drone> ( UGameplayStatics::GetPlayerPawn ( GetWorld () , 0 ) );
+	if (!Drone)
+	{
+		return;
+	}
+
+	BoundDrone = Drone;
+	UnitDetectedHandle = Drone->onUnitDetected.AddUObject ( this , &AB_UnitBase::HandleDroneUnitDetected );
+	UnitLostHandle = Drone->onUnitLostDetection.AddUObject ( this , &AB_UnitBase::HandleDroneUnitLost );
+}
+
+void AB_UnitBase::UnbindDroneDetection ()
+{
+	if (!BoundDrone.IsValid ())
+	{
+		return;
+	}
+
+	if (UnitDetectedHandle.IsValid ())
+	{
+		BoundDrone->onUnitDetected.Remove ( UnitDetectedHandle );
+	}
+
+	if (UnitLostHandle.IsValid ())
+	{
+		BoundDrone->onUnitLostDetection.Remove ( UnitLostHandle );
+	}
+
+	BoundDrone.Reset ();
+	UnitDetectedHandle.Reset ();
+	UnitLostHandle.Reset ();
+}
+
+void AB_UnitBase::HandleDroneUnitDetected ( AActor* DetectedActor )
+{
+	if (DetectedActor != this || !ShowNameWidget)
+	{
+		return;
+	}
+
+	ShowNameWidget->SetShowNameState ( EUnitShowNameState::DETECTED , true );
+}
+
+void AB_UnitBase::HandleDroneUnitLost ( AActor* LostActor )
+{
+	if (LostActor != this || !ShowNameWidget)
+	{
+		return;
+	}
+
+	ShowNameWidget->SetShowNameState ( EUnitShowNameState::UNDETECTED , false );
 }
 
 //void AB_UnitBase::FindMapWidgetLoop ()
@@ -881,7 +979,6 @@ void AB_UnitBase::SetSelectedSprite ( bool bIsSelected )
 	bIsSelectedByPlayer = bIsSelected;
 	RefreshIndicatorState(); 
 }
-
 
 void AB_UnitBase::SetSpeakingState ( bool bNewState )
 {
