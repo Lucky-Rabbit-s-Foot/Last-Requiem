@@ -25,6 +25,9 @@ class LASTREQUIEM_API AP_GameStateBase : public AGameStateBase
 public:
 	AP_GameStateBase ();
 
+	UFUNCTION()
+	void CountEnemyKill ( int32 InEnemyID );
+
 	FOnGameEventSignature OnGameStart;
 	FOnGameEventSignature OnWaveStart;
 	FOnGameEventSignature OnWaveEnd;

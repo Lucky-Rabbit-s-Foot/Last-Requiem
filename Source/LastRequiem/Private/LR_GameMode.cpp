@@ -111,7 +111,7 @@ void ALR_GameMode::OnGameOver ()
 	GS->OnGameOver.Broadcast ();
 	
 	GI->GameResultCount.SetCountResult ( GS->GameResultData );
-	GI->GameResultCount.SetScoreResult ( GS->GameResultData, ScoringDataAsset );
+	GI->GameResultScore.SetScoreResult ( GS->GameResultData, ScoringDataAsset );
 
 	FTimerHandle WaitHandle;
 	GetWorldTimerManager ().SetTimer ( WaitHandle , FTimerDelegate::CreateLambda ( [this]()

@@ -50,6 +50,11 @@ void AP_EnemyBase::BeginPlay ()
 	SpriteComp->SetSpriteOnOff ( false );
 	InitGameplayTag ();
 	OnTakeAnyDamage.AddDynamic ( this , &AP_EnemyBase::OnTakeDamage );
+
+	if (AP_GameStateBase* GS = Cast<AP_GameStateBase> ( UGameplayStatics::GetGameState ( GetWorld () ) ))
+	{
+		OnEnemyDieDelegate.AddDynamic ( GS , &AP_GameStateBase::CountEnemyKill );
+	}
 }
 
 void AP_EnemyBase::Tick(float DeltaTime)
@@ -98,8 +103,8 @@ void AP_EnemyBase::InitEnemyData(UP_EnemyDataAsset* InData)
 	CachedAttackRange = InData->AttackRange;
 	CachedAttackMontage = InData->AttackMontage;
 
-	Score = InData->Score;
-
+	EnemyID = InData->EnemyID;
+	
 	if (CombatComp)
 	{
 		CombatComp->InitStats ( InData->MaxHealth , InData->AttackRange , InData->AttackPower );
@@ -170,7 +175,7 @@ void AP_EnemyBase::OnDie ()
 
 	OnDeactivate ();
 
-	OnEnemyDieDelegate.Broadcast ( this );
+	OnEnemyDieDelegate.Broadcast ( EnemyID );
 }
 
 void AP_EnemyBase::OnDeactivate()

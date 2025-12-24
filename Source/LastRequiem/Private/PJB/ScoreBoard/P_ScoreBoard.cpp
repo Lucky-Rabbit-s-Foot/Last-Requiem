@@ -20,27 +20,27 @@ void UP_ScoreBoard::NativeConstruct ()
 	GI->GameResultScore.LogResult ();
 }
 
-void UP_ScoreBoard::UpdateAllScores ( FP_GameResultData& Count , FP_GameResultData& Modifier )
+void UP_ScoreBoard::UpdateAllScores ( FP_GameResultData& Count , FP_GameResultData& Score )
 {
-	SetScore ( PlayTime , TEXT ( "플레이 시간" ) , Count.PlayTime , Modifier.PlayTime );
-	SetScore ( HealthRecovery , TEXT ( "체력 회복" ) , Count.Heal , Modifier.Heal );
-	SetScore ( SanityRecovery , TEXT ( "정신력 회복" ) , Count.Sanity , Modifier.Sanity );
-	SetScore ( DestroyObject , TEXT ( "구조물 파괴" ) , Count.Dest , Modifier.Dest );
+	SetScore ( PlayTime , TEXT ( "플레이 시간" ) , Count.PlayTime , Score.PlayTime );
+	SetScore ( HealthRecovery , TEXT ( "체력 회복" ) , Count.Heal , Score.Heal );
+	SetScore ( SanityRecovery , TEXT ( "정신력 회복" ) , Count.Sanity , Score.Sanity );
+	SetScore ( DestroyObject , TEXT ( "구조물 파괴" ) , Count.Dest , Score.Dest );
 
-	SetScore ( MeleeCount , TEXT ( "근거리 처치" ) , Count.Melee , Modifier.Melee );
-	SetScore ( EnhancedMeleeCount , TEXT ( "강화 근거리 처치" ) , Count.EnMelee , Modifier.EnMelee );
-	SetScore ( RangeCount , TEXT ( "원거리 처치" ) , Count.Range , Modifier.Range );
-	SetScore ( EnhancedRangeCount , TEXT ( "강화 원거리 처치" ) , Count.EnRange , Modifier.EnRange );
+	SetScore ( MeleeCount , TEXT ( "근거리 처치" ) , Count.Melee , Score.Melee );
+	SetScore ( EnhancedMeleeCount , TEXT ( "강화 근거리 처치" ) , Count.EnMelee , Score.EnMelee );
+	SetScore ( RangeCount , TEXT ( "원거리 처치" ) , Count.Range , Score.Range );
+	SetScore ( EnhancedRangeCount , TEXT ( "강화 원거리 처치" ) , Count.EnRange , Score.EnRange );
 
-	if (TotalScore) TotalScore->SetText ( FText::AsNumber ( Modifier.TotalScore ) );
+	if (TotalScore) TotalScore->SetText ( FText::AsNumber ( Score.TotalScore ) );
 }
 
-void UP_ScoreBoard::SetScore ( UP_ScoreBlock* Title , FString TitleText , int32 Count , int32 Modifier )
+void UP_ScoreBoard::SetScore ( UP_ScoreBlock* Title , FString TitleText , int32 Count , int32 Score )
 {
 	if (!Title) return;
 	Title->SetBlockData ( 
 		FText::FromString ( TitleText ) ,
 		Count ,
-		Count * Modifier
+		Score
 	);
 }
