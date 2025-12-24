@@ -4,6 +4,7 @@
 #include "NavigationSystem.h"
 #include "BJM/Unit/B_UnitStatusComponent.h"
 #include "BJM/Unit/B_UnitAIController.h"
+#include "BJM/Announcer/B_UIAnnouncer.h"
 #include "PJB/Fortress/P_Fortress.h"
 #include "AIController.h" 
 #include "Kismet/GameplayStatics.h"
@@ -788,6 +789,11 @@ void AB_UnitBase::OnDie_Unit ()
 
 
 	OnUnitDieDelegate.Broadcast ( this );
+
+	if (AB_UIAnnouncer* Announcer = Cast<AB_UIAnnouncer> ( UGameplayStatics::GetActorOfClass ( GetWorld () , AB_UIAnnouncer::StaticClass () ) ))
+	{
+		Announcer->PlayUnitDeathSound ( MyUnitName.ToString () );
+	}
 
 	// 택 제거
 	FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
