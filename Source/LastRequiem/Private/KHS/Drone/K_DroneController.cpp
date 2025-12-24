@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "KHS/Drone/K_DroneController.h"
@@ -51,6 +51,12 @@ void AK_DroneController::SetupInputComponent()
 		
 		enhanced->BindAction(IA_Skill01, ETriggerEvent::Started, this, &AK_DroneController::OnDroneUseSkill01);
 		enhanced->BindAction(IA_Skill02, ETriggerEvent::Started, this, &AK_DroneController::OnDroneUseSkill02);
+
+		// (20251224) W : Orders (Keyboard)
+		enhanced->BindAction ( IA_OrderAttack , ETriggerEvent::Started , this , &AK_DroneController::OnUnitOrderAttack );
+		enhanced->BindAction ( IA_OrderStop , ETriggerEvent::Started , this , &AK_DroneController::OnUnitOrderStop );
+		enhanced->BindAction ( IA_OrderHold , ETriggerEvent::Started , this , &AK_DroneController::OnUnitOrderHold );
+		enhanced->BindAction ( IA_OrderRetreat , ETriggerEvent::Started , this , &AK_DroneController::OnUnitOrderRetreat );
 	}
 }
 
@@ -200,6 +206,31 @@ void AK_DroneController::UnbindSettingUIDelegates()
 	cachedSettingUI = nullptr;
 	bSettingUIBound = false;
 }
+// (20251224) W : Unit Order(Keyboard)
+void AK_DroneController::OnUnitOrderAttack ( const FInputActionValue& value )
+{
+	(void)value;
+	HandleUnitAttackButtonClicked ();
+}
+
+void AK_DroneController::OnUnitOrderStop ( const FInputActionValue& value )
+{
+	(void)value;
+	HandleUnitStopButtonClicked ();
+}
+
+void AK_DroneController::OnUnitOrderHold ( const FInputActionValue& value )
+{
+	(void)value;
+	HandleUnitHoldButtonClicked ();
+}
+
+void AK_DroneController::OnUnitOrderRetreat ( const FInputActionValue& value )
+{
+	(void)value;
+	HandleUnitRetreatButtonClicked ();
+}
+
 
 
 void AK_DroneController::OnDroneLook(const FInputActionValue& value)
