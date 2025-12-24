@@ -112,5 +112,10 @@ void ALR_GameMode::OnGameOver ()
 	
 	GI->GameResultCount.SetCountResult ( GS->GameResultData );
 	GI->GameResultCount.SetScoreResult ( GS->GameResultData, ScoringDataAsset );
-	//UGameplayStatics::OpenLevel ( this , FName ( TEXT ( "GameResultMap" ) ) );
+
+	FTimerHandle WaitHandle;
+	GetWorldTimerManager ().SetTimer ( WaitHandle , FTimerDelegate::CreateLambda ( [this]()
+		{
+			UGameplayStatics::OpenLevel ( this , FName ( TEXT ( "GameOverLevel" ) ) );
+		} ) , GameOverDelayTime , false );
 }
