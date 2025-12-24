@@ -1,13 +1,15 @@
 ﻿#include "LR_GameMode.h"
 
 #include "LastRequiem.h"
-
+#include "LR_GameInstance.h"
+#include "Kismet/GameplayStatics.h"
 #include "PJB/Data/P_SpawnDataRow.h"
 #include "PJB/Data/P_WaveDataRow.h"
 #include "PJB/System/P_GameStateBase.h"
 
 ALR_GameMode::ALR_GameMode ()
 {
+	PrimaryActorTick.bCanEverTick = true;
 }
 
 void ALR_GameMode::BeginPlay ()
@@ -32,7 +34,6 @@ void ALR_GameMode::Tick ( float DeltaSeconds )
 		if (GetWorldTimerManager ().IsTimerActive ( PhaseTimerHandle ))
 		{
 			GS->RemainingTime = GetWorldTimerManager ().GetTimerRemaining ( PhaseTimerHandle );
-			LOG_MESSAGE ( Log , TEXT ( "Remaining Time: %.2f" ) , GS->RemainingTime );
 		}
 	}
 }
@@ -104,8 +105,12 @@ void ALR_GameMode::OnGameOver ()
 	LOG_MESSAGE_SCREEN ( Log , TEXT ( "Game Over!" ) );
 
 	AP_GameStateBase* GS = GetGameState<AP_GameStateBase> ();
-	if (!GS) return;
+	ULR_GameInstance* GI = Cast<ULR_GameInstance> ( GetGameInstance () );
+	if (!GS || !GI) return;
 	
 	GS->OnGameOver.Broadcast ();
-	// TODO: Implement Game Over Logic 
+	
+	GI->GameResultCount.SetCountResult ( GS->GameResultData );
+	GI->GameResultCount.SetScoreResult ( GS->GameResultData, ScoringDataAsset );
+	//UGameplayStatics::OpenLevel ( this , FName ( TEXT ( "GameResultMap" ) ) );
 }

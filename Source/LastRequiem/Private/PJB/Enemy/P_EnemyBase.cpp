@@ -5,6 +5,10 @@
 #include "PaperSpriteComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "NiagaraSystem.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+
 #include "PJB/AI/P_AIControllerEnemyBase.h"
 #include "PJB/Component/P_CombatComponent.h"
 #include "PJB/Data/P_EnemyDataAsset.h"
@@ -24,6 +28,13 @@ AP_EnemyBase::AP_EnemyBase()
 	CombatComp = CreateDefaultSubobject<UP_CombatComponent> ( TEXT ( "Combat Component" ) );
 	SpriteComp = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "Indicator Sprite Component" ) );
 	SpriteComp->SetupAttachment ( GetRootComponent () );
+
+	WeaponMeshComp = CreateDefaultSubobject<USkeletalMeshComponent> ( TEXT ( "Weapon Mesh" ) );
+	WeaponMeshComp->SetupAttachment ( GetMesh () );
+
+	MuzzleFlashComp = CreateDefaultSubobject<UNiagaraComponent> ( TEXT ( "Muzzle Flash" ) );
+	MuzzleFlashComp->SetupAttachment ( WeaponMeshComp );
+	MuzzleFlashComp->bAutoActivate = false;
 
 	InitRotationSetting ();
 
@@ -158,11 +169,6 @@ void AP_EnemyBase::OnDie ()
 	bIsAlive = false;
 
 	OnDeactivate ();
-
-	if (AP_GameStateBase* GS = GetWorld () ? GetWorld ()->GetGameState<AP_GameStateBase> () : nullptr)
-	{
-		GS->AddScore ( Score );
-	}
 
 	OnEnemyDieDelegate.Broadcast ( this );
 }
