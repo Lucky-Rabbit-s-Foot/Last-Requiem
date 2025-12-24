@@ -55,7 +55,7 @@ void UIndicatorSpriteComponent::BeginPlay ()
 
 	// 초기 상태로 스프라이트 설정
 	CurrentState = InitialState;
-	InitializeSpritesIfNeeded ();
+	// InitializeSpritesIfNeeded (); // TEMP : 주석
 	UpdateSpriteForState ();
 
 	// 초기 색 캐시(StopGlow 시 원상복구 용도)
@@ -114,7 +114,7 @@ void UIndicatorSpriteComponent::OnRegister ()
 		}
 	}
 
-	InitializeSpritesIfNeeded ();
+	// InitializeSpritesIfNeeded (); // TEMP : 주석
 	UpdateSpriteForState ();
 
 	// 에디터 프리뷰에서도 색 캐시는 잡아둠(원복용)
@@ -210,7 +210,7 @@ void UIndicatorSpriteComponent::SetIndicatorState ( EIndicatorSpriteState NewSta
 
 	CurrentState = NewState;
 
-	InitializeSpritesIfNeeded ();
+	// InitializeSpritesIfNeeded (); // TEMP : 주석
 	UpdateSpriteForState ();
 
 	// 상태 기반 자동 Glow On/Off
@@ -451,38 +451,39 @@ void UIndicatorSpriteComponent::ApplyDefaultTransformDeferred ()
 	ApplyDefaultTransformIfNeeded ( false );
 }
 
-void UIndicatorSpriteComponent::InitializeSpritesIfNeeded ()
-{
-	if (bSpritesInitialized)
-	{
-		return;
-	}
-	bSpritesInitialized = true;
-
-	// 최소 하나는 설정되어 있어야 함
-	UPaperSprite* Fallback = SpirteNormal;
-	if (!Fallback) Fallback = SpirteCombat;
-	if (!Fallback) Fallback = SpirteSelected;
-	if (!Fallback) Fallback = SpirteDead;
-
-	if (!Fallback)
-	{
-		UE_LOG ( LogTemp , Warning ,
-			TEXT ( "IndicatorSpriteComponent: %s에 어떤 Sprite도 설정되어 있지 않습니다." ) ,
-			*GetOwner ()->GetName () );
-		return;
-	}
-
-	// Drone처럼 Normal만 쓰는 경우를 위해 나머지 비어 있으면 Fallback으로 채워 넣기
-	if (!SpirteNormal)	SpirteNormal = Fallback;
-	if (!SpirteCombat)	SpirteCombat = Fallback;
-	if (!SpirteSelected)SpirteSelected = Fallback;
-	if (!SpirteDead)	SpirteDead = Fallback;
-}
+// 의도치 않은 멤버 값 nullptr 설정 방지를 위해 임시 주석처리 : 테스트 필요
+//void UIndicatorSpriteComponent::InitializeSpritesIfNeeded ()
+//{
+//	if (bSpritesInitialized)
+//	{
+//		return;
+//	}
+//	bSpritesInitialized = true;
+//
+//	// 최소 하나는 설정되어 있어야 함
+//	UPaperSprite* Fallback = SpirteNormal;
+//	if (!Fallback) Fallback = SpirteCombat;
+//	if (!Fallback) Fallback = SpirteSelected;
+//	if (!Fallback) Fallback = SpirteDead;
+//
+//	if (!Fallback)
+//	{
+//		UE_LOG ( LogTemp , Warning ,
+//			TEXT ( "IndicatorSpriteComponent: %s에 어떤 Sprite도 설정되어 있지 않습니다." ) ,
+//			*GetOwner ()->GetName () );
+//		return;
+//	}
+//
+//	// Drone처럼 Normal만 쓰는 경우를 위해 나머지 비어 있으면 Fallback으로 채워 넣기
+//	if (!SpirteNormal)	SpirteNormal = Fallback;
+//	if (!SpirteCombat)	SpirteCombat = Fallback;
+//	if (!SpirteSelected)SpirteSelected = Fallback;
+//	if (!SpirteDead)	SpirteDead = Fallback;
+//}
 
 void UIndicatorSpriteComponent::UpdateSpriteForState ()
 {
-	InitializeSpritesIfNeeded ();
+	// InitializeSpritesIfNeeded (); // 의도치 않은 nullptr 방지 위해 임시 주석처리
 
 	UPaperSprite* NewSprite = nullptr;
 
@@ -507,10 +508,21 @@ void UIndicatorSpriteComponent::UpdateSpriteForState ()
 	// 데이터가 하나도 없을 시 방어 코드
 	if (!NewSprite)
 	{
-		UE_LOG ( LogTemp , Warning ,
-			TEXT ( "IndicatorSpriteComponent: %s 상태 %d에 사용할 Sprite가 없습니다." ) ,
-			*GetOwner ()->GetName () ,
-			static_cast<int32>(CurrentState) );
+		//UE_LOG ( LogTemp , Warning ,
+		//	TEXT ( "IndicatorSpriteComponent: %s 상태 %d에 사용할 Sprite가 없습니다." ) ,
+		//	*GetOwner ()->GetName () ,
+		//	static_cast<int32>(CurrentState) );
+		//return;
+		NewSprite = SpirteNormal;
+	}
+
+	// TEMP : 임시 방어 코드
+	if (!NewSprite) NewSprite = SpirteCombat;
+	if (!NewSprite) NewSprite = SpirteSelected;
+
+	// TEMP : 방어코드 실행 후에도 없을 시 그냥 리턴
+	if (!NewSprite)
+	{
 		return;
 	}
 
@@ -563,7 +575,7 @@ void UIndicatorSpriteComponent::UpdateGlow ( float DeltaTime )
 		// Selected는 "빛만" 반짝 => 색은 원래대로 유지
 		if (bCachedBaseColor)
 		{
-			SetSpriteColor ( BaseSpriteColor );
+			SetSpriteColor ( BaseSpriteColor * Glow ); // Selected에 빛 효과 적용
 		}
 	}
 }
