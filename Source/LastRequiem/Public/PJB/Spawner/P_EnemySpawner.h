@@ -20,7 +20,8 @@ public:
 	void InitArrowComponentForFindSpawner ();
 
 	UFUNCTION ( BlueprintCallable , Category = "Factory" )
-	void SpawnEnemy ();
+	void SpawnEnemies ();
+	void SpawnEachEnemy (struct FP_EnemySpawnRow* SelectedRow , FTransform& SpawnTransform );
 
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty ( FPropertyChangedEvent& PropertyChangedEvent ) override;
