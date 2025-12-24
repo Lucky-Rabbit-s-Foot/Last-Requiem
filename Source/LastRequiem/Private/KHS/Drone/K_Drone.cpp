@@ -160,7 +160,18 @@ void AK_Drone::UpdateDroneMovement(float DeltaTime)
 	{
 		return;
 	}
-	
+
+	// (20251224) P : 드론 이동 (Start)
+	FVector CurrentVelocity = sphereComp->GetPhysicsLinearVelocity ();
+	bool bIsOverLimitHeight = GetActorLocation ().Z > droneData->DRONE_FLIGHT_MAX_HEIGHT && CurrentVelocity.Z > 0.0f;
+	bool bIsUnderLimitHeight = GetActorLocation ().Z < droneData->DRONE_FLIGHT_MIN_HEIGHT && CurrentVelocity.Z < 0.0f;
+	if (bIsOverLimitHeight || bIsUnderLimitHeight)
+	{
+		CurrentVelocity.Z = 0.0f;
+		sphereComp->SetPhysicsLinearVelocity ( CurrentVelocity );
+	}
+	// (20251224) P : 드론 이동 (End)
+
 	//입력이 있을때만 Force 적용
 	bool bHasInput = (moveInputValue.SizeSquared() > 0.0f || FMath::Abs(upDownInputValue) > 0.0f);
 	
@@ -176,7 +187,8 @@ void AK_Drone::UpdateDroneMovement(float DeltaTime)
 		
 		//고도 제한 적용
 		bool bOnLimitHeight = GetActorLocation().Z > droneData->DRONE_FLIGHT_MAX_HEIGHT && upDownInputValue > 0.0f;
-		if (bOnLimitHeight)
+		bool bOnLimitLowHeight = GetActorLocation ().Z < droneData->DRONE_FLIGHT_MIN_HEIGHT && upDownInputValue < 0.0f;
+		if (bOnLimitHeight || bOnLimitLowHeight)
 		{
 			verticalForce = FVector::ZeroVector;
 		}
