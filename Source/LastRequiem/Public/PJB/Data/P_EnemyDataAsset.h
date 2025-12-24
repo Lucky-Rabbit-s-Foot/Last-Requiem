@@ -16,6 +16,9 @@ public:
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Visual" )
 	TSubclassOf<UAnimInstance> AnimInstanceClass;
 
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|ID" )
+	int32 EnemyID = 0;
+
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Movement" )
 	float BaseSpeed = 300.0f;
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Movement" )
@@ -30,7 +33,4 @@ public:
 	float AttackPower = 150.0f;
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Combat" )
 	UAnimMontage* AttackMontage;
-
-	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Score" )
-	int32 Score = 100;
 };

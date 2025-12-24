@@ -61,3 +61,17 @@ void FP_GameResultData::SetScoreResult ( const FP_GameResultData& Count , const 
 	EnRange = Count.EnRange * DA->EnRange;
 	TotalScore += EnRange;
 }
+
+void FP_GameResultData::LogResult() const
+{
+	UE_LOG(LogTemp, Log, TEXT("----- Game Result -----"));
+	UE_LOG(LogTemp, Log, TEXT("PlayTime Score: %d"), PlayTime);
+	UE_LOG(LogTemp, Log, TEXT("Heal Score: %d"), Heal);
+	UE_LOG(LogTemp, Log, TEXT("Sanity Score: %d"), Sanity);
+	UE_LOG(LogTemp, Log, TEXT("Dest Score: %d"), Dest);
+	UE_LOG(LogTemp, Log, TEXT("Melee Score: %d"), Melee);
+	UE_LOG(LogTemp, Log, TEXT("EnMelee Score: %d"), EnMelee);
+	UE_LOG(LogTemp, Log, TEXT("Range Score: %d"), Range);
+	UE_LOG(LogTemp, Log, TEXT("EnRange Score: %d"), EnRange);
+	UE_LOG(LogTemp, Log, TEXT("Total Score: %d"), TotalScore);
+}

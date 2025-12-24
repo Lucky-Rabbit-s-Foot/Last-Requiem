@@ -15,6 +15,9 @@ public:
 	ALR_GameMode ();
 	virtual void Tick ( float DeltaSeconds ) override;
 
+	UFUNCTION ()
+	void OnGameOver ();
+
 protected:
 	virtual void BeginPlay () override;
 
@@ -24,6 +27,9 @@ protected:
 	float PreparationTime = 10.0f;
 	UPROPERTY ( EditDefaultsOnly , Category = "Data|Wave" )
 	float WaveTime = 20.0f;
+
+	UPROPERTY ( EditDefaultsOnly , Category = "Data|GameOver" )
+	float GameOverDelayTime = 5.0f;
 
 	int32 TotalWaves = 0;
 private:
@@ -38,5 +44,4 @@ private:
 	void StartPreparation ();
 	void StartWave ();
 	void EndWave ();
-	void OnGameOver ();
 };

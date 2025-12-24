@@ -16,7 +16,7 @@ enum class EP_EnemyType : uint8
 	EnhancedRange	UMETA ( DisplayName = "EnhancedRange" )
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnemyDieDelegate, AActor*, InActor);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnemyDieDelegate, int32, InID);
 
 UCLASS()
 class LASTREQUIEM_API AP_EnemyBase : public ACharacter , public IGameplayTagAssetInterface
@@ -86,14 +86,14 @@ protected:
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
 	FGameplayTagContainer GameplayTags;
 
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|ID" )
+	int32 EnemyID = 0;
+
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Movement" )
 	float BaseMoveSpeed = 100.0f;
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Movement" )
 	float CombatMoveSpeed = 100.0f;
-
-	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Score" )
-	int32 Score = 100;
-
+	
 	// Cached combat data
 	float CachedAttackRange = 100.0f;
 	UPROPERTY ()
