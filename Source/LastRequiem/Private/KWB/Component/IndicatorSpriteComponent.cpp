@@ -20,7 +20,7 @@ UIndicatorSpriteComponent::UIndicatorSpriteComponent ()
 	DefaultRelativeTransform = FTransform (
 		FRotator ( 0.f , 0.f , -90.f ) ,	// 기준 순서 : Pitch, Yaw, Roll | 엔진에서는 Roll, Pitch, Yaw
 		FVector ( 0.f , 0.f , 4000.f ) ,	// TEMP : 레벨 구성 완료 후 결정 / 3000.0f로 테스트
-		FVector ( 0.35f , 0.35f , 0.35f )   // TEMP : 알파 게임 플레이 후 결정 !!사이즈 변경 시 W_MapWidget에서 UnitSelectionRadius 값 변경할 것!!
+		FVector ( 1.0f , 1.0f , 1.0f )   // TEMP : 알파 게임 플레이 후 결정 !!사이즈 변경 시 W_MapWidget에서 UnitSelectionRadius 값 변경할 것!!
 	);
 
 	// 상태/Glow 기본값
@@ -213,7 +213,7 @@ void UIndicatorSpriteComponent::SetIndicatorState ( EIndicatorSpriteState NewSta
 	InitializeSpritesIfNeeded ();
 	UpdateSpriteForState ();
 
-	// 상태 변경과 동시에 Glow 자동 적용!!
+	// 상태 기반 자동 Glow On/Off
 	ApplyAutoGlowByState ();
 }
 
@@ -394,31 +394,27 @@ void UIndicatorSpriteComponent::ApplyVisibilityRules ()
 
 void UIndicatorSpriteComponent::EnsureDynamicMaterial ( bool bForceRecreate )
 {
-	// 머티리얼 슬롯이 없으면 MID 생성 불가
 	if (GetNumMaterials () <= 0)
 	{
+		DynamicMID = nullptr;
 		return;
 	}
 
 	UMaterialInterface* Mat0 = GetMaterial ( 0 );
 	if (!Mat0)
 	{
+		DynamicMID = nullptr;
 		return;
 	}
 
-	// 이미 슬롯에 MID가 들어가 있으면 그대로 참조
+	// 이미 슬롯에 MID가 있으면 그걸 잡는다
 	if (UMaterialInstanceDynamic* MID0 = Cast<UMaterialInstanceDynamic> ( Mat0 ))
 	{
 		DynamicMID = MID0;
 		return;
 	}
 
-	if (DynamicMID && !bForceRecreate)
-	{
-		return;
-	}
-
-	// 슬롯이 BaseMat이면 여기서 MID로 교체
+	// 슬롯이 MID가 아니라면, 현재 슬롯 머티리얼을 베이스로 MID를 "다시" 만들어 슬롯에 꽂는다
 	DynamicMID = CreateDynamicMaterialInstance ( 0 , Mat0 );
 }
 
@@ -521,7 +517,7 @@ void UIndicatorSpriteComponent::UpdateSpriteForState ()
 	SetSprite ( NewSprite );
 
 	// 스프라이트가 바뀌면 내부 머티리얼 세팅도 바뀔 수 있으니 MID 다시 확보
-	EnsureDynamicMaterial ( false );
+	EnsureDynamicMaterial (); // false 인자 전달 -> 인자 전달 X로 수정
 }
 
 void UIndicatorSpriteComponent::UpdateGlow ( float DeltaTime )

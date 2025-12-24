@@ -7,6 +7,7 @@
 #include "GameplayTagContainer.h"
 #include "GameplayTagAssetInterface.h"
 #include "B_UnitAIController.h"
+#include "NiagaraSystem.h"
 
 #include "B_UnitBase.generated.h"
 
@@ -42,6 +43,9 @@ public:
 
 	UPROPERTY ( VisibleAnywhere , BlueprintReadWrite , Category = "Unit|Visual" )
 	USkeletalMeshComponent* WeaponMesh;
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Combat|VFX" )
+	UNiagaraComponent* NiagaraComp;
 
 	UPROPERTY ( VisibleAnywhere , BlueprintReadWrite , Category = "Unit|Visual" )
 	class USpotLightComponent* GunFlashlight;
@@ -297,5 +301,35 @@ public:
 
 	UFUNCTION ( BlueprintCallable )
 	void PlayWeaponFireSound ();
+
+public:
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Combat|VFX" )
+	UNiagaraSystem* MuzzleFlashVFX;
+
+	UFUNCTION ( BlueprintCallable , Category = "Combat" )
+	void PlayMuzzleEffect ();
+
+public:
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Sound" )
+	USoundBase* FootstepSound;
+
+	UFUNCTION ( BlueprintCallable , Category = "Sound" )
+	void PlayFootstepSound ();
+
+public:
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Combat|VFX" )
+	UNiagaraSystem* HealingHP;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Combat|VFX" )
+	UNiagaraSystem* HealingSanity;
+
+	void PlayHealingHPEffect ();
+
+	void PlayHealingSanityEffect ();
+
+private:
+	bool bIsSelectedByPlayer = false;
+
+	void RefreshIndicatorState ();
 
 };
