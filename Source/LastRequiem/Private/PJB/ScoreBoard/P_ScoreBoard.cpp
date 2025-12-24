@@ -11,9 +11,13 @@ void UP_ScoreBoard::NativeConstruct ()
 	Super::NativeConstruct ();
 
 	ULR_GameInstance* GI = Cast<ULR_GameInstance> ( GetGameInstance () );
+	UE_LOG ( LogTemp , Warning , TEXT ( "UP_ScoreBoard::NativeConstruct - GI: %s" ) , GI ? *GI->GetName () : TEXT ( "nullptr" ) );
 	if (!GI) return;
 	
 	UpdateAllScores ( GI->GameResultCount , GI->GameResultScore );
+
+	GI->GameResultCount.LogResult ();
+	GI->GameResultScore.LogResult ();
 }
 
 void UP_ScoreBoard::UpdateAllScores ( FP_GameResultData& Count , FP_GameResultData& Modifier )

@@ -12,6 +12,7 @@ public:
 	void ResetResult ();
 	void SetCountResult ( const FP_GameResultData& Count );
 	void SetScoreResult ( const FP_GameResultData& Count , const class UP_ScoringDataAsset* DA );
+	void LogResult () const;
 
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite )
 	int32 PlayTime = 0;
