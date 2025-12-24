@@ -7,6 +7,15 @@
 
 #include "P_EnemyBase.generated.h"
 
+UENUM (BlueprintType)
+enum class EP_EnemyType : uint8
+{
+	Melee		UMETA ( DisplayName = "Melee" ) ,
+	Range		UMETA ( DisplayName = "Range" ) ,
+	EnhancedMelee	UMETA ( DisplayName = "EnhancedMelee" ) ,
+	EnhancedRange	UMETA ( DisplayName = "EnhancedRange" )
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnemyDieDelegate, AActor*, InActor);
 
 UCLASS()
@@ -68,6 +77,12 @@ protected:
 	TObjectPtr<class UP_CombatComponent> CombatComp = nullptr;
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Sprite" )
 	TObjectPtr<class UIndicatorSpriteComponent> SpriteComp = nullptr;
+	
+	UPROPERTY (VisibleAnywhere, BlueprintReadOnly, Category = "Data|Weapon" )
+	TObjectPtr<class USkeletalMeshComponent> WeaponMeshComp = nullptr;
+	UPROPERTY (VisibleAnywhere, BlueprintReadOnly, Category = "Data|Weapon")
+	TObjectPtr<class UNiagaraComponent> MuzzleFlashComp = nullptr;
+
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
 	FGameplayTagContainer GameplayTags;
 

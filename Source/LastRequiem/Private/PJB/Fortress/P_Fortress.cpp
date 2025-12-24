@@ -89,5 +89,5 @@ void AP_Fortress::OnBroken ()
 	}
 
 	OnFortressBrokenDelegate.Broadcast ( this );
-	SetLifeSpan ( 3.0f );
+	SetLifeSpan ( LifeSpanTimeAfterBroken );
 }
