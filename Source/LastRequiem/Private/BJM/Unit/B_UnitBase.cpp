@@ -29,7 +29,6 @@
 #include "Sound/SoundAttenuation.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
-// 포인트
 #include "Components/WidgetComponent.h"
 #include "KWB/UI/W_ShowNameWidget.h"
 #include "KHS/Drone/K_Drone.h"
@@ -72,7 +71,6 @@ AB_UnitBase::AB_UnitBase()
 	IndicatorSprite = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "IndicatorSprite" ) );
 	IndicatorSprite->SetupAttachment ( RootComponent );
 
-	// 포인트
 	ShowNameWidgetComponent = CreateDefaultSubobject<UWidgetComponent> ( TEXT ( "ShowNameWidget" ) );
 	ShowNameWidgetComponent->SetupAttachment ( RootComponent );
 	ShowNameWidgetComponent->SetWidgetSpace ( EWidgetSpace::Screen );
@@ -116,12 +114,10 @@ void AB_UnitBase::BeginPlay()
 	}
 
 	UnitDataUpdate ();
-	// 포인트
 	InitializeShowNameWidget ();
 	BindDroneDetection ();
 }
 
-// 포인트
 void AB_UnitBase::EndPlay ( const EEndPlayReason::Type EndPlayReason )
 {
 	UnbindDroneDetection ();
@@ -145,7 +141,6 @@ void AB_UnitBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 }
 
-// 포인트(Start)
 void AB_UnitBase::InitializeShowNameWidget ()
 {
 	if (!ShowNameWidgetComponent)
@@ -226,7 +221,6 @@ void AB_UnitBase::HandleDroneUnitLost ( AActor* LostActor )
 
 	ShowNameWidget->SetShowNameState ( EUnitShowNameState::UNDETECTED , false );
 }
-// 포인트(End)
 
 //void AB_UnitBase::FindMapWidgetLoop ()
 //{

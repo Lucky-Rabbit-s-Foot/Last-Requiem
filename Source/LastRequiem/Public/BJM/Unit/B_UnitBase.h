@@ -8,7 +8,6 @@
 #include "GameplayTagAssetInterface.h"
 #include "B_UnitAIController.h"
 #include "NiagaraSystem.h"
-// 포인트
 #include "Delegates/Delegate.h"
 
 #include "B_UnitBase.generated.h"
@@ -20,7 +19,6 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams ( FOnUnitSpeak , AActor* , InSpeake
 class UB_UnitStatusComponent;
 class UIndicatorSpriteComponent;
 class UAudioComponent;
-// 포인트
 class UWidgetComponent;
 class UW_ShowNameWidget;
 class AK_Drone;
@@ -39,7 +37,6 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	// 포인트
 	virtual void EndPlay ( const EEndPlayReason::Type EndPlayReason ) override;
 
 public:	
@@ -88,7 +85,6 @@ public:
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Data" )
 	FText MyUnitName;
 
-	// 포인트
 	UPROPERTY ( EditDefaultsOnly , BlueprintReadOnly , Category = "Unit|UI" )
 	TSubclassOf<UW_ShowNameWidget> ShowNameWidgetClass;
 
@@ -255,7 +251,6 @@ public:
 protected:
 	FTimerHandle SpeakingTimerHandle;
 
-	// 포인트
 	void InitializeShowNameWidget ();
 	void BindDroneDetection ();
 	void UnbindDroneDetection ();
@@ -268,7 +263,6 @@ protected:
 	TWeakObjectPtr<AK_Drone> BoundDrone;
 	FDelegateHandle UnitDetectedHandle;
 	FDelegateHandle UnitLostHandle;
-
 
 public:
 	UFUNCTION ( BlueprintCallable , Category = "Unit|Action" )
