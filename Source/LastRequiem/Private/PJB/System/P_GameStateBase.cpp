@@ -25,3 +25,8 @@ void AP_GameStateBase::CountEnemyKill ( int32 InEnemyID )
 		break;
 	}
 }
+
+void AP_GameStateBase::SetPlayTime ()
+{
+	GameResultData.PlayTime = FMath::RoundToInt ( RealGameTimeSeconds );
+}
