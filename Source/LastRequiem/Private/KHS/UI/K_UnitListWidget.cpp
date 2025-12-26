@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "KHS/UI/K_UnitListWidget.h"
@@ -197,6 +197,7 @@ void UK_UnitListWidget::AddUnitSlot(UK_UnitSlotWiddget* newSlot)
 	UVerticalBoxSlot* childSlot = UnitSlotList->AddChildToVerticalBox(newSlot);
 	if (childSlot)
 	{
-		childSlot->SetPadding(FMargin(0,0,0,10.f));
+		// (20251226) W : 에디터에서 슬롯 간격 조정하기 위해 추가
+		childSlot->SetPadding ( FMargin ( 0.f , 0.f , 0.f , UnitSlotSpacing * 1.f ) );
 	}
 }
