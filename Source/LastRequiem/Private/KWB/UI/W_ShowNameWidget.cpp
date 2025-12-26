@@ -16,7 +16,13 @@ void UW_ShowNameWidget::NativeConstruct ()
 
 	if (OwnerUnit.IsValid ())
 	{
-		SetUnitNameText ( OwnerUnit.Get () );
+		AB_UnitBase* unit = Cast<AB_UnitBase> ( OwnerUnit );
+		if (!unit)
+		{
+			return;
+		}
+
+		SetUnitNameText ( OwnerUnit.Get (), unit->GetUnitProfileData () );
 		KHS_INFO ( TEXT ( "ShowName: %s 연결 됨." ) , *OwnerUnit->GetName () );
 	}
 	else
@@ -30,23 +36,50 @@ void UW_ShowNameWidget::InitializeOwner ( AActor* InOwnerUnit )
 {
 	OwnerUnit = InOwnerUnit;
 
-	if (OwnerUnit.IsValid ())
+	AB_UnitBase* unit = Cast<AB_UnitBase> ( InOwnerUnit );
+	if (!unit)
 	{
-		SetUnitNameText ( OwnerUnit.Get () );
-		KHS_INFO ( TEXT ( "ShowName: InitializeOwner -> %s" ) , *OwnerUnit->GetName () );
+		return;
 	}
+
+	FUnitProfileData unitData = unit->GetUnitProfileData ();
+
+	SetUnitInfo ( unitData );
+
+	// SetUnitInfo 로 대체
+	//if (OwnerUnit.IsValid ())
+	//{
+	//	SetUnitNameText ( OwnerUnit.Get () );
+	//	KHS_INFO ( TEXT ( "ShowName: InitializeOwner -> %s" ) , *OwnerUnit->GetName () );
+	//}
 }
 
-void UW_ShowNameWidget::SetUnitNameText ( AActor* InOwnerUnit )
+void UW_ShowNameWidget::SetUnitNameText ( AActor* InOwnerUnit, const FUnitProfileData& UnitData )
 {
 	if (!UnitNameText || !IsValid ( InOwnerUnit ))
 	{
 		return;
 	}
 
-	// 에디터에선 Label, 런타임에선 Name 쪽으로 안전하게 표시
-	const FString DisplayName = InOwnerUnit->GetActorNameOrLabel ();
-	UnitNameText->SetText ( FText::FromString ( DisplayName ) );
+	UnitNameText->SetText ( UnitData.UnitName );
+
+	// 새로운 걸로 테스트
+	//// 에디터에선 Label, 런타임에선 Name 쪽으로 안전하게 표시
+	//const FString DisplayName = InOwnerUnit->GetActorNameOrLabel ();
+	//UnitNameText->SetText ( FText::FromString ( DisplayName ) );
+}
+
+void UW_ShowNameWidget::SetUnitInfo ( const FUnitProfileData& UnitData )
+{
+	if (UnitNameText)
+	{
+		UnitNameText->SetText ( UnitData.UnitName );
+	}
+
+	if (UnitImage)
+	{
+		UnitImage->SetBrushFromTexture ( UnitData.ProfileImage );
+	}
 }
 
 void UW_ShowNameWidget::SetShowNameState ( EUnitShowNameState NewState , bool bPlayPopup )
