@@ -33,6 +33,11 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	// (20251224) P : 드론 충돌 (Start)
+	virtual void NotifyHit ( class UPrimitiveComponent* MyComp , AActor* Other , class UPrimitiveComponent* OtherComp , bool bSelfMoved , FVector HitLocation , FVector HitNormal , FVector NormalImpulse , const FHitResult& Hit ) override;
+	// (20251224) P : 드론 충돌 (End)
+
+
 private:
 	void InitializeDefaultComponents(); //컴포넌트 초기화 내부 헬퍼 함수
 	void UpdateDroneMovement(float DeltaTime);
@@ -48,7 +53,6 @@ private:
 	void OnSkill01CooldownFinished ();
 	void OnSkill02CooldownFinished ();
 	// (20251223) W : 드론 스킬 쿨타임 핸들 용도 멤버 추가 (End)
-
 
 public:
 	//Movement
@@ -82,7 +86,6 @@ public:
 	float GetSkill02CooldownRatioRemaining () const;
 	// (20251223) W : 드론 스킬 쿨타임 핸들 용도 함수 추가 (End)
 
-
 private:
 	//movement 
 	FVector2D moveInputValue = FVector2D::ZeroVector;
@@ -105,6 +108,11 @@ private:
 	FTimerHandle Skill01CooldownTimerHandle;
 	FTimerHandle Skill02CooldownTimerHandle;
 	// (20251223) W : 드론 스킬 쿨타임 핸들 용도 멤버 추가 (End)
+
+	// (20251224) P : 드론 충돌 (Start)
+	FTimerHandle DampingRestoreTimer;
+	float DefaultLinearDamping = 0.01f;
+	// (20251224) P : 드론 충돌 (End)
 
 protected:
 	//Components
