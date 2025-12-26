@@ -22,6 +22,9 @@ public:
 
 	void SetScore ( UP_ScoreBlock* Title, FString TitleText , int32 PlayTimeSec , int32 Modifier);
 
+	UFUNCTION ()
+	void OnScoreUpdateAnimFinished ();
+
 protected:
 	// Play Score
 	UPROPERTY ( meta = (BindWidget) )
@@ -46,4 +49,10 @@ protected:
 	// Total Score
 	UPROPERTY ( meta = (BindWidget) )
 	UTextBlock* TotalScore;
+
+	UPROPERTY ( meta = (BindWidget) )
+	class UP_GameOverLevelSelector* LevelSelector;
+
+	UPROPERTY( Transient , meta = (BindWidgetAnim) )
+	class UWidgetAnimation* ScoreUpdateAnim;
 };
