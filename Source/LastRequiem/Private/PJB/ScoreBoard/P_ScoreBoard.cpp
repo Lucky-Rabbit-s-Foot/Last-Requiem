@@ -5,10 +5,13 @@
 #include "PJB/ScoreBoard/P_ScoreBlock.h"
 #include "PJB/Data/P_ScoringDataAsset.h"
 #include "PJB/Data/P_GameResultData.h"
+#include "PJB/LevelSelector/P_GameOverLevelSelector.h"
 
 void UP_ScoreBoard::NativeConstruct ()
 {
 	Super::NativeConstruct ();
+
+	LevelSelector->SetIsEnabled ( false );
 
 	ULR_GameInstance* GI = Cast<ULR_GameInstance> ( GetGameInstance () );
 	UE_LOG ( LogTemp , Warning , TEXT ( "UP_ScoreBoard::NativeConstruct - GI: %s" ) , GI ? *GI->GetName () : TEXT ( "nullptr" ) );
@@ -18,6 +21,15 @@ void UP_ScoreBoard::NativeConstruct ()
 
 	GI->GameResultCount.LogResult ();
 	GI->GameResultScore.LogResult ();
+
+	if (ScoreUpdateAnim)
+	{
+		PlayAnimation ( ScoreUpdateAnim );
+
+		FWidgetAnimationDynamicEvent AnimFinishedDelegate;
+		AnimFinishedDelegate.BindDynamic ( this , &UP_ScoreBoard::OnScoreUpdateAnimFinished );
+		BindToAnimationFinished ( ScoreUpdateAnim , AnimFinishedDelegate );
+	}
 }
 
 void UP_ScoreBoard::UpdateAllScores ( FP_GameResultData& Count , FP_GameResultData& Score )
@@ -43,4 +55,9 @@ void UP_ScoreBoard::SetScore ( UP_ScoreBlock* Title , FString TitleText , int32 
 		Count ,
 		Score
 	);
+}
+
+void UP_ScoreBoard::OnScoreUpdateAnimFinished ()
+{
+	LevelSelector->SetIsEnabled ( true );
 }
