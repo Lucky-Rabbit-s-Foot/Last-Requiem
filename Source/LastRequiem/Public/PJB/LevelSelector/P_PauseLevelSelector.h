@@ -4,8 +4,9 @@
 #include "PJB/LevelSelector/P_LevelSelector.h"
 #include "P_PauseLevelSelector.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnRestartRequested1 );
-DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnQuitGameRequested1 );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnRestartRequestedSelect );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnQuitGameRequestedSelect );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnCloseUIRequestedSelect );
 
 UCLASS()
 class LASTREQUIEM_API UP_PauseLevelSelector : public UP_LevelSelector
@@ -18,8 +19,11 @@ public:
 	virtual void OnButton3Clicked () override;
 
 	UPROPERTY ( BlueprintAssignable , Category = "LR|Events" )
-	FOnRestartRequested1 onRestartRequestedDel;
+	FOnRestartRequestedSelect onRestartRequestedDel;
 
 	UPROPERTY ( BlueprintAssignable , Category = "LR|Events" )
-	FOnQuitGameRequested1 onQuitGameRequestedDel;
+	FOnQuitGameRequestedSelect onQuitGameRequestedDel;
+
+	UPROPERTY ( BlueprintAssignable , Category = "LR|Events" )
+	FOnCloseUIRequestedSelect onCloseUIRequestedDel;
 };

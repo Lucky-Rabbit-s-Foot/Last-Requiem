@@ -14,6 +14,8 @@
 
 #include "KWB/UI/Monitor/W_SituationMapWidget.h"
 #include "BJM/Unit/B_UnitBase.h"
+#include "PJB/Pause/P_PauseWidget.h"
+#include "PJB/LevelSelector/P_PauseLevelSelector.h"
 
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
@@ -47,7 +49,10 @@ void AK_DroneController::SetupInputComponent()
 		enhanced->BindAction(IA_UpDown, ETriggerEvent::Completed, this, &AK_DroneController::OnDroneDownReleased);
 		
 		enhanced->BindAction(IA_ModeChange, ETriggerEvent::Started, this, &AK_DroneController::OnToggleSituationMapUI);
-		enhanced->BindAction(IA_Setting, ETriggerEvent::Started, this, &AK_DroneController::OnOpenSettingUI);
+		// enhanced->BindAction(IA_Setting, ETriggerEvent::Started, this, &AK_DroneController::OnOpenSettingUI);
+		// (20251226) P : Pause UI (Start)
+		enhanced->BindAction(IA_Setting, ETriggerEvent::Started, this, &AK_DroneController::OnOpenPauseUI);
+		// (20251226) P : Pause UI (End)
 		
 		enhanced->BindAction(IA_Skill01, ETriggerEvent::Started, this, &AK_DroneController::OnDroneUseSkill01);
 		enhanced->BindAction(IA_Skill02, ETriggerEvent::Started, this, &AK_DroneController::OnDroneUseSkill02);
@@ -206,6 +211,39 @@ void AK_DroneController::UnbindSettingUIDelegates()
 	cachedSettingUI = nullptr;
 	bSettingUIBound = false;
 }
+
+// (20251226) P : Pause UI (Start)
+void AK_DroneController::BindPauseUIDelegates ( UP_PauseWidget* pauseUI )
+{
+	if (!pauseUI || bSituationMapUIBound)
+	{
+		KHS_INFO ( TEXT ( "NO Valid Setting Ui or is already bound with Controller" ) );
+		return;
+	}
+
+	cachedPauseUI = pauseUI;
+
+	pauseUI->onRestartRequestedDel.AddDynamic ( this , &AK_DroneController::HandleRestartButtonClicked );
+	pauseUI->onQuitGameRequestedDel.AddDynamic ( this , &AK_DroneController::HandleQuitGameButtonClicked );
+
+	bPauseUIBound = true;
+}
+void AK_DroneController::UnbindPauseUIDelegates ()
+{
+	if (!bSituationMapUIBound || !cachedPauseUI)
+	{
+		KHS_INFO ( TEXT ( "NO Valid cached Ui or is already unbound with Controller" ) );
+		return;
+	}
+
+	cachedPauseUI->LevelSelector->onRestartRequestedDel.RemoveDynamic ( this , &AK_DroneController::HandleRestartButtonClicked );
+	cachedPauseUI->LevelSelector->onQuitGameRequestedDel.RemoveDynamic ( this , &AK_DroneController::HandleQuitGameButtonClicked );
+	
+	cachedPauseUI = nullptr;
+	bPauseUIBound = false;
+}
+// (20251226) P : Pause UI (End)
+
 // (20251224) W : Unit Order(Keyboard)
 void AK_DroneController::OnUnitOrderAttack ( const FInputActionValue& value )
 {
@@ -334,6 +372,40 @@ void AK_DroneController::OnToggleSituationMapUI(const FInputActionValue& value)
 	}
 }
 
+void AK_DroneController::OnOpenPauseUI ( const FInputActionValue& value )
+{
+	if (!pauseUIFactory)
+	{
+		KHS_WARN ( TEXT ( "No Valid SettingWidget" ) );
+		return;
+	}
+
+	auto* UIManager = GetGameInstance ()->GetSubsystem<UK_UIManagerSubsystem> ();
+	if (!UIManager)
+	{
+		KHS_WARN ( TEXT ( "No Valid UI Subsystem" ) );
+		return;
+	}
+
+	auto* pauseUI = UIManager->GetOrCreateWidget<UP_PauseWidget> ( pauseUIFactory );
+	if (!pauseUI)
+	{
+		KHS_WARN ( TEXT ( "No Valid Casted Widget" ) );
+		return;
+	}
+
+	if (pauseUI->IsOpen ())
+	{
+		return;
+	}
+
+	SetPause ( true );
+
+	UIManager->OpenUI<UP_PauseWidget> ( pauseUIFactory );
+	pauseUI->onCloseUIRequested.AddDynamic ( this , &AK_DroneController::HandleUICloseRequest );
+	BindPauseUIDelegates ( pauseUI );
+}
+
 void AK_DroneController::OnDroneUseSkill01(const FInputActionValue& value)
 {
 	AK_Drone* drone = Cast<AK_Drone>(GetPawn());
@@ -388,7 +460,6 @@ void AK_DroneController::OnOpenSettingUI(const FInputActionValue& value)
 	BindSettingUIDelegates(settingUI);
 }
 
-
 void AK_DroneController::HandleUICloseRequest(class UK_BaseUIWidget* requestWidget)
 {
 	if (!requestWidget)
@@ -420,6 +491,16 @@ void AK_DroneController::HandleUICloseRequest(class UK_BaseUIWidget* requestWidg
 		SetPause(false);
 	}
 	
+	// (20251226) P : Pause UI (Start)
+	UP_PauseWidget* pauseUI = Cast<UP_PauseWidget> ( requestWidget );
+	if (pauseUI)
+	{
+		UnbindPauseUIDelegates ();
+		//게임 재개
+		SetPause ( false );
+	}
+	// (20251226) P : Pause UI (End)
+
 	//인스턴스로 직접 닫는 오버로딩 CloseUI함수 호출
 	UIManager->CloseUI(requestWidget);
 	

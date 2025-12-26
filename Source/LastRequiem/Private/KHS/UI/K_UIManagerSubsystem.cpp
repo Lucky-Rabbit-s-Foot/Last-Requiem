@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "KHS/UI/K_UIManagerSubsystem.h"
@@ -76,6 +76,9 @@ void UK_UIManagerSubsystem::NotifyInputModeChange()
 
 void UK_UIManagerSubsystem::CloseUIInternal(UK_BaseUIWidget* widget)
 {
+	//widget 이름이 뭔지 로그	로 남기기
+	KHS_INFO ( TEXT ( "CloseUIInternal 호출된 widget : %s" ) , widget ? *widget->GetName () : TEXT ( "nullptr" ) );
+
 	if (!widget || !widget->IsOpen())
 	{
 		KHS_INFO(TEXT("CloseUIInternal에 widget이 들어오지 않았음"));

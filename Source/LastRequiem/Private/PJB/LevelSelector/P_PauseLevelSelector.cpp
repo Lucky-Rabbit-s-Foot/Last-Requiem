@@ -10,7 +10,7 @@ void UP_PauseLevelSelector::OnButton1Clicked ()
 
 void UP_PauseLevelSelector::OnButton2Clicked ()
 {
-	onCloseUIRequested.Broadcast ( this );
+	onCloseUIRequestedDel.Broadcast ();
 }
 
 void UP_PauseLevelSelector::OnButton3Clicked ()

@@ -38,6 +38,10 @@ private:
 	void OnOpenSettingUI(const FInputActionValue& value);
 	void OnToggleSituationMapUI(const FInputActionValue& value); //드론뷰-상황판 전환용
 	
+	// (20251226) P : Pause UI (Start)
+	void OnOpenPauseUI ( const FInputActionValue& value );
+	// (20251226) P : Pause UI (End)
+
 	/*
 	 * UI Management FUnctions Section
 	 * - Open/Close UI with UI Subsystem
@@ -56,6 +60,11 @@ private:
 	void UnbindSituationMapUIDelegates();
 	void BindSettingUIDelegates(class UK_SettingWidget* settingUI);
 	void UnbindSettingUIDelegates();
+	// (20251226) P : Pause UI (Start)
+	void BindPauseUIDelegates ( class UP_PauseWidget* pauseUI );
+	void UnbindPauseUIDelegates ();
+	// (20251226) P : Pause UI (End)
+
 	
 	// (20251224) W : Unit Orders(Keyboard)
 	void OnUnitOrderAttack ( const FInputActionValue& value );
@@ -104,7 +113,13 @@ protected:
 	TObjectPtr<class UK_SettingWidget> cachedSettingUI;
 	UPROPERTY()
 	TObjectPtr<class UK_TutorialWidget> cachedTutorialUI;
-	
+
+	// (20251226) P : Pause UI (Start)
+	UPROPERTY ()
+	TObjectPtr<class UP_PauseWidget> cachedPauseUI;
+	bool bPauseUIBound = false;
+	// (20251226) P : Pause UI (End)
+
 	//UI 델리게이트 바인딩 플래그
 	bool bPersistentUIBound = false;
 	bool bSituationMapUIBound = false;
@@ -123,6 +138,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|UI")
 	TSubclassOf<class UK_SettingWidget> settingUIFactory;
 	
+	// (20251226) P : Pause UI (Start)
+	UPROPERTY ( EditDefaultsOnly , BlueprintReadOnly , Category = "LR|UI" )
+	TSubclassOf<class UP_PauseWidget> pauseUIFactory;
+	// (20251226) P : Pause UI (End)
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|UI")
 	TSubclassOf<class UK_TutorialWidget> tutorialUIFactory;
 	
