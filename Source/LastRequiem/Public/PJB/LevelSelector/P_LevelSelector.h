@@ -36,13 +36,13 @@ public:
 
 protected:
 	UFUNCTION ()
-	void OnButton1Clicked ();
+	virtual void OnButton1Clicked ();
 
 	UFUNCTION ()
-	void OnButton2Clicked ();
+	virtual void OnButton2Clicked ();
 
 	UFUNCTION ()
-	void OnButton3Clicked ();
+	virtual void OnButton3Clicked ();
 
 	UFUNCTION ()
 	bool IsQuitGame ( FName LevelName );

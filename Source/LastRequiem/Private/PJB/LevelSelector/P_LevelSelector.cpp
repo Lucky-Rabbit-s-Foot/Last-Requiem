@@ -6,21 +6,22 @@
 void UP_LevelSelector::NativeConstruct ()
 {
 	Super::NativeConstruct ();
+
 	if (Button1)
 	{
-		Button1->OnClicked.RemoveDynamic ( this , &UP_LevelSelector::OnButton1Clicked );
+		Button1->OnClicked.RemoveAll ( this );
 		Button1->OnClicked.AddDynamic ( this , &UP_LevelSelector::OnButton1Clicked );
 	}
 
 	if (Button2)
 	{
-		Button2->OnClicked.RemoveDynamic ( this , &UP_LevelSelector::OnButton2Clicked );
+		Button2->OnClicked.RemoveAll ( this );
 		Button2->OnClicked.AddDynamic ( this , &UP_LevelSelector::OnButton2Clicked );
 	}
 
 	if (Button3)
 	{
-		Button3->OnClicked.RemoveDynamic ( this , &UP_LevelSelector::OnButton3Clicked );
+		Button3->OnClicked.RemoveAll ( this );
 		Button3->OnClicked.AddDynamic ( this , &UP_LevelSelector::OnButton3Clicked );
 	}
 }
@@ -40,7 +41,7 @@ void UP_LevelSelector::OnButton2Clicked ()
 void UP_LevelSelector::OnButton3Clicked ()
 {
 	if (IsQuitGame ( Level3Name ) || Level3Name.IsNone ()) return;
-	UGameplayStatics::OpenLevel ( this , Level3Name );
+	OpenSelectedLevel ( Level3Name );
 }
 
 bool UP_LevelSelector::IsQuitGame ( FName LevelName )
