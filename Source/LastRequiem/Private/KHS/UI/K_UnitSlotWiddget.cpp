@@ -162,12 +162,12 @@ void UK_UnitSlotWiddget::UpdateSlotVisualState()
 	{
 		case EUnitSlotState::DETECTED:
 		{
-			SetSlotVisualState(FLinearColor(0.0f, 0.0f, 1.0f, 0.5f), ESlateVisibility::Hidden, true);
+			SetSlotVisualState(FLinearColor(0.0f, 0.0f, 1.0f, 10.0f), ESlateVisibility::Hidden, true); // TEST : Default 0.5f
 		}
 		break;
 	case EUnitSlotState::UNDETECTED:
 		{
-			SetSlotVisualState(FLinearColor(0.3f, 0.3f, 0.3f, 0.5f), ESlateVisibility::Hidden, true);
+			SetSlotVisualState(FLinearColor(0.3f, 0.3f, 0.3f, 10.0f), ESlateVisibility::Hidden, true); // TEST : Default 0.5f
 		}
 		break;
 	case EUnitSlotState::DEAD:

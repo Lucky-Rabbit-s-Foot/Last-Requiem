@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -50,6 +50,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "LR|UI")
 	TSubclassOf<class UK_UnitSlotWiddget> unitSlotWidget;
 	
+	// (20251226) W : 에디터에서 슬롯 간격 조정하기 위해 추가
+	UPROPERTY ( EditDefaultsOnly , Category = "LR|UI" )
+	float UnitSlotSpacing = 10.f;
+
 public:
 	UPROPERTY(BlueprintAssignable, Category = "LR|Event")
 	FOnUnitListSelected onUnitListSelectedDel;
