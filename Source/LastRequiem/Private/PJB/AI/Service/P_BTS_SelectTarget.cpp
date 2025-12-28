@@ -17,7 +17,8 @@
 UP_BTS_SelectTarget::UP_BTS_SelectTarget ()
 {
 	NodeName = TEXT ( "Select Target" );
-	Interval = 0.5f;
+	Interval = 0.15f;
+	RandomDeviation = 0.05f;
 }
 
 void UP_BTS_SelectTarget::TickNode ( UBehaviorTreeComponent& OwnerComp , uint8* NodeMemory , float DeltaSeconds )
