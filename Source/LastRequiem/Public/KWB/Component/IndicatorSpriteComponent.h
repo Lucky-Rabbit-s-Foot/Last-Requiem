@@ -100,17 +100,17 @@ protected:
 	float GlowMin = 0.5f;
 
 	UPROPERTY ( EditAnywhere , Category = "Data|Glow|Selected" )
-	float GlowMax = 2.0f;
+	float GlowMax = 5.0f;
 
 	// Combat Glow 세팅
 	UPROPERTY ( EditAnywhere , Category = "Data|Glow|Combat" )
-	float CombatGlowSpeed = 9.0f;
+	float CombatGlowSpeed = 12.0f;
 
 	UPROPERTY ( EditAnywhere , Category = "Data|Glow|Combat" )
 	float CombatGlowMin = 0.8f;
 
 	UPROPERTY ( EditAnywhere , Category = "Data|Glow|Combat" )
-	float CombatGlowMax = 2.5f;
+	float CombatGlowMax = 12.0f;
 
 	// Combat에서 색을 파란 <-> 빨간으로 변환하고 싶을 때 사용할 색
 	UPROPERTY ( EditAnywhere , Category = "Data|Glow|Combat" )
