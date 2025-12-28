@@ -8,6 +8,8 @@
 class UP_ScoreBlock;
 class UTextBlock;
 class UP_ScoringDataAsset;
+class USoundBase;
+class UAudioComponent;
 
 UCLASS()
 class LASTREQUIEM_API UP_ScoreBoard : public UK_BaseUIWidget
@@ -16,6 +18,7 @@ class LASTREQUIEM_API UP_ScoreBoard : public UK_BaseUIWidget
 	
 public:
 	virtual void NativeConstruct () override;
+	virtual void NativeDestruct () override;
 
 	UFUNCTION(BlueprintCallable, Category = "UI|Score" )
 	void UpdateAllScores ( FP_GameResultData& Count , FP_GameResultData& Modifier );
@@ -55,4 +58,11 @@ protected:
 
 	UPROPERTY( Transient , meta = (BindWidgetAnim) )
 	class UWidgetAnimation* ScoreUpdateAnim;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Audio|Score" )
+	USoundBase* GameOverBGM;
+
+private:
+	UPROPERTY ()
+	UAudioComponent* BGMComponent;
 };
