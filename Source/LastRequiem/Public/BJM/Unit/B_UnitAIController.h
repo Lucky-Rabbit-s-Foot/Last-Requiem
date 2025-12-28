@@ -62,4 +62,7 @@ public:
 
 	void SetCommandState ( EUnitCommandType NewCommand , FVector TargetLocation );
 
+protected:
+	virtual void OnMoveCompleted ( FAIRequestID RequestID , const FPathFollowingResult& Result ) override;
+
 };
