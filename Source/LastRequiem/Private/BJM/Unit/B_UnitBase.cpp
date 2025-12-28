@@ -407,6 +407,11 @@ void AB_UnitBase::OnBehaviorStateChanged_Unit ( EUnitBehaviorState NewState )
 		UE_LOG ( LogTemp , Warning , TEXT ( "공포 / 요새로 후퇴" ) );
 		break;
 
+	case EUnitBehaviorState::Panic:
+		CommandStop ();
+		UE_LOG ( LogTemp , Warning , TEXT ( "패닉 상태! 통제 불능!" ) );
+		break;
+
 	case EUnitBehaviorState::Madness:
 		//GameplayTags.RemoveTag ( UnitTag );
 		//GameplayTags.AddTag ( EnemyTag );
@@ -420,6 +425,19 @@ void AB_UnitBase::ProcessMoveCommand(float InX, float InY)
 {
 	AAIController* AIController = Cast<AAIController> ( GetController () );
 	if (!AIController) return;
+
+	if (StatusComponent)
+	{
+		EUnitBehaviorState State = StatusComponent->CurrentState;
+		if (State == EUnitBehaviorState::Fear ||
+			State == EUnitBehaviorState::Panic ||
+			State == EUnitBehaviorState::Madness)
+		{
+			PlayCommandSound ( Cmd_DisobeySound );
+			UE_LOG ( LogTemp , Warning , TEXT ( "상태 이상으로 명령 거부됨" ) );
+			return;
+		}
+	}
 
 	UBlackboardComponent* BlackboardComp = AIController->GetBlackboardComponent ();
 	if (BlackboardComp)
@@ -520,6 +538,16 @@ void AB_UnitBase::CommandMoveToLocation ( FVector TargetLocation )
 
 void AB_UnitBase::CommandAttackMove ( FVector TargetLocation )
 {
+	if (StatusComponent)
+	{
+		EUnitBehaviorState State = StatusComponent->CurrentState;
+		if (State == EUnitBehaviorState::Fear || State == EUnitBehaviorState::Panic || State == EUnitBehaviorState::Madness)
+		{
+			PlayCommandSound ( Cmd_DisobeySound );
+			return;
+		}
+	}
+
 	PlayCommandSound(Cmd_AttackSound);
 
 	AAIController* AIController = Cast<AAIController> ( GetController () );
@@ -535,6 +563,16 @@ void AB_UnitBase::CommandAttackMove ( FVector TargetLocation )
 
 void AB_UnitBase::CommandStop ()
 {
+	if (StatusComponent)
+	{
+		EUnitBehaviorState State = StatusComponent->CurrentState;
+		if (State == EUnitBehaviorState::Fear || State == EUnitBehaviorState::Panic || State == EUnitBehaviorState::Madness)
+		{
+			PlayCommandSound ( Cmd_DisobeySound );
+			return; // 무시
+		}
+	}
+
 	AAIController* AIController = Cast<AAIController> ( GetController () );
 	if (AIController)
 	{
@@ -549,6 +587,16 @@ void AB_UnitBase::CommandStop ()
 
 void AB_UnitBase::CommandHold ()
 {
+	if (StatusComponent)
+	{
+		EUnitBehaviorState State = StatusComponent->CurrentState;
+		if (State == EUnitBehaviorState::Fear || State == EUnitBehaviorState::Panic || State == EUnitBehaviorState::Madness)
+		{
+			PlayCommandSound ( Cmd_DisobeySound );
+			return; // 무시
+		}
+	}
+
 	AAIController* AIController = Cast<AAIController> ( GetController () );
 	if (AIController)
 	{
@@ -563,6 +611,16 @@ void AB_UnitBase::CommandHold ()
 
 void AB_UnitBase::CommandRetreat ()
 {
+	if (StatusComponent)
+	{
+		EUnitBehaviorState State = StatusComponent->CurrentState;
+		if (State == EUnitBehaviorState::Fear || State == EUnitBehaviorState::Panic || State == EUnitBehaviorState::Madness)
+		{
+			PlayCommandSound ( Cmd_DisobeySound );
+			return; // 무시
+		}
+	}
+
 	AAIController* AIController = Cast<AAIController> ( GetController () );
 	if (!AIController) return;
 
@@ -695,7 +753,23 @@ void AB_UnitBase::UnitAttack(AActor* TargetActor)
 		FGameplayTagContainer TargetTags;
 		TagInterface->GetOwnedGameplayTags ( TargetTags );
 
-		if (!TargetTags.HasTag ( EnemyTag ))
+		bool bIsTargetEnemy = TargetTags.HasTag ( EnemyTag );
+		bool bAmIMad = (StatusComponent && StatusComponent->CurrentState == EUnitBehaviorState::Madness);
+
+
+		//if (!TargetTags.HasTag ( EnemyTag ))
+		//{
+		//	CurrentAttackTarget = nullptr;
+
+		//	AAIController* AIC = Cast<AAIController> ( GetController () );
+		//	if (AIC && AIC->GetBlackboardComponent ())
+		//	{
+		//		AIC->GetBlackboardComponent ()->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
+		//	}
+		//	return;
+		//}
+
+		if (!bIsTargetEnemy && !bAmIMad)
 		{
 			CurrentAttackTarget = nullptr;
 
@@ -706,6 +780,7 @@ void AB_UnitBase::UnitAttack(AActor* TargetActor)
 			}
 			return;
 		}
+
 	}
 
 	SetCombatState_Unit ( true );

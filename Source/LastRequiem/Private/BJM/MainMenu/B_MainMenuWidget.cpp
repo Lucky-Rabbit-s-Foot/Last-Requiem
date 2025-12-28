@@ -6,11 +6,11 @@
 
 void UB_MainMenuWidget::OnClickNewGame ()
 {
-	// 맵전환
-	// UGameplayStatics::OpenLevel ( this , FName ( "맵 이름" ) );
+	PlayGameStartAnimation ();
 }
 
 void UB_MainMenuWidget::OnClickExitGame ()
 {
 	UKismetSystemLibrary::QuitGame ( this , GetOwningPlayer () , EQuitPreference::Quit , true );
 }
+

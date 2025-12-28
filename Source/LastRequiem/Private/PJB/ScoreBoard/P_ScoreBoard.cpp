@@ -1,6 +1,10 @@
 ﻿#include "PJB/ScoreBoard/P_ScoreBoard.h"
 
 #include "Components/TextBlock.h"
+#include "Sound/SoundBase.h"
+#include "Components/AudioComponent.h"
+#include "Kismet/GameplayStatics.h" 
+
 #include "LR_GameInstance.h"
 #include "PJB/ScoreBoard/P_ScoreBlock.h"
 #include "PJB/Data/P_ScoringDataAsset.h"
@@ -32,6 +36,16 @@ void UP_ScoreBoard::NativeConstruct ()
 	}
 }
 
+void UP_ScoreBoard::NativeDestruct ()
+{
+	Super::NativeDestruct ();
+
+	if (BGMComponent && BGMComponent->IsPlaying ())
+	{
+		BGMComponent->Stop ();
+	}
+}
+
 void UP_ScoreBoard::UpdateAllScores ( FP_GameResultData& Count , FP_GameResultData& Score )
 {
 	SetScore ( PlayTime , TEXT ( "플레이 시간" ) , Count.PlayTime , Score.PlayTime );
@@ -60,4 +74,12 @@ void UP_ScoreBoard::SetScore ( UP_ScoreBlock* Title , FString TitleText , int32 
 void UP_ScoreBoard::OnScoreUpdateAnimFinished ()
 {
 	LevelSelector->SetIsEnabled ( true );
+
+	if (GameOverBGM)
+	{
+		if (!BGMComponent || !BGMComponent->IsPlaying ())
+		{
+			BGMComponent = UGameplayStatics::SpawnSound2D ( this , GameOverBGM );
+		}
+	}
 }

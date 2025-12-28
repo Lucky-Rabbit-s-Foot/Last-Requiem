@@ -105,4 +105,11 @@ protected:
 private:
 	void UpdateBehaviorState ();
 
+protected:
+	// 패닉 상태일 때 정신력 깎는 타이머
+	FTimerHandle PanicSanityTimerHandle;
+
+	// 패닉 상태일 때 호출될 함수
+	void ReduceSanityInPanic ();
+
 };
