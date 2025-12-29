@@ -50,7 +50,8 @@ void AP_EnemyBase::BeginPlay ()
 {
 	Super::BeginPlay ();
 
-	SpriteComp->SetSpriteOnOff ( false );
+	SpriteComp->SetSpriteOnOff ( false );	
+	SpriteComp->SetRelativeRotation ( FRotator ( 0.0f , -90.0f , -90.0f ) );
 	InitGameplayTag ();
 	OnTakeAnyDamage.AddDynamic ( this , &AP_EnemyBase::OnTakeDamage );
 

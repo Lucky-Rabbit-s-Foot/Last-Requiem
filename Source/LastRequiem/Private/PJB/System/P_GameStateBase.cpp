@@ -36,7 +36,10 @@ void AP_GameStateBase::CountRecoverySanity ()
 	GameResultData.Sanity++;
 }
 
-
+void AP_GameStateBase::CountDestructEnemyObstacle ()
+{
+	GameResultData.Dest++;
+}
 
 void AP_GameStateBase::SetPlayTime ()
 {

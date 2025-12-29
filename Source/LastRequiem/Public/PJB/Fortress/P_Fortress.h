@@ -49,6 +49,9 @@ protected:
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Config = "Data|Destruction" )
 	TSubclassOf<AActor> MasterFieldClass = nullptr;
 
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Sprite" )
+	TObjectPtr<class UIndicatorSpriteComponent> SpriteComp = nullptr;
+
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
 	FGameplayTagContainer GameplayTags;
 
