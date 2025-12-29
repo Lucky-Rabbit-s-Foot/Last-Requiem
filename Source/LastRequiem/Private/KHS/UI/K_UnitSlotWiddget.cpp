@@ -133,7 +133,6 @@ void UK_UnitSlotWiddget::UpdateUnitData(const FUnitProfileData& newData)
 	
 	if (!newData.bIsAlive)
 	{
-		// (20251229) W : 유닛 사망시 남아있는 HP바 강제 0으로 업데이트
 		HPBar->SetPercent ( 0.0f );
 		SetSlotState(EUnitSlotState::DEAD);
 	}
@@ -144,6 +143,26 @@ void UK_UnitSlotWiddget::SetSlotState(EUnitSlotState newState)
 {
 	currentState = newState;
 	
+	// (20251229) W : Dead 상태가 되면 HPBar, SPBar 값 강제 0.0f으로 고정
+	if (currentState == EUnitSlotState::DEAD)
+	{
+		targetDisplayedHP = 0.f;
+		currentDisplayedHP = 0.f;
+
+		if (HPBar)
+		{
+			HPBar->SetPercent ( 0.0f );
+		}
+
+		targetDisplayedSP = 0.f;
+		currentDisplayedSP = 0.f;
+
+		if (SPBar)
+		{
+			SPBar->SetPercent ( 0.0f );
+		}
+	}
+
 	UpdateSlotVisualState();
 }
 
