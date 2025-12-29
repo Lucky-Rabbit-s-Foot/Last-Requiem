@@ -9,37 +9,51 @@ UP_PauseWidget::UP_PauseWidget ()
 	zOrder = 10;
 }
 
-void UP_PauseWidget::NativeConstruct ()
+
+
+//void UP_PauseWidget::NativeConstruct ()
+//{
+//	Super::NativeConstruct ();
+//
+//	if (APlayerController* PC = GetOwningPlayer ())
+//	{
+//		PC->SetShowMouseCursor ( true );
+//
+//		FInputModeUIOnly InputModeData;
+//		InputModeData.SetWidgetToFocus ( this->TakeWidget () );
+//		InputModeData.SetLockMouseToViewportBehavior ( EMouseLockMode::DoNotLock );
+//
+//		PC->SetInputMode ( InputModeData );
+//	}
+//
+//	LevelSelector->onRestartRequestedDel.AddDynamic ( this , &UP_PauseWidget::RestartGame );
+//	LevelSelector->onCloseUIRequestedDel.AddDynamic ( this , &UP_PauseWidget::ResumeGame );
+//	LevelSelector->onQuitGameRequestedDel.AddDynamic ( this , &UP_PauseWidget::QuitGame );
+//}
+
+void UP_PauseWidget::NativeOnInitialized ()
 {
-	Super::NativeConstruct ();
+	Super::NativeOnInitialized ();
 
-	if (APlayerController* PC = GetOwningPlayer ())
+	if (LevelSelector)
 	{
-		PC->SetShowMouseCursor ( true );
-
-		FInputModeUIOnly InputModeData;
-		InputModeData.SetWidgetToFocus ( this->TakeWidget () );
-		InputModeData.SetLockMouseToViewportBehavior ( EMouseLockMode::DoNotLock );
-
-		PC->SetInputMode ( InputModeData );
+		LevelSelector->onRestartRequestedDel.AddDynamic ( this , &UP_PauseWidget::RestartGame );
+		LevelSelector->onCloseUIRequestedDel.AddDynamic ( this , &UP_PauseWidget::ResumeGame );
+		LevelSelector->onQuitGameRequestedDel.AddDynamic ( this , &UP_PauseWidget::QuitGame );
 	}
-
-	LevelSelector->onRestartRequestedDel.AddDynamic ( this , &UP_PauseWidget::RestartGame );
-	LevelSelector->onCloseUIRequestedDel.AddDynamic ( this , &UP_PauseWidget::ResumeGame );
-	LevelSelector->onQuitGameRequestedDel.AddDynamic ( this , &UP_PauseWidget::QuitGame );
 }
 
 void UP_PauseWidget::NativeDestruct ()
 {
 	Super::NativeDestruct ();
 
-	if (APlayerController* PC = GetOwningPlayer ())
-	{
-		PC->SetShowMouseCursor ( false );
+	//if (APlayerController* PC = GetOwningPlayer ())
+	//{
+	//	PC->SetShowMouseCursor ( false );
 
-		FInputModeGameOnly InputModeData;
-		PC->SetInputMode ( InputModeData );
-	}
+	//	FInputModeGameOnly InputModeData;
+	//	PC->SetInputMode ( InputModeData );
+	//}
 }
 
 void UP_PauseWidget::RestartGame ()
