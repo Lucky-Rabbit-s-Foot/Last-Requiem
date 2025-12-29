@@ -119,6 +119,6 @@ void ALR_GameMode::OnGameOver ()
 	FTimerHandle WaitHandle;
 	GetWorldTimerManager ().SetTimer ( WaitHandle , FTimerDelegate::CreateLambda ( [this]()
 		{
-			UGameplayStatics::OpenLevel ( this , FName ( TEXT ( "GameOverLevel" ) ) );
+			UGameplayStatics::OpenLevel ( this , FName ( TEXT ( "LR_Outro" ) ) );
 		} ) , GameOverDelayTime , false );
 }
