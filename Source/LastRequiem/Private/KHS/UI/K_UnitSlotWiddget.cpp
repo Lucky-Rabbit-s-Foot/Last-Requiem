@@ -133,6 +133,8 @@ void UK_UnitSlotWiddget::UpdateUnitData(const FUnitProfileData& newData)
 	
 	if (!newData.bIsAlive)
 	{
+		// (20251229) W : 유닛 사망시 남아있는 HP바 강제 0으로 업데이트
+		HPBar->SetPercent ( 0.0f );
 		SetSlotState(EUnitSlotState::DEAD);
 	}
 }
