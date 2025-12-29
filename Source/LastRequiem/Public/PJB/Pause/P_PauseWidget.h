@@ -17,7 +17,10 @@ class LASTREQUIEM_API UP_PauseWidget : public UK_BaseUIWidget
 
 	bool IsOpenTest () { return bIsOpen; }
 protected:
-	virtual void NativeConstruct () override;
+
+	//(251229) B : 일시정지 메뉴 설정을 위해 삽입
+	virtual void NativeOnInitialized () override;
+	//virtual void NativeConstruct () override;
 	virtual void NativeDestruct () override;
 
 private:
