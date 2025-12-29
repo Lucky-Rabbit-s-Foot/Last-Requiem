@@ -4,11 +4,13 @@
 #include "Sound/SoundBase.h"
 #include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h" 
+#include "Components/Image.h"
 
 #include "LR_GameInstance.h"
 #include "PJB/ScoreBoard/P_ScoreBlock.h"
 #include "PJB/Data/P_ScoringDataAsset.h"
 #include "PJB/Data/P_GameResultData.h"
+#include "PJB/Data/P_RankDataAsset.h"
 #include "PJB/LevelSelector/P_GameOverLevelSelector.h"
 
 void UP_ScoreBoard::NativeConstruct ()
@@ -59,6 +61,7 @@ void UP_ScoreBoard::UpdateAllScores ( FP_GameResultData& Count , FP_GameResultDa
 	SetScore ( EnhancedRangeCount , TEXT ( "강화 원거리 처치" ) , Count.EnRange , Score.EnRange );
 
 	if (TotalScore) TotalScore->SetText ( FText::AsNumber ( Score.TotalScore ) );
+	UpdateRankImage ( Score.TotalScore );
 }
 
 void UP_ScoreBoard::SetScore ( UP_ScoreBlock* Title , FString TitleText , int32 Count , int32 Score )
@@ -80,6 +83,23 @@ void UP_ScoreBoard::OnScoreUpdateAnimFinished ()
 		if (!BGMComponent || !BGMComponent->IsPlaying ())
 		{
 			BGMComponent = UGameplayStatics::SpawnSound2D ( this , GameOverBGM );
+		}
+	}
+}
+
+void UP_ScoreBoard::UpdateRankImage ( int32 InTotalScore )
+{
+	if (!RankDataAsset) return;
+
+	for (const FRankData& RankData : RankDataAsset->RankList)
+	{
+		if (InTotalScore >= RankData.MinScoreRequirement)
+		{
+			if (RankData.RankImage)
+			{
+				Image_Score->SetBrushFromTexture ( RankData.RankImage );
+			}
+			return;
 		}
 	}
 }
