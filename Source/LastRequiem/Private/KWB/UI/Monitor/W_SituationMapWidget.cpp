@@ -131,6 +131,32 @@ void UW_SituationMapWidget::NativeDestruct ()
 	}
 }
 
+void UW_SituationMapWidget::NativeTick ( const FGeometry& MyGeometry , float InDeltaTime )
+{
+	Super::NativeTick ( MyGeometry , InDeltaTime );
+
+	if (!bInterpFortressHP || !FortressHPBar)
+	{
+		return;
+	}
+
+	CurrentFortressHPPercent = FMath::FInterpTo (
+		CurrentFortressHPPercent ,
+		TargetFortressHPPercent ,
+		InDeltaTime ,
+		FortressHPInterpSpeed
+	);
+
+	FortressHPBar->SetPercent ( CurrentFortressHPPercent );
+
+	if (FMath::IsNearlyEqual ( CurrentFortressHPPercent , TargetFortressHPPercent , 0.001f ))
+	{
+		CurrentFortressHPPercent = TargetFortressHPPercent;
+		FortressHPBar->SetPercent ( CurrentFortressHPPercent );
+		bInterpFortressHP = false;
+	}
+}
+
 void UW_SituationMapWidget::HandleExitButtonClicked ()
 {
 	UE_LOG ( LogTemp , Log , TEXT ( "Exit Button Clicked." ) );
@@ -172,20 +198,19 @@ void UW_SituationMapWidget::HandleFortressDamaged ()
 	AP_Fortress* Fortress = CachedFortress.Get ();
 	if (!IsValid ( Fortress ))
 	{
-		FortressHPBar->SetPercent ( 0.0f );
+		TargetFortressHPPercent = 0.0f;
+		bInterpFortressHP = true;
 		return;
 	}
 
-	const float HealthPercent = FMath::Clamp ( Fortress->GetHealthPercent () , 0.0f , 1.0f );
-	FortressHPBar->SetPercent ( HealthPercent );
+	TargetFortressHPPercent = FMath::Clamp ( Fortress->GetHealthPercent () , 0.0f , 1.0f );
+	bInterpFortressHP = true;
 }
 
 void UW_SituationMapWidget::HandleFortressBroken ()
 {
-	if (FortressHPBar)
-	{
-		FortressHPBar->SetPercent ( 0.0f );
-	}
+	TargetFortressHPPercent = 0.0f;
+	bInterpFortressHP = true;
 }
 
 void UW_SituationMapWidget::BindFortressDelegates ()
