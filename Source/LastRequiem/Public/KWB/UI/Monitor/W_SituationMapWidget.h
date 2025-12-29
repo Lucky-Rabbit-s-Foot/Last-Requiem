@@ -29,6 +29,16 @@ protected:
 
 	virtual void NativeDestruct () override;
 
+	virtual void NativeTick ( const FGeometry& MyGeometry , float InDeltaTime ) override;
+
+	float CurrentFortressHPPercent = 0.0f;
+	float TargetFortressHPPercent = 0.0f;
+
+	UPROPERTY ( EditDefaultsOnly , Category = "UI|Fortress" )
+	float FortressHPInterpSpeed = 8.0f;
+
+	bool bInterpFortressHP = false;
+
 	UFUNCTION ()
 	void HandleExitButtonClicked ();
 
