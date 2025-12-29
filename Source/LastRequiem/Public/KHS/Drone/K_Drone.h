@@ -33,6 +33,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	void UpdateDroneRotationByMovement(float DeltaTime);
+
 	// (20251224) P : 드론 충돌 (Start)
 	virtual void NotifyHit ( class UPrimitiveComponent* MyComp , AActor* Other , class UPrimitiveComponent* OtherComp , bool bSelfMoved , FVector HitLocation , FVector HitNormal , FVector NormalImpulse , const FHitResult& Hit ) override;
 	// (20251224) P : 드론 충돌 (End)

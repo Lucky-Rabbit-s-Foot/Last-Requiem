@@ -4,7 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "GameplayTagContainer.h"
 #include "GameplayTagAssetInterface.h"
-#include "GeometryCollection/GeometryCollectionComponent.h"
+//#include "GeometryCollection/GeometryCollectionComponent.h"
 
 #include "P_Fortress.generated.h"
 
@@ -26,6 +26,8 @@ protected:
 	virtual void BeginPlay() override;
 
 public:	
+	virtual void Tick ( float DeltaTime ) override;
+	
 	UFUNCTION ()
 	void OnTakeDamage (
 		AActor* DamagedActor ,
@@ -35,6 +37,10 @@ public:
 		AActor* DamageCauser
 	);
 	void OnBroken ();
+	void StartDissolve ();
+	bool bIsDissolving = false;
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Dissolve" )
+	class UNiagaraSystem* DustEffect = nullptr;
 
 public:
 	FOnFortressDamagedDelegate OnFortressDamagedDelegate;
@@ -44,10 +50,10 @@ protected:
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Components" )
 	TObjectPtr<UStaticMeshComponent> Mesh = nullptr;
 	
-	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Components" )
-	TObjectPtr<UGeometryCollectionComponent> GeometryComp = nullptr;
-	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Config = "Data|Destruction" )
-	TSubclassOf<AActor> MasterFieldClass = nullptr;
+	//UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Components" )
+	//TObjectPtr<UGeometryCollectionComponent> GeometryComp = nullptr;
+	//UPROPERTY ( EditAnywhere , BlueprintReadWrite , Config = "Data|Destruction" )
+	//TSubclassOf<AActor> MasterFieldClass = nullptr;
 
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Sprite" )
 	TObjectPtr<class UIndicatorSpriteComponent> SpriteComp = nullptr;
@@ -65,6 +71,7 @@ protected:
 
 private:
 	bool bIsBroken = false;
+	float CurrentDissolveAmount = 0.0f;
 
 public:
 	float GetHealthPercent () const { return Health / MaxHealth; }
