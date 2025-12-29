@@ -8,6 +8,8 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnOrderButtonClicked );
 
+class AP_Fortress;
+
 /**
  * 
  */
@@ -41,6 +43,18 @@ protected:
 
 	UFUNCTION ()
 	void HandleRetreatButtonClicked ();
+
+	UFUNCTION ()
+	void HandleFortressDamaged ();
+
+	UFUNCTION ()
+	void HandleFortressBroken ();
+
+	void BindFortressDelegates ();
+
+	UPROPERTY ( meta = (BindWidget) )
+	class UProgressBar* FortressHPBar;
+	TWeakObjectPtr<AP_Fortress> CachedFortress;
 
 public:
 	// 공격(Attack) 버튼 클릭 시
