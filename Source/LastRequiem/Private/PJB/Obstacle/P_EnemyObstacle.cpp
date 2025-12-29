@@ -47,7 +47,7 @@ void AP_EnemyObstacle::BeginPlay()
 	Mesh->SetCanEverAffectNavigation ( false );
 
 	SpriteComp->SetRelativeRotation ( FRotator ( 0.0f , 90.0f , -90.0f ) );
-	SpriteComp->SetSpriteOnOff ( true );
+	SpriteComp->SetSpriteOnOff ( false );
 
 	static FGameplayTag ObstacleTag = FGameplayTag::RequestGameplayTag ( FName ( "Enemy.Obstacle" ) );
 	GameplayTags.AddTag ( ObstacleTag );

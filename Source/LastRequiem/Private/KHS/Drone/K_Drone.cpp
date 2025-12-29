@@ -18,6 +18,7 @@
 #include "Sound/SoundBase.h"
 #include "KHS/Util/K_LoggingSystem.h"
 #include "PJB/Enemy/P_EnemyBase.h"
+#include "PJB/Obstacle/P_EnemyObstacle.h"
 
 
 // Sets default values
@@ -354,6 +355,12 @@ void AK_Drone::UpdateDetectedUnitSlot()
 			//KHS_SCREEN_INFO(TEXT("에너미 탐지되었음 - %p"), detectedEnemy);
 			currentDetectedEnemys.Add(detectedActor);
 			onUnitDetected.Broadcast(detectedActor);
+		}
+
+		AP_EnemyObstacle* detectedEnemyObstacle = Cast<AP_EnemyObstacle> ( detectedActor );
+		if( detectedEnemyObstacle )
+		{
+			onUnitDetected.Broadcast ( detectedActor );
 		}
 	}
 	
