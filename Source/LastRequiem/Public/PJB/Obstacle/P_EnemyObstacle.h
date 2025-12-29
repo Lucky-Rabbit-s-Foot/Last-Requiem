@@ -8,7 +8,7 @@
 
 #include "P_EnemyObstacle.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnEnemyObstacleBrokenDelegate , AActor* , InActor );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnEnemyObstacleBrokenDelegate );
 
 UCLASS()
 class LASTREQUIEM_API AP_EnemyObstacle : public APawn, public IGameplayTagAssetInterface
@@ -33,6 +33,10 @@ public:
 		AActor* DamageCauser
 	);
 	void OnBroken ();
+
+	void BindDrone ( class AK_Drone* InDrone );
+	void OnDetected ( AActor* DetectedActor );
+
 
 public:
 	FOnEnemyObstacleBrokenDelegate OnEnemyObstacleBrokenDelegate;

@@ -2,6 +2,7 @@
 
 #include "LR_GameMode.h"
 #include "PJB/System/P_GameStateBase.h"
+#include "KWB/Component/IndicatorSpriteComponent.h"
 
 AP_Fortress::AP_Fortress()
 {
@@ -10,6 +11,9 @@ AP_Fortress::AP_Fortress()
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent> ( TEXT ( "Mesh" ) );
 	SetRootComponent ( Mesh );
 
+	SpriteComp = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "SpriteComp" ) );
+	SpriteComp->SetupAttachment ( Mesh );
+	
 	GeometryComp = CreateDefaultSubobject<UGeometryCollectionComponent> ( TEXT ( "GeometryComp" ) );
 	GeometryComp->SetupAttachment ( Mesh );
 
@@ -41,6 +45,12 @@ void AP_Fortress::BeginPlay()
 	}
 
 	Mesh->SetCanEverAffectNavigation ( false );
+
+	if (SpriteComp)
+	{
+		SpriteComp->SetRelativeRotation ( FRotator ( 0.0f , 90.0f , -90.0f ) );
+		SpriteComp->SetSpriteOnOff ( true );
+	}
 
 	static FGameplayTag FortressTag = FGameplayTag::RequestGameplayTag ( FName ( "Fortress" ) );
 	GameplayTags.AddTag ( FortressTag );
@@ -74,6 +84,11 @@ void AP_Fortress::OnBroken ()
 		Mesh->SetVisibility ( false );
 	}
 
+	if (SpriteComp)
+	{
+		SpriteComp->SetSpriteOnOff ( false );
+	}
+	
 	if (GeometryComp)
 	{
 		GeometryComp->SetVisibility ( true );

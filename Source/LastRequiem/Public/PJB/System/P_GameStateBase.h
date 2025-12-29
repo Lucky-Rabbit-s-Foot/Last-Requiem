@@ -31,6 +31,8 @@ public:
 	void CountRecoveryHealth ();
 	UFUNCTION ()
 	void CountRecoverySanity ();
+	UFUNCTION ()
+	void CountDestructEnemyObstacle ();
 
 	FOnGameEventSignature OnGameStart;
 	FOnGameEventSignature OnWaveStart;
