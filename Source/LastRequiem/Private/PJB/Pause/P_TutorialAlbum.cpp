@@ -4,6 +4,7 @@
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Engine/Texture2D.h"
+#include "PJB/Data/P_TutorialImageDataAsset.h"
 
 void UP_TutorialAlbum::NativeConstruct ()
 {
@@ -26,11 +27,11 @@ void UP_TutorialAlbum::NativeConstruct ()
 
 void UP_TutorialAlbum::UpdateTutorialView ()
 {
-	if (TutorialImages.Num () == 0) return;
+	if (!DA || DA->Images.Num () == 0) return;
 
-	if (Img_Tutorial && TutorialImages.IsValidIndex ( CurrentIndex ))
+	if (Img_Tutorial && DA->Images.IsValidIndex ( CurrentIndex ))
 	{
-		Img_Tutorial->SetBrushFromTexture ( TutorialImages[CurrentIndex] );
+		Img_Tutorial->SetBrushFromTexture ( DA->Images[CurrentIndex] );
 	}
 
 	if (Btn_Prev)
@@ -40,7 +41,7 @@ void UP_TutorialAlbum::UpdateTutorialView ()
 
 	if (Btn_Next)
 	{
-		Btn_Next->SetIsEnabled ( CurrentIndex < TutorialImages.Num () - 1 );
+		Btn_Next->SetIsEnabled ( CurrentIndex < DA->Images.Num () - 1 );
 	}
 }
 
@@ -55,7 +56,7 @@ void UP_TutorialAlbum::OnPrevClicked ()
 
 void UP_TutorialAlbum::OnNextClicked ()
 {
-	if (CurrentIndex < TutorialImages.Num () - 1)
+	if (CurrentIndex < DA->Images.Num () - 1)
 	{
 		CurrentIndex++;
 		UpdateTutorialView ();

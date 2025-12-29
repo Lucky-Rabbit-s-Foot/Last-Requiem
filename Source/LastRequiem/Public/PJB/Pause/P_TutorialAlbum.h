@@ -9,6 +9,7 @@ class UButton;
 class UImage;
 class UTextBlock;
 class UTexture2D;
+class UP_TutorialImageDataAsset;
 
 UCLASS()
 class LASTREQUIEM_API UP_TutorialAlbum : public UK_BaseUIWidget
@@ -29,8 +30,7 @@ public:
 	UImage* Img_Tutorial;
 
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Tutorial Data" )
-	TArray<UTexture2D*> TutorialImages;
-
+	TObjectPtr<UP_TutorialImageDataAsset> DA;
 private:
 	int32 CurrentIndex = 0;
 
