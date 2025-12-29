@@ -14,6 +14,7 @@
 #include "KWB/UI/Monitor/W_SituationMapWidget.h"
 #include "KWB/UI/W_MapWidget.h"
 #include "KWB/Component/IndicatorSpriteComponent.h"
+#include "KWB/Component/W_SelectedSpriteComponent.h"
 #include "Perception/AISense_Damage.h"
 #include "TimerManager.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -77,6 +78,14 @@ AB_UnitBase::AB_UnitBase()
 	ShowNameWidgetComponent->SetDrawAtDesiredSize ( true );
 	ShowNameWidgetComponent->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
 	ShowNameWidgetComponent->SetRelativeLocation ( FVector ( 0.0f , 0.0f , 120.0f ) );
+
+	SelectedSpriteComponent = CreateDefaultSubobject<UW_SelectedSpriteComponent> ( TEXT ( "SelectedSpriteComponent" ) );
+	SelectedSpriteComponent->SetupAttachment ( RootComponent );
+
+	SelectedSpriteComponent->SetVisibility ( false , true );
+	SelectedSpriteComponent->SetHiddenInGame ( true );
+	SelectedSpriteComponent->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
+
 }
 
 void AB_UnitBase::GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const
