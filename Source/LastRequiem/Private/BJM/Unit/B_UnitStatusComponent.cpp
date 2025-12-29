@@ -224,12 +224,32 @@ void UB_UnitStatusComponent::UpdateBehaviorState ()
 	if (CurrentState != NewState)
 	{
 		CurrentState = NewState;
+		if (CurrentState == EUnitBehaviorState::Panic)
+		{
+			GetWorld ()->GetTimerManager ().SetTimer (
+				PanicSanityTimerHandle ,
+				this ,
+				&UB_UnitStatusComponent::ReduceSanityInPanic ,
+				1.0f ,
+				true
+			);
+		}
+		else
+		{
+			GetWorld ()->GetTimerManager ().ClearTimer ( PanicSanityTimerHandle );
+		}
 		if (OnStateChanged.IsBound())
 		{
 			OnStateChanged.Broadcast(CurrentState);
 		}
 	}
 
+}
+
+void UB_UnitStatusComponent::ReduceSanityInPanic ()
+{
+	ModifySanity ( -0.6f );
+	UE_LOG ( LogTemp , Warning , TEXT ( "패닉 정신력 하락 (%.1f)" ) , CurrentSanity );
 }
 
 

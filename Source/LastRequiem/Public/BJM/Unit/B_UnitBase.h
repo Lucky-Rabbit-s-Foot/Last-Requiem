@@ -22,6 +22,7 @@ class UAudioComponent;
 class UWidgetComponent;
 class UW_ShowNameWidget;
 class AK_Drone;
+class UW_SelectedSpriteComponent;
 
 UCLASS()
 class LASTREQUIEM_API AB_UnitBase : public ACharacter, public IGameplayTagAssetInterface
@@ -60,6 +61,9 @@ public:
 
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Unit|Component" )
 	UIndicatorSpriteComponent* IndicatorSprite = nullptr;
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Unit|Component" )
+	UW_SelectedSpriteComponent* SelectedSpriteComponent = nullptr;
 
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
 	FGameplayTagContainer GameplayTags;
@@ -355,5 +359,7 @@ private:
 	bool bIsSelectedByPlayer = false;
 
 	void RefreshIndicatorState ();
+
+
 
 };
