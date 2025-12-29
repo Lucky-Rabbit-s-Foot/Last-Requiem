@@ -4,9 +4,12 @@
 #include "PJB/System/P_GameStateBase.h"
 #include "KWB/Component/IndicatorSpriteComponent.h"
 
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+
 AP_Fortress::AP_Fortress()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent> ( TEXT ( "Mesh" ) );
 	SetRootComponent ( Mesh );
@@ -14,12 +17,12 @@ AP_Fortress::AP_Fortress()
 	SpriteComp = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "SpriteComp" ) );
 	SpriteComp->SetupAttachment ( Mesh );
 	
-	GeometryComp = CreateDefaultSubobject<UGeometryCollectionComponent> ( TEXT ( "GeometryComp" ) );
-	GeometryComp->SetupAttachment ( Mesh );
+	//GeometryComp = CreateDefaultSubobject<UGeometryCollectionComponent> ( TEXT ( "GeometryComp" ) );
+	//GeometryComp->SetupAttachment ( Mesh );
 
-	GeometryComp->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
-	GeometryComp->SetSimulatePhysics ( false );
-	GeometryComp->SetVisibility ( false );
+	//GeometryComp->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
+	//GeometryComp->SetSimulatePhysics ( false );
+	//GeometryComp->SetVisibility ( false );
 }
 
 void AP_Fortress::GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const
@@ -56,6 +59,25 @@ void AP_Fortress::BeginPlay()
 	GameplayTags.AddTag ( FortressTag );
 }
 
+void AP_Fortress::Tick ( float DeltaTime )
+{
+	Super::Tick ( DeltaTime );
+
+	if (bIsDissolving && DustEffect)
+	{
+		float DissolveSpeed = 2.0f;
+		CurrentDissolveAmount += DeltaTime * DissolveSpeed;
+		if(CurrentDissolveAmount > 1.0f)
+		{
+			bIsDissolving = false;
+			if (Mesh)
+			{
+				Mesh->SetVisibility ( false );
+			}
+		}
+	}
+}
+
 void AP_Fortress::OnTakeDamage ( AActor* DamagedActor , float Damage , const UDamageType* DamageType , AController* InstigateBy , AActor* DamageCauser )
 {
 	if (bIsBroken) return;
@@ -79,36 +101,58 @@ void AP_Fortress::OnBroken ()
 
 	GameplayTags.Reset ();
 
-	if (Mesh)
-	{
-		Mesh->SetVisibility ( false );
-	}
+	//if (Mesh)
+	//{
+	//	Mesh->SetVisibility ( false );
+	//}
 
 	if (SpriteComp)
 	{
 		SpriteComp->SetSpriteOnOff ( false );
 	}
 	
-	if (GeometryComp)
-	{
-		GeometryComp->SetVisibility ( true );
-		GeometryComp->SetCollisionEnabled ( ECollisionEnabled::QueryAndPhysics );
-		GeometryComp->SetCollisionProfileName ( FName ( "Destructible" ) );
-		GeometryComp->SetSimulatePhysics ( true );
-	}
+	StartDissolve ();
 
-	if (MasterFieldClass)
-	{
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		GetWorld ()->SpawnActor<AActor> (
-			MasterFieldClass ,
-			GetActorLocation () ,
-			GetActorRotation () ,
-			SpawnParams
-		);
-	}
+	//if (GeometryComp)
+	//{
+	//	GeometryComp->SetVisibility ( true );
+	//	GeometryComp->SetCollisionEnabled ( ECollisionEnabled::QueryAndPhysics );
+	//	GeometryComp->SetCollisionProfileName ( FName ( "Destructible" ) );
+	//	GeometryComp->SetSimulatePhysics ( true );
+	//}
+
+	//if (MasterFieldClass)
+	//{
+	//	FActorSpawnParameters SpawnParams;
+	//	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	//	GetWorld ()->SpawnActor<AActor> (
+	//		MasterFieldClass ,
+	//		GetActorLocation () ,
+	//		GetActorRotation () ,
+	//		SpawnParams
+	//	);
+	//}
 
 	OnFortressBrokenDelegate.Broadcast ();
 	SetLifeSpan ( LifeSpanTimeAfterBroken );
+}
+
+void AP_Fortress::StartDissolve()
+{
+	if (bIsDissolving) return;
+	bIsDissolving = true;
+
+	if (DustEffect)
+	{
+		UNiagaraComponent* NiagaraComp = UNiagaraFunctionLibrary::SpawnSystemAttached (
+			DustEffect ,
+			Mesh ,              // 요새 메쉬에 붙임
+			FName ( "None" ) ,
+			FVector::ZeroVector ,
+			FRotator::ZeroRotator ,
+			EAttachLocation::KeepRelativeOffset ,
+			true
+		);
+	}
+	Mesh->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
 }
