@@ -4,6 +4,9 @@
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "KWB/Component/IndicatorSpriteComponent.h" // 포인트
+#include "KHS/Drone/K_Drone.h"
+#include "PJB/System/P_GameStateBase.h"
+#include "LR_GameMode.h"
 
 AP_EnemyObstacle::AP_EnemyObstacle()
 {
@@ -43,8 +46,23 @@ void AP_EnemyObstacle::BeginPlay()
 
 	Mesh->SetCanEverAffectNavigation ( false );
 
+	SpriteComp->SetRelativeRotation ( FRotator ( 0.0f , 90.0f , -90.0f ) );
+	SpriteComp->SetSpriteOnOff ( true );
+
 	static FGameplayTag ObstacleTag = FGameplayTag::RequestGameplayTag ( FName ( "Enemy.Obstacle" ) );
 	GameplayTags.AddTag ( ObstacleTag );
+
+	if(ALR_GameMode* GM = Cast<ALR_GameMode> ( GetWorld ()->GetAuthGameMode () ) )
+	{
+		// 게임 모드의 디폴트 폰 가져오기
+		AK_Drone* Drone = Cast<AK_Drone> ( UGameplayStatics::GetPlayerPawn ( GetWorld () , 0 ) );
+		BindDrone ( Drone );
+	}
+
+	if(AP_GameStateBase* GS = GetWorld ()->GetGameState<AP_GameStateBase> ())
+	{
+		OnEnemyObstacleBrokenDelegate.AddDynamic ( GS , &AP_GameStateBase::CountDestructEnemyObstacle );
+	}
 }
 
 void AP_EnemyObstacle::GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const
@@ -76,7 +94,6 @@ void AP_EnemyObstacle::OnBroken ()
 		Mesh->SetVisibility ( false );
 	}
 
-	// 포인트
 	if (SpriteComp)
 	{
 		SpriteComp->SetSpriteOnOff ( false );
@@ -107,6 +124,23 @@ void AP_EnemyObstacle::OnBroken ()
 		);
 	}
 
-	OnEnemyObstacleBrokenDelegate.Broadcast ( this );
+	OnEnemyObstacleBrokenDelegate.Broadcast ();
 	SetLifeSpan ( 3.0f );
+}
+
+
+void AP_EnemyObstacle::BindDrone ( AK_Drone* InDrone )
+{
+	if (!InDrone) return;
+	InDrone->onUnitDetected.AddUObject ( this , &AP_EnemyObstacle::OnDetected );
+}
+
+void AP_EnemyObstacle::OnDetected ( AActor* DetectedActor )
+{
+	if (DetectedActor != this || bIsBroken) return;
+
+	if (SpriteComp)
+	{
+		SpriteComp->SetSpriteOnOff ( true );
+	}
 }
