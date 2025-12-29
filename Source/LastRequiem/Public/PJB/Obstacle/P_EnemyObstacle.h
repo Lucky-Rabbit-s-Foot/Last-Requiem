@@ -52,6 +52,9 @@ protected:
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Components" )
 	TObjectPtr<UGeometryCollectionComponent> GeometryComp = nullptr;
 
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Destruction" )
+	class UNiagaraSystem* DestructionEffect = nullptr;
+
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
 	FGameplayTagContainer GameplayTags;
 

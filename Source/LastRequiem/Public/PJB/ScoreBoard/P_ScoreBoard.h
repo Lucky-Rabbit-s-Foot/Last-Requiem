@@ -10,6 +10,7 @@ class UTextBlock;
 class UP_ScoringDataAsset;
 class USoundBase;
 class UAudioComponent;
+class UImage;
 
 UCLASS()
 class LASTREQUIEM_API UP_ScoreBoard : public UK_BaseUIWidget
@@ -62,7 +63,14 @@ protected:
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Audio|Score" )
 	USoundBase* GameOverBGM;
 
+	UPROPERTY (meta = (BindWidget))
+	UImage* Image_Score;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Image")
+	TObjectPtr<class UP_RankDataAsset> RankDataAsset;
 private:
+	void UpdateRankImage ( int32 InTotalScore );
+
 	UPROPERTY ()
 	UAudioComponent* BGMComponent;
 };

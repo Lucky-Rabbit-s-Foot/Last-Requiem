@@ -8,6 +8,9 @@
 #include "PJB/System/P_GameStateBase.h"
 #include "LR_GameMode.h"
 
+#include "NiagaraSystem.h"
+#include "NiagaraFunctionLibrary.h"
+
 AP_EnemyObstacle::AP_EnemyObstacle()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -102,6 +105,16 @@ void AP_EnemyObstacle::OnBroken ()
 	if (CollisionComp)
 	{
 		CollisionComp->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
+	}
+
+	if (DestructionEffect)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation (
+			this ,
+			DestructionEffect ,
+			GetActorLocation () ,
+			GetActorRotation ()
+		);
 	}
 
 	if (GeometryComp)

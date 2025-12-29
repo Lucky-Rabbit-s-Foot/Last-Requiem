@@ -110,9 +110,38 @@ void AK_Drone::Tick(float DeltaTime)
 	if (audioComp && audioComp->IsPlaying ())
 	{
 		float velocitySize = GetVelocity ().Size ();
-		float newPitch = FMath::GetMappedRangeValueClamped ( FVector2D ( 0.0f , 2000.0f ) , FVector2D ( 0.5f , 1.0f ) , velocitySize );
+		float newPitch = FMath::GetMappedRangeValueClamped ( FVector2D ( 0.0f , 2000.0f ) , FVector2D ( 0.5f , 0.8f ) , velocitySize );
 		audioComp->SetPitchMultiplier ( newPitch );
 	}
+
+	UpdateDroneRotationByMovement ( DeltaTime );
+}
+
+void AK_Drone::UpdateDroneRotationByMovement ( float DeltaTime )
+{
+	FVector velocity = GetVelocity ();
+	FVector forwardVectr = GetActorForwardVector ();
+	FVector rightVector = GetActorRightVector ();
+
+	float forwardSpeed = FVector::DotProduct ( velocity , forwardVectr );
+	float rightSpeed = FVector::DotProduct ( velocity , rightVector );
+
+	const float tiltStrength = 0.01f;
+
+	float targetPitch = -forwardSpeed * tiltStrength;
+	float targetRoll = rightSpeed * tiltStrength;
+
+	float maxAngle = 10.0f;
+
+	targetPitch = FMath::Clamp ( targetPitch , -maxAngle , maxAngle );
+	targetRoll = FMath::Clamp ( targetRoll , -maxAngle , maxAngle );
+
+	FRotator currentRot = meshComp->GetRelativeRotation ();
+	FRotator targetRot = FRotator ( targetPitch , 0.0f , targetRoll );
+
+	float interpSpeed = 90.0f;
+	FRotator newRot = FMath::RInterpTo ( currentRot , targetRot , DeltaTime , interpSpeed );
+	meshComp->SetRelativeRotation ( newRot );
 }
 
 // (20251224) P : 드론 충돌 (Start)
