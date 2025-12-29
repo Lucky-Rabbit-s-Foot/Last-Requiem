@@ -130,7 +130,13 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Components")
 	TObjectPtr<class UIndicatorSpriteComponent> indicatorComp;
-	
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "LR|Components" )
+	TObjectPtr<class UAudioComponent> audioComp;
+
+	UPROPERTY ( EditDefaultsOnly , BlueprintReadOnly , Category = "LR|Sound" )
+	TObjectPtr<class USoundBase> flightSound;
+
 	//Data
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Data")
 	TObjectPtr<class UK_DroneData> droneData;

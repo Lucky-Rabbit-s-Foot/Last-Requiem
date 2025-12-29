@@ -13,7 +13,9 @@
 #include "Camera/CameraComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/AudioComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Sound/SoundBase.h"
 #include "KHS/Util/K_LoggingSystem.h"
 #include "PJB/Enemy/P_EnemyBase.h"
 
@@ -72,11 +74,22 @@ void AK_Drone::BeginPlay()
 		&AK_Drone::UpdateDetectedUnitSlot,
 		1.0f,
 		true
-		);
+	);
+
+	if (audioComp && flightSound)
+	{
+		audioComp->SetSound ( flightSound );
+		audioComp->Play ();
+	}
 }
 
 void AK_Drone::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if (audioComp && audioComp->IsPlaying ())
+	{
+		audioComp->Stop ();
+	}
+
 	GetWorldTimerManager().ClearTimer(detectionTimerHandle);
 	// (20251223) W : 드론 스킬 타이머 정리
 	GetWorldTimerManager ().ClearTimer ( Skill01CooldownTimerHandle );
@@ -92,6 +105,13 @@ void AK_Drone::Tick(float DeltaTime)
 
 	UpdateDroneMovement(DeltaTime);
 	UpdateDroneRotation(DeltaTime);
+
+	if (audioComp && audioComp->IsPlaying ())
+	{
+		float velocitySize = GetVelocity ().Size ();
+		float newPitch = FMath::GetMappedRangeValueClamped ( FVector2D ( 0.0f , 2000.0f ) , FVector2D ( 0.5f , 1.0f ) , velocitySize );
+		audioComp->SetPitchMultiplier ( newPitch );
+	}
 }
 
 // (20251224) P : 드론 충돌 (Start)
@@ -152,6 +172,11 @@ void AK_Drone::InitializeDefaultComponents()
 	//indicator
 	indicatorComp = CreateDefaultSubobject<UIndicatorSpriteComponent>("indicatorComp");
 	indicatorComp->SetupAttachment(RootComponent);
+
+	//audio
+	audioComp = CreateDefaultSubobject<UAudioComponent> ( "audioComp" );
+	audioComp->SetupAttachment ( RootComponent );
+	audioComp->bAutoActivate = false;
 }
 
 void AK_Drone::UpdateDroneMovement(float DeltaTime)
