@@ -374,12 +374,6 @@ void AK_DroneController::OnToggleSituationMapUI(const FInputActionValue& value)
 
 void AK_DroneController::OnOpenPauseUI ( const FInputActionValue& value )
 {
-	if (!pauseUIFactory)
-	{
-		KHS_WARN ( TEXT ( "No Valid SettingWidget" ) );
-		return;
-	}
-
 	auto* UIManager = GetGameInstance ()->GetSubsystem<UK_UIManagerSubsystem> ();
 	if (!UIManager)
 	{
@@ -387,23 +381,67 @@ void AK_DroneController::OnOpenPauseUI ( const FInputActionValue& value )
 		return;
 	}
 
-	auto* pauseUI = UIManager->GetOrCreateWidget<UP_PauseWidget> ( pauseUIFactory );
-	if (!pauseUI)
+	if (UIManager->HasOpenPopupUI ())
 	{
-		KHS_WARN ( TEXT ( "No Valid Casted Widget" ) );
-		return;
+
+		UK_BaseUIWidget* TopWidget = UIManager->GetTopPopupUI ();
+		if (TopWidget)
+		{
+			HandleUICloseRequest ( TopWidget );
+		}
+	}
+	else
+	{
+		if (!pauseUIFactory)
+		{
+			KHS_WARN ( TEXT ( "No Valid PauseUI Factory" ) );
+			return;
+		}
+
+		auto* pauseUI = UIManager->GetOrCreateWidget<UP_PauseWidget> ( pauseUIFactory );
+		if (pauseUI)
+		{
+			if (pauseUI->IsOpen ()) return;
+
+			SetPause ( true );
+
+			UIManager->OpenUI<UP_PauseWidget> ( pauseUIFactory );
+			pauseUI->onCloseUIRequested.AddDynamic ( this , &AK_DroneController::HandleUICloseRequest );
+			BindPauseUIDelegates ( pauseUI );
+		}
 	}
 
-	if (pauseUI->IsOpen ())
-	{
-		return;
-	}
 
-	SetPause ( true );
+	//if (!pauseUIFactory)
+	//{
+	//	KHS_WARN ( TEXT ( "No Valid SettingWidget" ) );
+	//	return;
+	//}
 
-	UIManager->OpenUI<UP_PauseWidget> ( pauseUIFactory );
-	pauseUI->onCloseUIRequested.AddDynamic ( this , &AK_DroneController::HandleUICloseRequest );
-	BindPauseUIDelegates ( pauseUI );
+	//auto* UIManager = GetGameInstance ()->GetSubsystem<UK_UIManagerSubsystem> ();
+	//if (!UIManager)
+	//{
+	//	KHS_WARN ( TEXT ( "No Valid UI Subsystem" ) );
+	//	return;
+	//}
+
+	//auto* pauseUI = UIManager->GetOrCreateWidget<UP_PauseWidget> ( pauseUIFactory );
+	//if (!pauseUI)
+	//{
+	//	KHS_WARN ( TEXT ( "No Valid Casted Widget" ) );
+	//	return;
+	//}
+
+	//if (pauseUI->IsOpen ())
+	//{
+	//	return;
+	//}
+
+	//SetPause ( true );
+
+	//UIManager->OpenUI<UP_PauseWidget> ( pauseUIFactory );
+	//pauseUI->onCloseUIRequested.AddDynamic ( this , &AK_DroneController::HandleUICloseRequest );
+	//BindPauseUIDelegates ( pauseUI );
 }
 
 void AK_DroneController::OnDroneUseSkill01(const FInputActionValue& value)
