@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -71,6 +71,11 @@ private:
 	UPROPERTY()
 	TMap<TSubclassOf<UK_BaseUIWidget>, UK_BaseUIWidget*> cachedWidgets;
 	
+public:
+	// (20251229) B : 떠있는 위젯찾는 용도
+	UFUNCTION ( BlueprintCallable , Category = "UIManager" )
+	UK_BaseUIWidget* GetTopPopupUI () const { return popUpUIStack.IsEmpty () ? nullptr : popUpUIStack.Last (); }
+
 };
 
 template<typename T>
