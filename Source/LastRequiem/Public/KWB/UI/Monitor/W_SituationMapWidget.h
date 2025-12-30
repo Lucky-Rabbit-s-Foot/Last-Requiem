@@ -55,10 +55,10 @@ protected:
 	void HandleRetreatButtonClicked ();
 
 	UFUNCTION ()
-	void HandleFortressDamaged ();
+	void HandleFortressDamaged ( AP_Fortress* Fortress = nullptr );
 
 	UFUNCTION ()
-	void HandleFortressBroken ();
+	void HandleFortressBroken ( AP_Fortress* Fortress = nullptr );
 
 	void BindFortressDelegates ();
 

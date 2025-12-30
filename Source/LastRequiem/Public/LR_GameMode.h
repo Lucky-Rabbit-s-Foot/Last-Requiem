@@ -16,7 +16,7 @@ public:
 	virtual void Tick ( float DeltaSeconds ) override;
 
 	UFUNCTION ()
-	void OnGameOver ();
+	void OnGameOver ( AP_Fortress* Fortress = nullptr);
 
 protected:
 	virtual void BeginPlay () override;
