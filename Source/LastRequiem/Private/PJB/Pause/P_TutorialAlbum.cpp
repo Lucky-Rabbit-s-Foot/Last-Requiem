@@ -9,7 +9,7 @@
 UP_TutorialAlbum::UP_TutorialAlbum()
 {
 	UILayer = EUILayer::POPUP;
-	zOrder = 99;
+	zOrder = 11;
 }
 
 void UP_TutorialAlbum::NativeConstruct ()
@@ -79,6 +79,6 @@ void UP_TutorialAlbum::OnNextClicked ()
 void UP_TutorialAlbum::OnQuitClicked()
 {
 	//한번 보고나면 닫기버튼 가시성 해제
-	Btn_Quit->SetVisibility(ESlateVisibility::Hidden);
+	//Btn_Quit->SetVisibility(ESlateVisibility::Hidden);
 	onCloseUIRequested.Broadcast(this);
 }

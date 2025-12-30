@@ -20,6 +20,7 @@
 
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "LR_GameInstance.h"
 #include "KHS/UI/K_TutorialWidget.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -72,7 +73,11 @@ void AK_DroneController::OnPossess(APawn* InPawn)
 	
 	InitializePersistentUI();
 	
-	OpenTutorialUI();
+	ULR_GameInstance* gi = Cast<ULR_GameInstance>(GetGameInstance());
+	if (gi && gi->CanShowTutorial())
+	{
+		OpenTutorialUI();
+	}
 }
 
 
@@ -117,6 +122,13 @@ void AK_DroneController::OpenTutorialUI()
 	{
 		//닫기 델리게이트 구독
 		tutorialUI->onCloseUIRequested.AddDynamic(this, &AK_DroneController::HandleUICloseRequest);
+	}
+	
+	//튜토리얼 시청여부 GI에 등록.
+	ULR_GameInstance* gi = Cast<ULR_GameInstance>(GetGameInstance());
+	if (gi)
+	{
+		gi->MarkTutorialAsShown();
 	}
 }
 
@@ -253,6 +265,7 @@ void AK_DroneController::BindPauseUIDelegates ( UP_PauseWidget* pauseUI )
 
 	pauseUI->onRestartRequestedDel.AddDynamic ( this , &AK_DroneController::HandleRestartButtonClicked );
 	pauseUI->onQuitGameRequestedDel.AddDynamic ( this , &AK_DroneController::HandleQuitGameButtonClicked );
+	pauseUI->onTutorialRequestedDel.AddDynamic ( this , &AK_DroneController::HandleTutorialButtonClicked );
 
 	bPauseUIBound = true;
 }

@@ -126,6 +126,7 @@ protected:
 	bool bSituationMapUIBound = false;
 	bool bSettingUIBound = false;
 	
+	
 	//UI Classes
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|UI")
 	TSubclassOf<class UK_HUDWidget> hudUIFactory;

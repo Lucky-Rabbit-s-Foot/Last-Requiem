@@ -55,6 +55,7 @@ void UK_UnitListWidget::NativeDestruct()
 		if (unit)
 		{
 			unit->OnUnitDieDelegate.RemoveDynamic(this, &UK_UnitListWidget::OnUnitDied);
+			unit->OnUnitSpeakChanged.RemoveDynamic ( this , &UK_UnitListWidget::OnUnitSpeakChanged );
 		}
 	}
 	
@@ -181,6 +182,7 @@ UK_UnitSlotWiddget* UK_UnitListWidget::GetOrCreateUnitSlot(AActor* unitActor)
 		if (unit)
 		{
 			unit->OnUnitDieDelegate.AddDynamic(this, &UK_UnitListWidget::OnUnitDied);
+			unit->OnUnitSpeakChanged.AddDynamic ( this , &UK_UnitListWidget::OnUnitSpeakChanged );
 		}
 	}
 	
@@ -197,7 +199,24 @@ void UK_UnitListWidget::AddUnitSlot(UK_UnitSlotWiddget* newSlot)
 	UVerticalBoxSlot* childSlot = UnitSlotList->AddChildToVerticalBox(newSlot);
 	if (childSlot)
 	{
+		//childSlot->SetHorizontalAlignment ( EHorizontalAlignment::HAlign_Right );
 		// (20251226) W : 에디터에서 슬롯 간격 조정하기 위해 추가
 		childSlot->SetPadding ( FMargin ( 0.f , 0.f , 0.f , UnitSlotSpacing * 1.f ) );
+	}
+}
+
+void UK_UnitListWidget::OnUnitSpeakChanged ( AB_UnitBase* Unit , bool bIsSpeaking , FString StateText )
+{
+	if (!Unit) return;
+
+	// 1. 누가 말했는지(Unit)를 키값으로 슬롯을 찾는다.
+	if (unitSlotMap.Contains ( Unit ))
+	{
+		UK_UnitSlotWiddget* TargetSlot = unitSlotMap[Unit];
+		if (TargetSlot)
+		{
+			// 2. 그 슬롯한테 "말풍선 띄워!"라고 명령한다. (아까 만든 함수)
+			TargetSlot->SetSpeakingState ( bIsSpeaking , StateText );
+		}
 	}
 }

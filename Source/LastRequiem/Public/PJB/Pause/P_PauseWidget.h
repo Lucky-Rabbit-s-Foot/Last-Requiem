@@ -7,6 +7,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnRestartRequestedPause );
 DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnQuitGameRequestedPause );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnTutorialRequestedPause );
 
 UCLASS()
 class LASTREQUIEM_API UP_PauseWidget : public UK_BaseUIWidget
@@ -30,11 +31,10 @@ private:
 	void ResumeGame ();
 	UFUNCTION ()
 	void QuitGame ();
+	UFUNCTION ()
+	void OpenTutorialAlbum ();
 
 public:
-	UPROPERTY ( meta = (BindWidget) )
-	class UP_TutorialAlbum* TutorialAlbum;
-
 	UPROPERTY ( meta = (BindWidget) )
 	class UP_PauseLevelSelector* LevelSelector;
 
@@ -44,4 +44,7 @@ public:
 
 	UPROPERTY ( BlueprintAssignable , Category = "LR|Events" )
 	FOnQuitGameRequestedPause onQuitGameRequestedDel;
+
+	UPROPERTY ( BlueprintAssignable , Category = "LR|Events" )
+	FOnTutorialRequestedPause onTutorialRequestedDel;
 };
