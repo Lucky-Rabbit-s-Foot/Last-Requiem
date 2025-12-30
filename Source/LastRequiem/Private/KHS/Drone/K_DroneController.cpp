@@ -64,7 +64,7 @@ void AK_DroneController::OnPossess(APawn* InPawn)
 
 void AK_DroneController::InitializePersistentUI()
 {
-	KHS_SCREEN_INFO(TEXT("==== Initialize Persistent UI START! ===="));
+	//KHS_SCREEN_INFO(TEXT("==== Initialize Persistent UI START! ===="));
 	
 	UK_UIManagerSubsystem* UIManager = GetGameInstance()->GetSubsystem<UK_UIManagerSubsystem>();
 	if (UIManager)
@@ -73,12 +73,12 @@ void AK_DroneController::InitializePersistentUI()
 		cachedUnitListUI = UIManager->OpenUI<UK_UnitListWidget>(unitListUIFactory);
 		
 		auto* hud = UIManager->GetOrCreateWidget<UK_HUDWidget>(hudUIFactory);
-		KHS_SCREEN_INFO(TEXT("HUD isOpen : %s, ISInViewport : %s"), hud->IsOpen()? TEXT("TRUE") : TEXT("False"), hud->IsInViewport()? TEXT("TRUE") : TEXT("FASLE"));
+		//KHS_SCREEN_INFO(TEXT("HUD isOpen : %s, ISInViewport : %s"), hud->IsOpen()? TEXT("TRUE") : TEXT("False"), hud->IsInViewport()? TEXT("TRUE") : TEXT("FASLE"));
 		
 		BindPersistentUIDelegates();
 	}
 	
-	KHS_SCREEN_INFO(TEXT("==== Initialize Persistent UI END! ===="));
+	//KHS_SCREEN_INFO(TEXT("==== Initialize Persistent UI END! ===="));
 }
 
 void AK_DroneController::BindPersistentUIDelegates()
@@ -523,6 +523,7 @@ void AK_DroneController::HandleRestartButtonClicked()
 	}
 	
 	UIManager->CloseAllPopupUI();
+	UIManager->ResetAllUIStates();
 	
 	//게임 재개
 	SetPause(false);

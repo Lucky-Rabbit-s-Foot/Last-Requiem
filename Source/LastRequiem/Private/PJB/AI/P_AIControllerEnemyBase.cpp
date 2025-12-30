@@ -2,10 +2,9 @@
 
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
-#include "Perception/AISenseConfig_Damage.h"
 #include "Perception/AISense_Sight.h"
-#include "Perception/AISense_Damage.h"
 
+#include "Navigation/CrowdFollowingComponent.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -14,15 +13,14 @@
 
 #include "PJB/System/P_GameStateBase.h"
 
-AP_AIControllerEnemyBase::AP_AIControllerEnemyBase ()
+AP_AIControllerEnemyBase::AP_AIControllerEnemyBase (const FObjectInitializer& ObjectInitializer)
+	: Super ( ObjectInitializer.SetDefaultSubobjectClass<UCrowdFollowingComponent> ( TEXT ( "PathFollowingComponent" ) ) )
 {
 	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent> ( TEXT ( "AIPerception" ) );
-	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight> ( TEXT ( "SenseSight" ) );
-	DamageConfig = CreateDefaultSubobject<UAISenseConfig_Damage> ( TEXT ( "SenseDamage" ) );
+	SetPerceptionComponent ( *AIPerceptionComp );
+	SightConfig_v2 = CreateDefaultSubobject<UAISenseConfig_Sight> ( TEXT ( "SenseSight" ) );
 
 	InitSightConfig ();
-	InitDamageConfig ();
-
 	InitPerceptionComponent ();
 }
 
@@ -44,36 +42,41 @@ void AP_AIControllerEnemyBase::OnPossess ( APawn* InPawn )
 {
 	Super::OnPossess ( InPawn );
 
+	InitSightConfig ();
+	InitPerceptionComponent ();
+
+	if (UCrowdFollowingComponent* CrowdComp = Cast<UCrowdFollowingComponent> ( GetPathFollowingComponent () ))
+	{
+		CrowdComp->SetCrowdSeparationWeight ( 20.0f , true );
+		CrowdComp->SetCrowdAvoidanceQuality ( ECrowdAvoidanceQuality::High );
+		CrowdComp->SetCrowdCollisionQueryRange ( 400.0f );
+		CrowdComp->SetCrowdAvoidanceRangeMultiplier ( 1.0f );
+	}
+	SetCachedFortressByGameState ();
+
 	if (BehaviorTree)
 	{
 		RunBehaviorTree ( BehaviorTree );
 	}
-	SetCachedFortressByGameState ();
 }
 
 void AP_AIControllerEnemyBase::InitPerceptionComponent ()
 {
-	if (!AIPerceptionComp) return;
+	if (!AIPerceptionComp || !SightConfig_v2) return;
 
-	AIPerceptionComp->ConfigureSense ( *DamageConfig );
-	AIPerceptionComp->ConfigureSense ( *SightConfig );
-	AIPerceptionComp->SetDominantSense ( SightConfig->GetSenseImplementation () );
+	AIPerceptionComp->ConfigureSense ( *SightConfig_v2 );
+	AIPerceptionComp->SetDominantSense ( SightConfig_v2->GetSenseImplementation () );
 }
 
 void AP_AIControllerEnemyBase::InitSightConfig ()
 {
-	if (!SightConfig) return;
+	if (!SightConfig_v2) return;
 
-	SightConfig->SightRadius = SightRadius;
-	SightConfig->LoseSightRadius = LoseSightRadius;
-	SightConfig->PeripheralVisionAngleDegrees = ViewAngleDegree;
+	SightConfig_v2->SightRadius = SightRadius;
+	SightConfig_v2->LoseSightRadius = LoseSightRadius;
+	SightConfig_v2->PeripheralVisionAngleDegrees = ViewAngleDegree;
 
-	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
-	SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
-	SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
-}
-
-void AP_AIControllerEnemyBase::InitDamageConfig ()
-{
-	if (!DamageConfig) return;
+	SightConfig_v2->DetectionByAffiliation.bDetectEnemies = true;
+	SightConfig_v2->DetectionByAffiliation.bDetectFriendlies = true;
+	SightConfig_v2->DetectionByAffiliation.bDetectNeutrals = true;
 }

@@ -3,7 +3,7 @@
 #include "LastRequiem.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
-//#include "KWB/Component/IndicatorSpriteComponent.h"
+#include "KWB/Component/IndicatorSpriteComponent.h" // 포인트
 
 AP_Obstacle::AP_Obstacle()
 {
@@ -11,6 +11,7 @@ AP_Obstacle::AP_Obstacle()
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent> ( TEXT ( "Mesh" ) );
 	SetRootComponent ( Mesh );
+	
 	Mesh->SetCollisionProfileName ( FName ( "NoCollision" ) );
 	Mesh->SetCanEverAffectNavigation ( false );
 
@@ -18,9 +19,8 @@ AP_Obstacle::AP_Obstacle()
 	CollisionComp->SetCollisionProfileName ( TEXT ( "BlockAll" ) );
 	CollisionComp->SetupAttachment ( Mesh );
 
-	// TODO: Activate later if fixed indicator sprite issue
-//	SpriteComp = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "SpriteComp" ) );
-//	SpriteComp->SetupAttachment ( Mesh );
+	SpriteComp = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "SpriteComp" ) );
+	SpriteComp->SetupAttachment ( Mesh );
 
 	GeometryComp = CreateDefaultSubobject<UGeometryCollectionComponent> ( TEXT ( "GeometryComp" ) );
 	GeometryComp->SetupAttachment ( Mesh );
@@ -28,6 +28,10 @@ AP_Obstacle::AP_Obstacle()
 	GeometryComp->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
 	GeometryComp->SetSimulatePhysics ( false );
 	GeometryComp->SetVisibility ( false );
+
+	AIControllerClass = nullptr;
+	AutoPossessPlayer = EAutoReceiveInput::Disabled;
+	AutoPossessAI = EAutoPossessAI::Disabled;
 }
 
 void AP_Obstacle::GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const
@@ -71,10 +75,11 @@ void AP_Obstacle::OnBroken ()
 		Mesh->SetVisibility ( false );
 	}
 
-	//if (SpriteComp)
-	//{
-	//	SpriteComp->SetSpriteOnOff ( false );
-	//}
+	// 포인트
+	if (SpriteComp)
+	{
+		SpriteComp->SetSpriteOnOff ( false );
+	}
 
 	if (CollisionComp)
 	{
