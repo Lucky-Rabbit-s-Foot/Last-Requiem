@@ -8,12 +8,17 @@ UCLASS()
 class LASTREQUIEM_API UP_DetectedObstacleWidget : public UUserWidget
 {
 	GENERATED_BODY()
+
+protected:
+	virtual void NativeConstruct () override;
+
 public:
 	void PlayShowAnimation ();
 	void PlayHideAnimation ();
 
 protected:
-	virtual void NativeConstruct () override;
+	UFUNCTION ()
+	void OnHideAnimFinished ();
 
 protected:
 	UPROPERTY ( Transient , meta = (BindWidgetAnim) )
