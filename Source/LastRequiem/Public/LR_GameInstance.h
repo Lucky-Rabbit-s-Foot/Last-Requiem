@@ -17,4 +17,16 @@ public:
 
 	UPROPERTY ( BlueprintReadWrite , Category = "GameResult" )
 	FP_GameResultData GameResultScore;
+	
+	
+	//튜토리얼 UI 플래그
+	UPROPERTY ( BlueprintReadWrite , Category = "Tutorial" )
+	bool bHasShownTutorial = false;
+	
+	UFUNCTION(BlueprintCallable, Category = "Tutorial")
+	void MarkTutorialAsShown() {bHasShownTutorial = true;}
+	
+	UFUNCTION(BlueprintCallable, Category = "Tutorial")
+	bool CanShowTutorial() const {return !bHasShownTutorial;}
+	
 };

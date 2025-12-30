@@ -77,8 +77,6 @@ void AK_Drone::BeginPlay()
 	}
 	// (20251224) P : 드론 충돌 (End)
 
-	
-
 	if (audioComp && flightSound)
 	{
 		audioComp->SetSound ( flightSound );

@@ -171,6 +171,28 @@ void UK_UnitSlotWiddget::SetLinkedUnit(AActor* targetUnit)
 	linkedUnit = targetUnit;
 }
 
+void UK_UnitSlotWiddget::SetSpeakingState ( bool InIsSpeaking , FString StateText )
+{
+	bIsSpeaking = InIsSpeaking; 
+
+	if (SpeechBubbleContainer)
+	{
+		if (InIsSpeaking)
+		{
+			SpeechBubbleContainer->SetVisibility ( ESlateVisibility::HitTestInvisible );
+		}
+		else
+		{
+			SpeechBubbleContainer->SetVisibility ( ESlateVisibility::Hidden );
+		}
+	}
+
+	if (InIsSpeaking && MentalStateText)
+	{
+		MentalStateText->SetText ( FText::FromString ( StateText ) );
+	}
+}
+
 void UK_UnitSlotWiddget::UpdateSlotVisualState()
 {
 	if (!BackgroundImg)
