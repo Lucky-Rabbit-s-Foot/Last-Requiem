@@ -52,6 +52,7 @@ void AP_EnemyBase::BeginPlay ()
 
 	SpriteComp->SetSpriteOnOff ( false );	
 	SpriteComp->SetRelativeRotation ( FRotator ( 0.0f , -90.0f , -90.0f ) );
+	SpriteComp->SetRelativeScale3D ( FVector ( 0.8f , 0.8f , 0.8f ) );
 	InitGameplayTag ();
 	OnTakeAnyDamage.AddDynamic ( this , &AP_EnemyBase::OnTakeDamage );
 
