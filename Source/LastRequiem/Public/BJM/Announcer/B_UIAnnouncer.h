@@ -92,4 +92,7 @@ private:
 	bool bPlayed10;
 	bool bPlayed0;
 
+public:
+	void TryBindFortressDelegate ();
+
 };

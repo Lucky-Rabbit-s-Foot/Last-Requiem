@@ -187,7 +187,7 @@ void UW_SituationMapWidget::HandleRetreatButtonClicked ()
 	UE_LOG ( LogTemp , Log , TEXT ( "Retreat Button Clicked." ) );
 }
 
-void UW_SituationMapWidget::HandleFortressDamaged ()
+void UW_SituationMapWidget::HandleFortressDamaged ( AP_Fortress* InFortress )
 {
 	if (!FortressHPBar)
 	{
@@ -207,7 +207,7 @@ void UW_SituationMapWidget::HandleFortressDamaged ()
 	bInterpFortressHP = true;
 }
 
-void UW_SituationMapWidget::HandleFortressBroken ()
+void UW_SituationMapWidget::HandleFortressBroken ( AP_Fortress* InFortress )
 {
 	TargetFortressHPPercent = 0.0f;
 	bInterpFortressHP = true;
