@@ -7,6 +7,7 @@
 #include "KHS/Drone/K_Drone.h"
 #include "PJB/System/P_GameStateBase.h"
 #include "LR_GameMode.h"
+#include "Components/WidgetComponent.h"
 
 #include "NiagaraSystem.h"
 #include "NiagaraFunctionLibrary.h"
@@ -34,6 +35,12 @@ AP_EnemyObstacle::AP_EnemyObstacle()
 	GeometryComp->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
 	GeometryComp->SetSimulatePhysics ( false );
 	GeometryComp->SetVisibility ( false );
+
+	DetectedWidget = CreateDefaultSubobject<UWidgetComponent> ( TEXT ( "EnemyWidgetComp" ) );
+	DetectedWidget->SetupAttachment ( RootComponent );
+	DetectedWidget->SetWidgetSpace ( EWidgetSpace::Screen );
+	DetectedWidget->SetDrawAtDesiredSize ( true );
+	DetectedWidget->SetVisibility ( false );
 
 	AIControllerClass = nullptr;
 	AutoPossessPlayer = EAutoReceiveInput::Disabled;
@@ -107,6 +114,11 @@ void AP_EnemyObstacle::OnBroken ()
 		CollisionComp->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
 	}
 
+	if (DetectedWidget)
+	{
+		DetectedWidget->SetVisibility ( false );
+	}
+
 	if (DestructionEffect)
 	{
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation (
@@ -146,6 +158,7 @@ void AP_EnemyObstacle::BindDrone ( AK_Drone* InDrone )
 {
 	if (!InDrone) return;
 	InDrone->onUnitDetected.AddUObject ( this , &AP_EnemyObstacle::OnDetected );
+	InDrone->onUnitLostDetection.AddUObject ( this , &AP_EnemyObstacle::OnLostDetection );
 }
 
 void AP_EnemyObstacle::OnDetected ( AActor* DetectedActor )
@@ -155,5 +168,20 @@ void AP_EnemyObstacle::OnDetected ( AActor* DetectedActor )
 	if (SpriteComp)
 	{
 		SpriteComp->SetSpriteOnOff ( true );
+	}
+
+	if (DetectedWidget)
+	{
+		DetectedWidget->SetVisibility ( true );
+	}
+}
+
+void AP_EnemyObstacle::OnLostDetection ( AActor* DetectedActor )
+{
+	if (DetectedActor != this || bIsBroken) return;
+
+	if (DetectedWidget)
+	{
+		DetectedWidget->SetVisibility ( false );
 	}
 }
