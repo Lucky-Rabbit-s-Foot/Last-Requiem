@@ -36,6 +36,7 @@ public:
 
 	void BindDrone ( class AK_Drone* InDrone );
 	void OnDetected ( AActor* DetectedActor );
+	void OnLostDetection ( AActor* DetectedActor );
 
 
 public:
@@ -65,6 +66,9 @@ protected:
 
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Config = "Data|Destruction" )
 	TSubclassOf<AActor> MasterFieldClass = nullptr;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|UI" )
+	TObjectPtr<class UWidgetComponent> DetectedWidget = nullptr;
 
 private:
 	bool bIsBroken = false;

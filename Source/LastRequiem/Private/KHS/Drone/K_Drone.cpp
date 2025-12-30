@@ -389,6 +389,7 @@ void AK_Drone::UpdateDetectedUnitSlot()
 		AP_EnemyObstacle* detectedEnemyObstacle = Cast<AP_EnemyObstacle> ( detectedActor );
 		if( detectedEnemyObstacle )
 		{
+			currentDetectedEnemys.Add ( detectedActor );
 			onUnitDetected.Broadcast ( detectedActor );
 		}
 	}
