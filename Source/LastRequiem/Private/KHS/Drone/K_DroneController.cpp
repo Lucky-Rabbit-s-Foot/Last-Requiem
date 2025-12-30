@@ -16,6 +16,7 @@
 #include "BJM/Unit/B_UnitBase.h"
 #include "PJB/Pause/P_PauseWidget.h"
 #include "PJB/LevelSelector/P_PauseLevelSelector.h"
+#include "PJB/Pause/P_TutorialAlbum.h"
 
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
@@ -70,6 +71,8 @@ void AK_DroneController::OnPossess(APawn* InPawn)
 	Super::OnPossess(InPawn);
 	
 	InitializePersistentUI();
+	
+	OpenTutorialUI();
 }
 
 
@@ -90,6 +93,31 @@ void AK_DroneController::InitializePersistentUI()
 	}
 	
 	//KHS_SCREEN_INFO(TEXT("==== Initialize Persistent UI END! ===="));
+}
+
+void AK_DroneController::OpenTutorialUI()
+{
+	if (!tutorialUIFactory)
+	{
+		KHS_WARN(TEXT("Tutorial : No Valid Widget"));
+		return;
+	}
+	
+	auto* UIManager = GetGameInstance()->GetSubsystem<UK_UIManagerSubsystem>();
+	if (!UIManager)
+	{
+		KHS_WARN(TEXT("UIManager : No Valid Instance"));
+		return;
+	}
+	
+	SetPause(true);
+	
+	auto* tutorialUI = UIManager->OpenUI<UP_TutorialAlbum>(tutorialUIFactory);
+	if (tutorialUI)
+	{
+		//닫기 델리게이트 구독
+		tutorialUI->onCloseUIRequested.AddDynamic(this, &AK_DroneController::HandleUICloseRequest);
+	}
 }
 
 void AK_DroneController::BindPersistentUIDelegates()
@@ -655,7 +683,7 @@ void AK_DroneController::HandleTutorialButtonClicked()
 		return;
 	}
 	
-	auto* tutorialUI = UIManager->OpenUI<UK_TutorialWidget>(tutorialUIFactory);
+	auto* tutorialUI = UIManager->OpenUI<UP_TutorialAlbum>(tutorialUIFactory);
 	if (tutorialUI)
 	{
 		//닫기 델리게이트 구독
