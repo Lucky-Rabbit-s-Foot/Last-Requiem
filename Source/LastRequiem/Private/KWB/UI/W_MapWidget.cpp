@@ -138,7 +138,7 @@ FReply UW_MapWidget::NativeOnMouseButtonDown ( const FGeometry& InGeometry , con
 			OnMapMoveCommand.Broadcast ( SelectedUnit.Get () , ClickedWorldLocation );
 			KHS_INFO ( TEXT ( "Move command: %s to %s" ) ,
 				*SelectedUnit->GetName () , *ClickedWorldLocation.ToString () );
-			ClearUnitSelection (); // 명령 내린 후에는 저장된 유닛 비우기 => 이거 없으면 선택 유지 -> 추후 테스트 해보고 결정
+			// ClearUnitSelection (); // 명령 내린 후에는 저장된 유닛 비우기 => 이거 없으면 선택 유지 -> 추후 테스트 해보고 결정
 		}
 
 		return FReply::Handled ();

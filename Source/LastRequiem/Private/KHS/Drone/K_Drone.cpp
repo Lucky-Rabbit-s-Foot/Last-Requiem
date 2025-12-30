@@ -96,6 +96,10 @@ void AK_Drone::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	GetWorldTimerManager ().ClearTimer ( Skill01CooldownTimerHandle );
 	GetWorldTimerManager ().ClearTimer ( Skill02CooldownTimerHandle );
 	
+	//캐싱 컨테이너 비우기
+	previouslyDetectedUnits.Empty();
+	previouslyDetectedEnemys.Empty();
+	
 	Super::EndPlay(EndPlayReason);
 }
 
