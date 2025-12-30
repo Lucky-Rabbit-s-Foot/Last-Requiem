@@ -39,14 +39,16 @@ void AB_UIAnnouncer::BeginPlay()
 		GS->OnWaveStart.AddDynamic ( this , &AB_UIAnnouncer::HandleWaveStart );
 		GS->OnWaveEnd.AddDynamic ( this , &AB_UIAnnouncer::HandleWaveEnd );
 
-		if (AActor* ActorFortress = GS->GetFortress ())
-		{
-			if (AP_Fortress* MyFortress = Cast<AP_Fortress> ( ActorFortress ))
-			{
-				//MyFortress->OnFortressDamagedDelegate.AddDynamic ( this , &AB_UIAnnouncer::HandleCoreDamaged );
-				//MyFortress->OnFortressBrokenDelegate.AddDynamic ( this , &AB_UIAnnouncer::HandleCoreBroken );
-			}
-		}
+		TryBindFortressDelegate ();
+
+		//if (AActor* ActorFortress = GS->GetFortress ())
+		//{
+		//	if (AP_Fortress* MyFortress = Cast<AP_Fortress> ( ActorFortress ))
+		//	{
+		//		MyFortress->OnFortressDamagedDelegate.AddDynamic ( this , &AB_UIAnnouncer::HandleCoreDamaged );
+		//		MyFortress->OnFortressBrokenDelegate.AddDynamic ( this , &AB_UIAnnouncer::HandleCoreBroken );
+		//	}
+		//}
 	}
 
 }
@@ -102,26 +104,33 @@ void AB_UIAnnouncer::HandleCoreDamaged ( AP_Fortress* Fortress )
 
 	float Ratio = Fortress->GetHealthPercent ();
 
-	if (Ratio <= 0.5f && !bPlayed50)
+	if (Ratio <= 0.1f)
 	{
-		PlayVoice ( CoreHP_50 );
-		bPlayed50 = true;
+		if (!bPlayed10)
+		{
+			PlayVoice ( CoreHP_10 );
+			bPlayed10 = true;
+			bPlayed25 = true;
+			bPlayed50 = true;
+		}
 	}
-	else if (Ratio <= 0.25f && !bPlayed25)
+	else if (Ratio <= 0.25f)
 	{
-		PlayVoice ( CoreHP_25 );
-		bPlayed25 = true;
+		if (!bPlayed25)
+		{
+			PlayVoice ( CoreHP_25 );
+			bPlayed25 = true;
+			bPlayed50 = true;
+		}
 	}
-	else if (Ratio <= 0.1f && !bPlayed10)
+	else if (Ratio <= 0.5f)
 	{
-		PlayVoice ( CoreHP_10 );
-		bPlayed10 = true;
+		if (!bPlayed50)
+		{
+			PlayVoice ( CoreHP_50 );
+			bPlayed50 = true;
+		}
 	}
-	//else if( Ratio <= 0.0f && !bPlayed0 )
-	//{
-	//	PlayVoice ( GameOver_CoreDestroyed );
-	//	bPlayed0 = true;
-	//}
 }
 
 void AB_UIAnnouncer::HandleCoreBroken ( AP_Fortress* Fortress )
@@ -137,4 +146,32 @@ void AB_UIAnnouncer::PlayVoice ( USoundBase* Sound )
 	{
 		UGameplayStatics::PlaySound2D ( this , Sound );
 	}
+}
+
+void AB_UIAnnouncer::TryBindFortressDelegate ()
+{
+	AP_GameStateBase* GS = Cast<AP_GameStateBase> ( GetWorld ()->GetGameState () );
+	if (!GS) return;
+
+	if (AActor* ActorFortress = GS->GetFortress ())
+	{
+		if (AP_Fortress* MyFortress = Cast<AP_Fortress> ( ActorFortress ))
+		{
+			MyFortress->OnFortressDamagedDelegate.AddDynamic ( this , &AB_UIAnnouncer::HandleCoreDamaged );
+			MyFortress->OnFortressBrokenDelegate.AddDynamic ( this , &AB_UIAnnouncer::HandleCoreBroken );
+
+			UE_LOG ( LogTemp , Warning , TEXT ( "아나운서: 요새 연결 성공!" ) ); // 확인용 로그
+			return;
+		}
+	}
+
+	FTimerHandle WaitHandle;
+	GetWorld ()->GetTimerManager ().SetTimer (
+		WaitHandle ,
+		this ,
+		&AB_UIAnnouncer::TryBindFortressDelegate ,
+		0.1f ,
+		false
+	);
+	UE_LOG ( LogTemp , Log , TEXT ( "아나운서: 요새 찾는 중..." ) );
 }

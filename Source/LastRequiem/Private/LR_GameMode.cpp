@@ -102,7 +102,7 @@ void ALR_GameMode::EndWave ()
 	StartPreparation ();
 }
 
-void ALR_GameMode::OnGameOver ()
+void ALR_GameMode::OnGameOver ( AP_Fortress* Fortress )
 {
 	LOG_MESSAGE_SCREEN ( Log , TEXT ( "Game Over!" ) );
 
