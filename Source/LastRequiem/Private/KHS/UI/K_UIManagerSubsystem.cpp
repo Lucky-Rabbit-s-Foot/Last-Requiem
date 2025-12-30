@@ -168,15 +168,9 @@ void UK_UIManagerSubsystem::ResetAllUIStates()
 	{
 		if (pair.Value)
 		{
-			// KHS_SCREEN_INFO(TEXT("Widget: %s, IsOpen: %s, IsInViewport: %s"),
-			// 	*pair.Value->GetName(),
-			// 	pair.Value->IsOpen() ? TEXT("TRUE") : TEXT("FALSE"),
-			// 	pair.Value->IsInViewport() ? TEXT("TRUE") : TEXT("FALSE"));
 			if (pair.Value->IsOpen())
 			{
 				pair.Value->CloseUI();
-				// KHS_SCREEN_INFO(TEXT("After CloseUI - IsOpen: %s"),
-				// 	pair.Value->IsOpen() ? TEXT("TRUE") : TEXT("FALSE"));
 			}
 			
 			if (pair.Value->IsInViewport())
@@ -185,13 +179,11 @@ void UK_UIManagerSubsystem::ResetAllUIStates()
 			}
 		}
 	}
-	// (20251230) P: 캐싱된 위젯들 비우기 (Start)
-	cachedWidgets.Empty ();
-	// (20251230) P: 캐싱된 위젯들 비우기 (End)
 	 
 	//관련 컨테이너 비우기
 	persitentUIMap.Empty();
 	popUpUIStack.Empty();
+	cachedWidgets.Empty ();
 	
 	//입력모드 초기화
 	APlayerController* pc = GetWorld()->GetFirstPlayerController();
