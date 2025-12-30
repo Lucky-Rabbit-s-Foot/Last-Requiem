@@ -25,6 +25,9 @@ public:
 
 	UPROPERTY ( meta = (BindWidget) )
 	UButton* Btn_Next;
+	
+	UPROPERTY ( meta = (BindWidget) )
+	UButton* Btn_Quit;
 
 	UPROPERTY ( meta = (BindWidget) )
 	UImage* Img_Tutorial;
@@ -41,4 +44,8 @@ private:
 
 	UFUNCTION ()
 	void OnNextClicked ();
+	
+	//(K) 닫기 버튼 추가
+	UFUNCTION()
+	void OnQuitClicked();
 };

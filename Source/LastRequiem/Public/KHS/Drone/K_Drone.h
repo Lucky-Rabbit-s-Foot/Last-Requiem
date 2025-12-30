@@ -39,6 +39,7 @@ public:
 	virtual void NotifyHit ( class UPrimitiveComponent* MyComp , AActor* Other , class UPrimitiveComponent* OtherComp , bool bSelfMoved , FVector HitLocation , FVector HitNormal , FVector NormalImpulse , const FHitResult& Hit ) override;
 	// (20251224) P : 드론 충돌 (End)
 
+	void InitializeDetectedUnitSlot(); //게임 시작시 맵 전체 유닛 스캔 헬퍼 함수
 
 private:
 	void InitializeDefaultComponents(); //컴포넌트 초기화 내부 헬퍼 함수
@@ -46,7 +47,6 @@ private:
 	void UpdateDroneRotation(float DeltaTime);
 	
 	//Detection Helper
-	void InitializeDetectedUnitSlot(); //게임 시작시 맵 전체 유닛 스캔 헬퍼 함수
 	void UpdateDetectedUnitSlot(); //게임 진행 중 유닛 탐지 업데이트 헬퍼 함수
 	
 	// (20251223) W : 드론 스킬 쿨타임 핸들 용도 멤버 추가 (Start)
