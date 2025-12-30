@@ -7,6 +7,8 @@ void UP_TimerWidget::NativeConstruct ()
 {
 	Super::NativeConstruct ();
 	GameStateBase = GetWorld () ? GetWorld ()->GetGameState<AP_GameStateBase> () : nullptr;
+	
+	bIsInitialized = false;
 }
 
 void UP_TimerWidget::NativeTick ( const FGeometry& MyGeometry , float InDeltaTime )
@@ -23,5 +25,26 @@ void UP_TimerWidget::NativeTick ( const FGeometry& MyGeometry , float InDeltaTim
 
 		FString TimeString = FString::Printf ( TEXT ( "%02d:%02d" ) , Minutes , Seconds );
 		TimerText->SetText ( FText::FromString ( TimeString ) );
+	}
+	
+	EGamePhase CurrentPhase = GameStateBase ? GameStateBase->CurrentPhase : EGamePhase::Preparation;
+	if (!bIsInitialized || CachedPhase != CurrentPhase)
+	{
+		CachedPhase = CurrentPhase;
+		bIsInitialized = true;
+
+		FLinearColor NewColor = FLinearColor::White;
+		switch (CurrentPhase)
+		{
+		case EGamePhase::Preparation:
+			NewColor = PreparationColor;
+			break;
+		case EGamePhase::Wave:
+			NewColor = WaveColor;
+			break;
+		default:
+			break;
+		}
+		TimerText->SetColorAndOpacity ( FSlateColor ( NewColor ) );
 	}
 }
