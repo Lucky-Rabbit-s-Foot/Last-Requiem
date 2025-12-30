@@ -57,5 +57,10 @@ protected:
 public:
 	UPROPERTY(BlueprintAssignable, Category = "LR|Event")
 	FOnUnitListSelected onUnitListSelectedDel;
+
+// 종민 수정
+protected:
+	UFUNCTION ()
+	void OnUnitSpeakChanged ( AB_UnitBase* Unit , bool bIsSpeaking , FString StateText );
 	
 };
