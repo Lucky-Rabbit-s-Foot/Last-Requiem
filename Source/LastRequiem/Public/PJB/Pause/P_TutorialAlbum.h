@@ -16,6 +16,8 @@ class LASTREQUIEM_API UP_TutorialAlbum : public UK_BaseUIWidget
 {
 	GENERATED_BODY()
 
+	UP_TutorialAlbum();
+	
 protected:
 	virtual void NativeConstruct () override;
 

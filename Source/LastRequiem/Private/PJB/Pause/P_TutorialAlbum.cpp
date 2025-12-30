@@ -6,6 +6,12 @@
 #include "Engine/Texture2D.h"
 #include "PJB/Data/P_TutorialImageDataAsset.h"
 
+UP_TutorialAlbum::UP_TutorialAlbum()
+{
+	UILayer = EUILayer::POPUP;
+	zOrder = 99;
+}
+
 void UP_TutorialAlbum::NativeConstruct ()
 {
 	Super::NativeConstruct();
@@ -72,7 +78,7 @@ void UP_TutorialAlbum::OnNextClicked ()
 
 void UP_TutorialAlbum::OnQuitClicked()
 {
-	onCloseUIRequested.Broadcast(this);
 	//한번 보고나면 닫기버튼 가시성 해제
 	Btn_Quit->SetVisibility(ESlateVisibility::Hidden);
+	onCloseUIRequested.Broadcast(this);
 }
