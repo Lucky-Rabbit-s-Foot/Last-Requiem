@@ -90,7 +90,7 @@ void AP_Fortress::OnTakeDamage ( AActor* DamagedActor , float Damage , const UDa
 	}
 	else
 	{
-		OnFortressDamagedDelegate.Broadcast ();
+		OnFortressDamagedDelegate.Broadcast (this);
 	}
 }
 
@@ -132,8 +132,7 @@ void AP_Fortress::OnBroken ()
 	//		SpawnParams
 	//	);
 	//}
-
-	OnFortressBrokenDelegate.Broadcast ();
+	OnFortressBrokenDelegate.Broadcast ( this );
 	SetLifeSpan ( LifeSpanTimeAfterBroken );
 }
 
