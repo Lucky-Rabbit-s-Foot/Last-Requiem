@@ -20,7 +20,8 @@ public:
 	void InitArrowComponentForFindSpawner ();
 
 	UFUNCTION ( BlueprintCallable , Category = "Factory" )
-	void SpawnEnemy ();
+	void SpawnEnemies ();
+	void SpawnEachEnemy (struct FP_EnemySpawnRow* SelectedRow , FTransform& SpawnTransform );
 
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty ( FPropertyChangedEvent& PropertyChangedEvent ) override;
@@ -29,21 +30,21 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	void StartSpawnEnemy ();
+	UFUNCTION ()
+	void StartSpawning ();
+	UFUNCTION ()
+	void StopSpawning ();
 
 protected:
-	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
-	FGameplayTag EnemyTagToSpawn;
-
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Components" )
 	TObjectPtr<class USphereComponent> SpawnRadiusVisualizer;
 		
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
 	UDataTable* EnemyDataTable;
 
-	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|SpawnSettings" )
-	TObjectPtr<UP_SpawnerDataAsset> DA;
-
+	UPROPERTY(EditAnywhere, BlueprintReadOnly , Category = "Data|SpawnSettings" )
+	UP_SpawnerDataAsset* DA;
+	
 	FTimerHandle SpawnTimerHandle;
 
 private:

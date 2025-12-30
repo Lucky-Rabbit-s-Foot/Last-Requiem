@@ -8,6 +8,8 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnOrderButtonClicked );
 
+class AP_Fortress;
+
 /**
  * 
  */
@@ -25,6 +27,18 @@ public:
 protected:
 	virtual void NativeConstruct () override;
 
+	virtual void NativeDestruct () override;
+
+	virtual void NativeTick ( const FGeometry& MyGeometry , float InDeltaTime ) override;
+
+	float CurrentFortressHPPercent = 0.0f;
+	float TargetFortressHPPercent = 0.0f;
+
+	UPROPERTY ( EditDefaultsOnly , Category = "UI|Fortress" )
+	float FortressHPInterpSpeed = 8.0f;
+
+	bool bInterpFortressHP = false;
+
 	UFUNCTION ()
 	void HandleExitButtonClicked ();
 
@@ -39,6 +53,18 @@ protected:
 
 	UFUNCTION ()
 	void HandleRetreatButtonClicked ();
+
+	UFUNCTION ()
+	void HandleFortressDamaged ();
+
+	UFUNCTION ()
+	void HandleFortressBroken ();
+
+	void BindFortressDelegates ();
+
+	UPROPERTY ( meta = (BindWidget) )
+	class UProgressBar* FortressHPBar;
+	TWeakObjectPtr<AP_Fortress> CachedFortress;
 
 public:
 	// 공격(Attack) 버튼 클릭 시

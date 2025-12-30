@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "NiagaraSystem.h"
 
 #include "P_EnemyDataAsset.generated.h"
 
@@ -15,6 +16,11 @@ public:
 	USkeletalMesh* SkeletalMesh;
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Visual" )
 	TSubclassOf<UAnimInstance> AnimInstanceClass;
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Visual" )
+	UNiagaraSystem* Aura;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|ID" )
+	int32 EnemyID = 0;
 
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Movement" )
 	float BaseSpeed = 300.0f;
@@ -30,7 +36,4 @@ public:
 	float AttackPower = 150.0f;
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Combat" )
 	UAnimMontage* AttackMontage;
-
-	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Score" )
-	int32 Score = 100;
 };

@@ -15,6 +15,8 @@
 #include "PJB/Enemy/P_EnemyBase.h"
 #include "GameplayTagAssetInterface.h"
 #include "GameplayTagsManager.h"
+#include "NavigationSystem.h"
+#include "Navigation/PathFollowingComponent.h"
 
 AB_UnitAIController::AB_UnitAIController()
 {
@@ -115,6 +117,35 @@ void AB_UnitAIController::CheckNearbyEnemies ()
 
 	if (!BlackboardComponent || !AIPerception) return;
 
+	AB_UnitBase* MyUnitBase = Cast<AB_UnitBase> ( MyPawn );
+	if (!MyUnitBase || !MyUnitBase->StatusComponent) return;
+
+	if (MyUnitBase->StatusComponent->CurrentState == EUnitBehaviorState::Panic)
+	{
+		BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
+		ClearFocus ( EAIFocusPriority::Gameplay );
+		MyUnitBase->SetCombatState_Unit ( false );
+
+		if (GetMoveStatus () == EPathFollowingStatus::Idle)
+		{
+			FNavLocation RandomNavLoc;
+			UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1> ( GetWorld () );
+
+			if (NavSystem && NavSystem->GetRandomReachablePointInRadius ( MyPawn->GetActorLocation () , 300.0f , RandomNavLoc ))
+			{
+				BlackboardComponent->SetValueAsVector ( TEXT ( "TargetLocation" ) , RandomNavLoc.Location );
+				BlackboardComponent->SetValueAsEnum ( TEXT ( "Command" ) , (uint8)EUnitCommandType::Move );
+
+				UE_LOG ( LogTemp , Warning , TEXT ( "[%s] 패닉 상태! 제멋대로 이동 중..." ) , *MyPawn->GetName () );
+			}
+		}
+
+		return;
+	}
+
+
+
+
 	EUnitCommandType CurrentCommand = (EUnitCommandType)BlackboardComponent->GetValueAsEnum ( TEXT ( "Command" ) );
 
 	if (CurrentCommand == EUnitCommandType::Move || CurrentCommand == EUnitCommandType::Stop || CurrentCommand == EUnitCommandType::Retreat)
@@ -126,6 +157,20 @@ void AB_UnitAIController::CheckNearbyEnemies ()
 
 	if (IsValid ( CurrentTarget ))
 	{
+		AB_UnitBase* TargetUnit = Cast<AB_UnitBase> ( CurrentTarget );
+		if (TargetUnit && !TargetUnit->IsAlive ())
+		{
+			// 아군 타겟이 죽었으면 타겟 해제
+			BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
+			ClearFocus ( EAIFocusPriority::Gameplay );
+
+			if (AB_UnitBase* MyPawnUnit = Cast<AB_UnitBase> ( GetPawn () ))
+			{
+				MyPawnUnit->SetCombatState_Unit ( false );
+			}
+			return;
+		}
+
 		float Dist = FVector::Dist ( MyPawn->GetActorLocation () , CurrentTarget->GetActorLocation () );
 
 		if (Dist > 1200.0f)
@@ -144,7 +189,6 @@ void AB_UnitAIController::CheckNearbyEnemies ()
 	}
 
 	bool bIsMadness = false;
-	AB_UnitBase* MyUnitBase = Cast<AB_UnitBase> ( MyPawn );
 
 	if (MyUnitBase && MyUnitBase->StatusComponent)
 	{
@@ -177,9 +221,16 @@ void AB_UnitAIController::CheckNearbyEnemies ()
 	for (auto const& OverlapResult : OverlapResults)
 	{
 		AActor* HitActor = OverlapResult.GetActor ();
-		if (!HitActor) continue;
+		if (!HitActor || HitActor == MyPawn) continue;
+		//if (!HitActor) continue;
+		//if (HitActor == MyPawn) continue;
 
-		if (HitActor == MyPawn) continue;
+		AB_UnitBase* HitUnit = Cast<AB_UnitBase> ( HitActor );
+		if (HitUnit && !HitUnit->IsAlive ())
+		{
+			continue;
+		}
+
 		IGameplayTagAssetInterface* TagInterface = Cast<IGameplayTagAssetInterface> ( HitActor );
 
 		if (TagInterface)
@@ -193,13 +244,11 @@ void AB_UnitAIController::CheckNearbyEnemies ()
 			{
 				bIsValidTarget = true;
 			}
-			// 조건 B: [광기] 상태이고, 상대가 아군이면 타겟 (팀킬 로직)
 			else if (bIsMadness && OwnedTags.HasTag ( UnitTag ))
 			{
 				bIsValidTarget = true;
 			}
 
-			// 제일 가까운 놈 찾기
 			if (bIsValidTarget)
 			{
 				float Dist = FVector::Dist ( MyPawn->GetActorLocation () , HitActor->GetActorLocation () );
@@ -364,6 +413,24 @@ void AB_UnitAIController::SetCommandState ( EUnitCommandType NewCommand , FVecto
 				MyUnit->SetCombatState_Unit ( false );
 			}
 		}
+	}
+}
+
+void AB_UnitAIController::OnMoveCompleted ( FAIRequestID RequestID , const FPathFollowingResult& Result )
+{
+	Super::OnMoveCompleted ( RequestID , Result );
+
+	if (!BlackboardComponent) return;
+
+	EUnitCommandType CurrentCommand = (EUnitCommandType)BlackboardComponent->GetValueAsEnum ( TEXT ( "Command" ) );
+
+	if (CurrentCommand == EUnitCommandType::Retreat)
+	{
+		BlackboardComponent->SetValueAsEnum ( TEXT ( "Command" ) , (uint8)EUnitCommandType::Hold );
+
+		BlackboardComponent->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
+
+		UE_LOG ( LogTemp , Warning , TEXT ( "후퇴 완료 Hold 상태로 전환" ) );
 	}
 }
 

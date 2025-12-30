@@ -106,15 +106,8 @@ FReply UW_MapWidget::NativeOnMouseButtonDown ( const FGeometry& InGeometry , con
 	
 	UE_LOG ( LogTemp , Log , TEXT ( "Minimap Click: U=%.3f V=%.3f -> World=%s" ) ,
 		U , V , *WorldPos.ToString () );
-	/*if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage (
-			-1 , 2.f , FColor::Green ,
-			FString::Printf ( TEXT ( "WorldPos: %s" ) , *WorldPos.ToString () )
-		);
-	}*/
-	KHS_SCREEN_INFO ( TEXT ( "WorldPos: %s" ) , *WorldPos.ToString () );
 
+	KHS_SCREEN_INFO ( TEXT ( "WorldPos: %s" ) , *WorldPos.ToString () );
 
 	// 좌클릭: 유닛 선택
 	if (PressedButton == EKeys::LeftMouseButton)
@@ -129,7 +122,8 @@ FReply UW_MapWidget::NativeOnMouseButtonDown ( const FGeometry& InGeometry , con
 		else
 		{
 			// 빈 곳 클릭 시 선택 해제
-			SelectedUnit = nullptr;
+			// SelectedUnit = nullptr;
+			ClearUnitSelection ();
 			KHS_INFO ( TEXT ( "No unit at clicked position" ) );
 		}
 
@@ -144,7 +138,7 @@ FReply UW_MapWidget::NativeOnMouseButtonDown ( const FGeometry& InGeometry , con
 			OnMapMoveCommand.Broadcast ( SelectedUnit.Get () , ClickedWorldLocation );
 			KHS_INFO ( TEXT ( "Move command: %s to %s" ) ,
 				*SelectedUnit->GetName () , *ClickedWorldLocation.ToString () );
-			ClearUnitSelection (); // 명령 내린 후에는 저장된 유닛 비우기
+			ClearUnitSelection (); // 명령 내린 후에는 저장된 유닛 비우기 => 이거 없으면 선택 유지 -> 추후 테스트 해보고 결정
 		}
 
 		return FReply::Handled ();
@@ -174,6 +168,8 @@ FVector UW_MapWidget::MapUVToWorld ( float U , float V ) const
 
 	return WorldPos;
 }
+
+
 
 // 레거시 : Overlap 사용해서 유닛 선택하기 -> 거리 계산으로 셀렉 동작하면 지울 예정
 //AActor* UW_MapWidget::FindClosestUnitNear ( const FVector& ClickWorld ) const

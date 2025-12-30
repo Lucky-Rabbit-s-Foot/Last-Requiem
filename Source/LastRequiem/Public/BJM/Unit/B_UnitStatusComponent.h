@@ -13,6 +13,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams (FOnStatChanged, float, Current, fl
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnCombatStateChanged , bool , bInCombat );
 
 
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class LASTREQUIEM_API UB_UnitStatusComponent : public UActorComponent
 {
@@ -47,6 +48,8 @@ public:
 	float CurrentSanity;
 
 
+public:
+
 	// 유닛 멘탈 상황
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Stat")
 	EUnitBehaviorState CurrentState;
@@ -54,8 +57,8 @@ public:
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Unit|Status" )
 	bool bIsInCombat = false;
 
-	UPROPERTY ( VisibleAnywhere , BlueprintReadWrite , Category = "Unit|Status" )
-	bool bIsSpeaking = false;
+	//UPROPERTY ( VisibleAnywhere , BlueprintReadWrite , Category = "Unit|Status" )
+	//bool bIsSpeaking = false;
 
 	UPROPERTY (BlueprintAssignable)
 	FOnStateChanged OnStateChanged;
@@ -69,6 +72,9 @@ public:
 	UPROPERTY ( BlueprintAssignable , Category = "Unit|Event" )
 	FOnCombatStateChanged OnCombatStateChanged;
 
+	//UPROPERTY ( BlueprintAssignable , Category = "Unit|Event" )
+	//FOnUnitSpeak OnUnitSpeak;
+
 	UFUNCTION (BlueprintCallable, Category = "Unit|Logic")
 	void ReduceHP ( float InDamage );
 
@@ -77,6 +83,15 @@ public:
 
 	UFUNCTION (BlueprintCallable, Category = "Unit|Logic")
 	void SetCombatState ( bool bNewState );
+
+	//UFUNCTION ( BlueprintCallable , Category = "Unit|Logic" )
+	//void SetSpeakingState ( bool bNewState );
+
+	UFUNCTION ( BlueprintCallable , Category = "Unit|Logic" )
+	void RecoverHP ( float InAmount );
+
+	UFUNCTION ( BlueprintCallable , Category = "Unit|Logic" )
+	void RecoverSanity ( float InAmount );
 
 protected:
 	FTimerHandle CombatTimerHandle;
@@ -89,5 +104,12 @@ protected:
 		
 private:
 	void UpdateBehaviorState ();
+
+protected:
+	// 패닉 상태일 때 정신력 깎는 타이머
+	FTimerHandle PanicSanityTimerHandle;
+
+	// 패닉 상태일 때 호출될 함수
+	void ReduceSanityInPanic ();
 
 };

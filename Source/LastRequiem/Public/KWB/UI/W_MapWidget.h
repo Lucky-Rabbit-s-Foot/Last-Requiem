@@ -72,7 +72,7 @@ public:
 
 	// 유닛 선택 반경
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Minimap|Selection" )
-	float UnitSelectionRadius = 100.f; // 인디케이터 크기에 따라 변경되어야 함
+	float UnitSelectionRadius = 180.f; // 인디케이터 크기에 따라 변경되어야 함
 
 	// 선택 가능한 유닛을 태그로 제한 (Default: Unit => cpp에서 설정)
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Minimap|Selection" )

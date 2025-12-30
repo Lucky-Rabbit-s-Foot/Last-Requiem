@@ -72,6 +72,8 @@ void AP_AIControllerEnemyBase::InitSightConfig ()
 {
 	if (!SightConfig_v2) return;
 
+	SightConfig_v2->AutoSuccessRangeFromLastSeenLocation = 1000.0f;
+
 	SightConfig_v2->SightRadius = SightRadius;
 	SightConfig_v2->LoseSightRadius = LoseSightRadius;
 	SightConfig_v2->PeripheralVisionAngleDegrees = ViewAngleDegree;

@@ -24,8 +24,12 @@ public:
 	UFUNCTION ( BlueprintCallable , Category = "UI" )
 	void InitializeOwner ( AActor* InOwnerUnit );
 
+	// SetUnitInfo 함수로 대체할 예정
 	UFUNCTION(BlueprintCallable, Category = "UI")
-	void SetUnitNameText (AActor* InOwnerUnit);
+	void SetUnitNameText (AActor* InOwnerUnit, const FUnitProfileData& UnitData );
+
+	UFUNCTION ( BlueprintCallable , Category = "UI" )
+	void SetUnitInfo ( const FUnitProfileData& UnitData );
 
 	UFUNCTION ( BlueprintCallable , Category = "UI" )
 	void SetShowNameState ( EUnitShowNameState NewState , bool bPlayPopup = true );

@@ -1,0 +1,159 @@
+﻿#include "PJB/Obstacle/P_EnemyObstacle.h"
+
+#include "LastRequiem.h"
+#include "Components/CapsuleComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "KWB/Component/IndicatorSpriteComponent.h" // 포인트
+#include "KHS/Drone/K_Drone.h"
+#include "PJB/System/P_GameStateBase.h"
+#include "LR_GameMode.h"
+
+#include "NiagaraSystem.h"
+#include "NiagaraFunctionLibrary.h"
+
+AP_EnemyObstacle::AP_EnemyObstacle()
+{
+	PrimaryActorTick.bCanEverTick = false;
+
+	Mesh = CreateDefaultSubobject<UStaticMeshComponent> ( TEXT ( "Mesh" ) );
+	SetRootComponent ( Mesh );
+
+	Mesh->SetCollisionProfileName ( FName ( "NoCollision" ) );
+	Mesh->SetCanEverAffectNavigation ( false );
+
+	CollisionComp = CreateDefaultSubobject<UCapsuleComponent> ( TEXT ( "CollisionComp" ) );
+	CollisionComp->SetCollisionProfileName ( TEXT ( "BlockAll" ) );
+	CollisionComp->SetupAttachment ( Mesh );
+
+	SpriteComp = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "SpriteComp" ) );
+	SpriteComp->SetupAttachment ( Mesh );
+
+	GeometryComp = CreateDefaultSubobject<UGeometryCollectionComponent> ( TEXT ( "GeometryComp" ) );
+	GeometryComp->SetupAttachment ( Mesh );
+
+	GeometryComp->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
+	GeometryComp->SetSimulatePhysics ( false );
+	GeometryComp->SetVisibility ( false );
+
+	AIControllerClass = nullptr;
+	AutoPossessPlayer = EAutoReceiveInput::Disabled;
+	AutoPossessAI = EAutoPossessAI::Disabled;
+}
+
+void AP_EnemyObstacle::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	Health = MaxHealth;
+	OnTakeAnyDamage.AddDynamic ( this , &AP_EnemyObstacle::OnTakeDamage );
+
+	Mesh->SetCanEverAffectNavigation ( false );
+
+	SpriteComp->SetRelativeRotation ( FRotator ( 0.0f , 90.0f , -90.0f ) );
+	SpriteComp->SetSpriteOnOff ( false );
+
+	static FGameplayTag ObstacleTag = FGameplayTag::RequestGameplayTag ( FName ( "Enemy.Obstacle" ) );
+	GameplayTags.AddTag ( ObstacleTag );
+
+	if(ALR_GameMode* GM = Cast<ALR_GameMode> ( GetWorld ()->GetAuthGameMode () ) )
+	{
+		// 게임 모드의 디폴트 폰 가져오기
+		AK_Drone* Drone = Cast<AK_Drone> ( UGameplayStatics::GetPlayerPawn ( GetWorld () , 0 ) );
+		BindDrone ( Drone );
+	}
+
+	if(AP_GameStateBase* GS = GetWorld ()->GetGameState<AP_GameStateBase> ())
+	{
+		OnEnemyObstacleBrokenDelegate.AddDynamic ( GS , &AP_GameStateBase::CountDestructEnemyObstacle );
+	}
+}
+
+void AP_EnemyObstacle::GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const
+{
+	TagContainer = GameplayTags;
+}
+
+
+void AP_EnemyObstacle::OnTakeDamage ( AActor* DamagedActor , float Damage , const UDamageType* DamageType , AController* InstigateBy , AActor* DamageCauser )
+{
+	if (bIsBroken) return;
+
+	Health -= Damage;
+	if (Health <= 0.0f)
+	{
+		OnBroken ();
+	}
+}
+
+void AP_EnemyObstacle::OnBroken ()
+{
+	if (bIsBroken) return;
+	bIsBroken = true;
+
+	GameplayTags.Reset ();
+
+	if (Mesh)
+	{
+		Mesh->SetVisibility ( false );
+	}
+
+	if (SpriteComp)
+	{
+		SpriteComp->SetSpriteOnOff ( false );
+	}
+
+	if (CollisionComp)
+	{
+		CollisionComp->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
+	}
+
+	if (DestructionEffect)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation (
+			this ,
+			DestructionEffect ,
+			GetActorLocation () ,
+			GetActorRotation ()
+		);
+	}
+
+	if (GeometryComp)
+	{
+		GeometryComp->SetVisibility ( true );
+		GeometryComp->SetCollisionEnabled ( ECollisionEnabled::QueryAndPhysics );
+		GeometryComp->SetCollisionProfileName ( FName ( "Destructible" ) );
+		GeometryComp->SetSimulatePhysics ( true );
+	}
+
+	if (MasterFieldClass)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		GetWorld ()->SpawnActor<AActor> (
+			MasterFieldClass ,
+			GetActorLocation () ,
+			GetActorRotation () ,
+			SpawnParams
+		);
+	}
+
+	OnEnemyObstacleBrokenDelegate.Broadcast ();
+	SetLifeSpan ( 3.0f );
+}
+
+
+void AP_EnemyObstacle::BindDrone ( AK_Drone* InDrone )
+{
+	if (!InDrone) return;
+	InDrone->onUnitDetected.AddUObject ( this , &AP_EnemyObstacle::OnDetected );
+}
+
+void AP_EnemyObstacle::OnDetected ( AActor* DetectedActor )
+{
+	if (DetectedActor != this || bIsBroken) return;
+
+	if (SpriteComp)
+	{
+		SpriteComp->SetSpriteOnOff ( true );
+	}
+}

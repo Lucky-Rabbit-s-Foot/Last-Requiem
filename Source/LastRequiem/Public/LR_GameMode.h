@@ -1,17 +1,47 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "PJB/Data/P_ScoringDataAsset.h"
+
 #include "LR_GameMode.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class LASTREQUIEM_API ALR_GameMode : public AGameModeBase
 {
 	GENERATED_BODY()
-	
+
+public:
+	ALR_GameMode ();
+	virtual void Tick ( float DeltaSeconds ) override;
+
+	UFUNCTION ()
+	void OnGameOver ();
+
+protected:
+	virtual void BeginPlay () override;
+
+
+protected:
+	UPROPERTY ( EditDefaultsOnly , Category = "Data|Wave" )
+	float PreparationTime = 10.0f;
+	UPROPERTY ( EditDefaultsOnly , Category = "Data|Wave" )
+	float WaveTime = 20.0f;
+
+	UPROPERTY ( EditDefaultsOnly , Category = "Data|GameOver" )
+	float GameOverDelayTime = 5.0f;
+
+	int32 TotalWaves = 0;
+private:
+	FTimerHandle PhaseTimerHandle;
+
+	UPROPERTY ( EditDefaultsOnly , Category = "Data|Wave" )
+	TObjectPtr<UDataTable> WaveDataTable;
+
+	UPROPERTY ( EditDefaultsOnly , Category = "Data|Score" )
+	TObjectPtr<UP_ScoringDataAsset> ScoringDataAsset;
+
+	void StartPreparation ();
+	void StartWave ();
+	void EndWave ();
 };

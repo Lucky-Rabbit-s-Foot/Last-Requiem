@@ -21,4 +21,8 @@ public:
 	UFUNCTION ( BlueprintCallable )
 	void OnClickExitGame ();
 
+protected:
+	UFUNCTION ( BlueprintImplementableEvent )
+	void PlayGameStartAnimation ();
+
 };

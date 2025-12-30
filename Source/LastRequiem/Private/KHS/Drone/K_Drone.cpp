@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "KHS/Drone/K_Drone.h"
@@ -8,12 +8,17 @@
 #include "BJM/Unit/B_UnitMentalTypes.h"
 
 #include "KWB/Component/IndicatorSpriteComponent.h"
+#include "TimerManager.h" // (20251223) W : 드론 스킬 쿨타임 용도
 
 #include "Camera/CameraComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/AudioComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "KWB/Component/IndicatorSpriteComponent.h"
+#include "Sound/SoundBase.h"
+#include "KHS/Util/K_LoggingSystem.h"
+#include "PJB/Enemy/P_EnemyBase.h"
+#include "PJB/Obstacle/P_EnemyObstacle.h"
 
 
 // Sets default values
@@ -53,7 +58,13 @@ void AK_Drone::BeginPlay()
 		animInst->Montage_JumpToSection(FName("Start"));
 	}
 	
-	
+	// (20251224) P : 드론 충돌 (Start)
+	if(UPrimitiveComponent* primComp = Cast<UPrimitiveComponent>(GetRootComponent()))
+	{
+		DefaultLinearDamping = primComp->GetLinearDamping ();
+	}
+	// (20251224) P : 드론 충돌 (End)
+
 	//Unit 최초 탐색 후
 	//타이머로 n초마다 UpdateDetectedUnitSlot 호출
 	InitializeDetectedUnitSlot();
@@ -64,12 +75,26 @@ void AK_Drone::BeginPlay()
 		&AK_Drone::UpdateDetectedUnitSlot,
 		1.0f,
 		true
-		);
+	);
+
+	if (audioComp && flightSound)
+	{
+		audioComp->SetSound ( flightSound );
+		audioComp->Play ();
+	}
 }
 
 void AK_Drone::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if (audioComp && audioComp->IsPlaying ())
+	{
+		audioComp->Stop ();
+	}
+
 	GetWorldTimerManager().ClearTimer(detectionTimerHandle);
+	// (20251223) W : 드론 스킬 타이머 정리
+	GetWorldTimerManager ().ClearTimer ( Skill01CooldownTimerHandle );
+	GetWorldTimerManager ().ClearTimer ( Skill02CooldownTimerHandle );
 	
 	Super::EndPlay(EndPlayReason);
 }
@@ -81,7 +106,67 @@ void AK_Drone::Tick(float DeltaTime)
 
 	UpdateDroneMovement(DeltaTime);
 	UpdateDroneRotation(DeltaTime);
+
+	if (audioComp && audioComp->IsPlaying ())
+	{
+		float velocitySize = GetVelocity ().Size ();
+		float newPitch = FMath::GetMappedRangeValueClamped ( FVector2D ( 0.0f , 2000.0f ) , FVector2D ( 0.5f , 0.8f ) , velocitySize );
+		audioComp->SetPitchMultiplier ( newPitch );
+	}
+
+	UpdateDroneRotationByMovement ( DeltaTime );
 }
+
+void AK_Drone::UpdateDroneRotationByMovement ( float DeltaTime )
+{
+	FVector velocity = GetVelocity ();
+	FVector forwardVectr = GetActorForwardVector ();
+	FVector rightVector = GetActorRightVector ();
+
+	float forwardSpeed = FVector::DotProduct ( velocity , forwardVectr );
+	float rightSpeed = FVector::DotProduct ( velocity , rightVector );
+
+	const float tiltStrength = 0.01f;
+
+	float targetPitch = -forwardSpeed * tiltStrength;
+	float targetRoll = rightSpeed * tiltStrength;
+
+	float maxAngle = 10.0f;
+
+	targetPitch = FMath::Clamp ( targetPitch , -maxAngle , maxAngle );
+	targetRoll = FMath::Clamp ( targetRoll , -maxAngle , maxAngle );
+
+	FRotator currentRot = meshComp->GetRelativeRotation ();
+	FRotator targetRot = FRotator ( targetPitch , 0.0f , targetRoll );
+
+	float interpSpeed = 90.0f;
+	FRotator newRot = FMath::RInterpTo ( currentRot , targetRot , DeltaTime , interpSpeed );
+	meshComp->SetRelativeRotation ( newRot );
+}
+
+// (20251224) P : 드론 충돌 (Start)
+void AK_Drone::NotifyHit ( UPrimitiveComponent* MyComp , AActor* Other , UPrimitiveComponent* OtherComp , bool bSelfMoved , FVector HitLocation , FVector HitNormal , FVector NormalImpulse , const FHitResult& Hit )
+{
+	Super::NotifyHit ( MyComp , Other , OtherComp , bSelfMoved , HitLocation , HitNormal , NormalImpulse , Hit );
+
+	if (Other && Cast<ACharacter> ( Other ))
+	{
+		if(GetWorldTimerManager ().IsTimerActive ( DampingRestoreTimer ))
+		{
+			return;
+		}
+		MyComp->SetLinearDamping ( 10.0f );
+		GetWorldTimerManager ().SetTimer ( 
+			DampingRestoreTimer , 
+			FTimerDelegate::CreateLambda ( 
+				[ this , MyComp ]() { MyComp->SetLinearDamping ( DefaultLinearDamping ); } 
+			) ,
+			0.2f , 
+			false 
+		);
+	}
+}
+// (20251224) P : 드론 충돌 (End)
 
 void AK_Drone::InitializeDefaultComponents()
 {
@@ -117,6 +202,11 @@ void AK_Drone::InitializeDefaultComponents()
 	//indicator
 	indicatorComp = CreateDefaultSubobject<UIndicatorSpriteComponent>("indicatorComp");
 	indicatorComp->SetupAttachment(RootComponent);
+
+	//audio
+	audioComp = CreateDefaultSubobject<UAudioComponent> ( "audioComp" );
+	audioComp->SetupAttachment ( RootComponent );
+	audioComp->bAutoActivate = false;
 }
 
 void AK_Drone::UpdateDroneMovement(float DeltaTime)
@@ -125,7 +215,18 @@ void AK_Drone::UpdateDroneMovement(float DeltaTime)
 	{
 		return;
 	}
-	
+
+	// (20251224) P : 드론 이동 (Start)
+	FVector CurrentVelocity = sphereComp->GetPhysicsLinearVelocity ();
+	bool bIsOverLimitHeight = GetActorLocation ().Z > droneData->DRONE_FLIGHT_MAX_HEIGHT && CurrentVelocity.Z > 0.0f;
+	bool bIsUnderLimitHeight = GetActorLocation ().Z < droneData->DRONE_FLIGHT_MIN_HEIGHT && CurrentVelocity.Z < 0.0f;
+	if (bIsOverLimitHeight || bIsUnderLimitHeight)
+	{
+		CurrentVelocity.Z = 0.0f;
+		sphereComp->SetPhysicsLinearVelocity ( CurrentVelocity );
+	}
+	// (20251224) P : 드론 이동 (End)
+
 	//입력이 있을때만 Force 적용
 	bool bHasInput = (moveInputValue.SizeSquared() > 0.0f || FMath::Abs(upDownInputValue) > 0.0f);
 	
@@ -141,7 +242,8 @@ void AK_Drone::UpdateDroneMovement(float DeltaTime)
 		
 		//고도 제한 적용
 		bool bOnLimitHeight = GetActorLocation().Z > droneData->DRONE_FLIGHT_MAX_HEIGHT && upDownInputValue > 0.0f;
-		if (bOnLimitHeight)
+		bool bOnLimitLowHeight = GetActorLocation ().Z < droneData->DRONE_FLIGHT_MIN_HEIGHT && upDownInputValue < 0.0f;
+		if (bOnLimitHeight || bOnLimitLowHeight)
 		{
 			verticalForce = FVector::ZeroVector;
 		}
@@ -176,8 +278,8 @@ void AK_Drone::InitializeDetectedUnitSlot()
 	FVector start = GetActorLocation();
 	FVector end = start;
 	
-	float capsuleRadius = 10000.f;
-	float capsuleHalfHeight = 700.f;
+	float capsuleRadius = droneData->DRONE_DETECTION_INITIAL_RADIUS;
+	float capsuleHalfHeight = droneData->DRONE_DETECTION_INITIAL_HALF_HEIGHT;
 	FCollisionShape capsuleShpae = FCollisionShape::MakeCapsule(capsuleRadius, capsuleHalfHeight);
 	
 	GetWorld()->SweepMultiByChannel(
@@ -227,14 +329,19 @@ void AK_Drone::UpdateDetectedUnitSlot()
 	FVector start = GetActorLocation();
 	FVector end = start;
 	
-	float capsuleRadius = 800.f;
-	float capsuleHalfHeight = 2500.f;
+	float capsuleRadius = droneData->DRONE_DETECTION_CAPSULE_RADIUS;
+	float capsuleHalfHeight = droneData->DRONE_DETECTION_CAPSULE_HALF_HEIGHT;
 	FCollisionShape capsuleShpae = FCollisionShape::MakeCapsule(capsuleRadius, capsuleHalfHeight);
+	
+	//(251217 수정) 캡슐 회전 추가
+	FRotator currentRot = GetActorRotation();
+	currentRot.Pitch += droneData->DRONE_DETECTION_CAPSULE_ROTATION;
+	FQuat capsuleQuat = currentRot.Quaternion();
 	
 	GetWorld()->SweepMultiByChannel(
 		hitResults,
 		start, end,
-		FQuat::Identity,
+		capsuleQuat,
 		ECC_Pawn,
 		capsuleShpae);
 	
@@ -244,28 +351,45 @@ void AK_Drone::UpdateDetectedUnitSlot()
 		start,
 		capsuleHalfHeight,
 		capsuleRadius,
-		FQuat::Identity,
+		capsuleQuat,
 		FColor::Green,
 		false,
 		1.f, 0, 3.f
 		);
+	
 #endif
 	
 	//현재 탐지된 유닛 캐싱
 	TSet<AActor*> currentDetectedUnits;
+	TSet<AActor*> currentDetectedEnemys;
 	
 	//탐지결과 처리
 	for (const FHitResult& hit : hitResults)
 	{
-		
 		AActor* detectedActor = hit.GetActor();
-		AB_UnitBase* detectedUnit = Cast<AB_UnitBase>(detectedActor);
 		
+		//유닛
+		AB_UnitBase* detectedUnit = Cast<AB_UnitBase>(detectedActor);
 		if (detectedUnit)
 		{
 			currentDetectedUnits.Add(detectedActor);
 			//broadcast
 			onUnitDetected.Broadcast(detectedActor);
+		}
+		
+		//(251217 수정) 에너미 탐지 추가
+		AP_EnemyBase* detectedEnemy = Cast<AP_EnemyBase>(detectedActor);
+		if (detectedEnemy)
+		{
+			//KHS_SCREEN_INFO(TEXT("에너미 탐지되었음 - %p"), detectedEnemy);
+			currentDetectedEnemys.Add(detectedActor);
+			onUnitDetected.Broadcast(detectedActor);
+		}
+
+		AP_EnemyObstacle* detectedEnemyObstacle = Cast<AP_EnemyObstacle> ( detectedActor );
+		if( detectedEnemyObstacle )
+		{
+			onUnitDetected.Broadcast ( detectedActor );
 		}
 	}
 	
@@ -274,15 +398,64 @@ void AK_Drone::UpdateDetectedUnitSlot()
 	{
 		if (!currentDetectedUnits.Contains(detectedActor))
 		{
+			//KHS_SCREEN_INFO(TEXT("에너미 탐지벗어남 - %p"), detectedActor);
 			//broadcast
 			onUnitLostDetection.Broadcast(detectedActor);
 		}
 	}
 	
-	//unit list update
+	//(251217 수정) 이전 탐지되었으나 지금은 안된 에너미들 브로드캐스트
+	for (AActor* detectedEnemy : previouslyDetectedEnemys)
+	{
+		if (!currentDetectedEnemys.Contains(detectedEnemy))
+		{
+			onUnitLostDetection.Broadcast(detectedEnemy);
+		}
+	}
+	
+	//list update
 	previouslyDetectedUnits = currentDetectedUnits;
+	previouslyDetectedEnemys = currentDetectedEnemys;
 }
 
+// (20251223) W : 드론 스킬 용도 (Start)
+void AK_Drone::StartSkill01Cooldown ()
+{
+	if (Skill01CooldownDuration <= 0.0f) return;
+
+	GetWorldTimerManager ().SetTimer (
+		Skill01CooldownTimerHandle ,
+		this ,
+		&AK_Drone::OnSkill01CooldownFinished ,
+		Skill01CooldownDuration ,
+		false
+	);
+}
+
+void AK_Drone::StartSkill02Cooldown ()
+{
+	if (Skill02CooldownDuration <= 0.0f) return;
+
+	GetWorldTimerManager ().SetTimer (
+		Skill02CooldownTimerHandle ,
+		this ,
+		&AK_Drone::OnSkill02CooldownFinished ,
+		Skill02CooldownDuration ,
+		false
+	);
+}
+
+void AK_Drone::OnSkill01CooldownFinished ()
+{
+	// 만료되면 inactive가 되긴 하지만, 명시적 Clear로 관리 편하게
+	GetWorldTimerManager ().ClearTimer ( Skill01CooldownTimerHandle );
+}
+
+void AK_Drone::OnSkill02CooldownFinished ()
+{
+	GetWorldTimerManager ().ClearTimer ( Skill02CooldownTimerHandle );
+}
+// (20251223) W : 드론 스킬 용도 (End)
 
 void AK_Drone::Move(const FVector2D& inputValue)
 {
@@ -296,9 +469,96 @@ void AK_Drone::UpDown(float inputValue)
 
 void AK_Drone::UseSkill01()
 {
+	// (20251223) W : 드론 스킬 용도
+	if (!IsSkill01Ready ())
+	{
+		return;
+	}
+
+	//previouslyDetectedUnits을 순회하면서 유닛들에게 회복명령
+	for (AActor* actor : previouslyDetectedUnits)
+	{
+		AB_UnitBase* unit = Cast<AB_UnitBase>(actor);
+		if (!unit || !unit->IsAlive())
+		{
+			continue;
+		}
+		
+		unit->ReceiveSupport_HP(droneData->RECOVER_HEALTH_AMOUNT);
+	}
+
+	// (20251223) W : 드론 스킬 용도
+	StartSkill01Cooldown ();
 }
 
 void AK_Drone::UseSkill02()
 {
+	// (20251223) W : 드론 스킬 용도
+	if (!IsSkill02Ready ())
+	{
+		return;
+	}
+
+	for (AActor* actor : previouslyDetectedUnits)
+	{
+		AB_UnitBase* unit = Cast<AB_UnitBase>(actor);
+		if (!unit || !unit->IsAlive())
+		{
+			continue;
+		}
+		
+		unit->ReceiveSupport_Sanity(droneData->RECOVER_SANITY_AMOUNT);
+	}
+
+	// (20251223) W : 드론 스킬 용도
+	StartSkill02Cooldown ();
 }
+
+// (20251223) W : 드론 스킬 용도 (Start)
+bool AK_Drone::IsSkill01Ready () const
+{
+	const UWorld* World = GetWorld ();
+	if (!World) return true;
+
+	return !World->GetTimerManager ().IsTimerActive ( Skill01CooldownTimerHandle );
+}
+
+float AK_Drone::GetSkill01CooldownRemaining () const
+{
+	const UWorld* World = GetWorld ();
+	if (!World) return 0.0f;
+
+	const float Remaining = World->GetTimerManager ().GetTimerRemaining ( Skill01CooldownTimerHandle );
+	return FMath::Max ( 0.0f , Remaining );
+}
+
+float AK_Drone::GetSkill01CooldownRatioRemaining () const
+{
+	if (Skill01CooldownDuration <= 0.0f) return 0.0f;
+	return FMath::Clamp ( GetSkill01CooldownRemaining () / Skill01CooldownDuration , 0.0f , 1.0f );
+}
+
+bool AK_Drone::IsSkill02Ready () const
+{
+	const UWorld* World = GetWorld ();
+	if (!World) return true;
+
+	return !World->GetTimerManager ().IsTimerActive ( Skill02CooldownTimerHandle );
+}
+
+float AK_Drone::GetSkill02CooldownRemaining () const
+{
+	const UWorld* World = GetWorld ();
+	if (!World) return 0.0f;
+
+	const float Remaining = World->GetTimerManager ().GetTimerRemaining ( Skill02CooldownTimerHandle );
+	return FMath::Max ( 0.0f , Remaining );
+}
+
+float AK_Drone::GetSkill02CooldownRatioRemaining () const
+{
+	if (Skill02CooldownDuration <= 0.0f) return 0.0f;
+	return FMath::Clamp ( GetSkill02CooldownRemaining () / Skill02CooldownDuration , 0.0f , 1.0f );
+}
+// (20251223) W : 드론 스킬 용도 (End)
 

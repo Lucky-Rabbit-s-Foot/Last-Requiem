@@ -6,9 +6,9 @@
 #include "BJM/Unit/B_UnitBase.h"
 #include "B_UnitGrenadier.generated.h"
 
-/**
- * 
- */
+
+class UNiagaraSystem;
+
 UCLASS()
 class LASTREQUIEM_API AB_UnitGrenadier : public AB_UnitBase
 {
@@ -22,9 +22,8 @@ protected:
 
 public:
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Combat" )
-	float ExplosionRadius = 300.0f;
+	float ExplosionRadius = 200.0f;
 
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Combat" )
-	UParticleSystem* ExplosionEffect;
-
+	UNiagaraSystem* ExplosionEffect;
 };

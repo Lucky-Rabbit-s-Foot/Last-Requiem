@@ -2,6 +2,9 @@
 
 
 #include "BJM/Unit/B_UnitStatusComponent.h"
+#include "BJM/Unit/B_UnitBase.h"
+
+#include "PJB/System/P_GameStateBase.h"
 
 // Sets default values for this component's properties
 UB_UnitStatusComponent::UB_UnitStatusComponent()
@@ -66,6 +69,16 @@ void UB_UnitStatusComponent::ModifySanity (float InAmount)
 {
 	CurrentSanity = FMath::Clamp(CurrentSanity + InAmount, 0.0f, MaxSanity);
 
+	if (CurrentSanity + InAmount >= MaxSanity)
+	{
+		AP_GameStateBase* GS = GetWorld ()->GetGameState<AP_GameStateBase> ();
+		if (GS)
+		{
+			GS->CountRecoverySanity ();
+		}
+	}
+
+
 	if (OnSanityChanged.IsBound())
 	{
 		OnSanityChanged.Broadcast(CurrentSanity, MaxSanity);
@@ -116,7 +129,56 @@ void UB_UnitStatusComponent::SetCombatState(bool bNewState)
 
 }
 
-void UB_UnitStatusComponent::ResetCombatState()
+//void UB_UnitStatusComponent::SetSpeakingState ( bool bNewState )
+//{
+//	AB_UnitBase* Unit = Cast<AB_UnitBase> ( GetOwner () );
+//	if (bIsSpeaking == bNewState) return;
+//
+//	bIsSpeaking = bNewState;
+//
+//	if (OnUnitSpeak.IsBound ())
+//	{
+//		OnUnitSpeak.Broadcast ( GetOwner () , bIsSpeaking );
+//	}
+//
+//	if (Unit)
+//	{
+//		Unit->UnitDataUpdate ();
+//	}
+//}
+
+void UB_UnitStatusComponent::RecoverHP ( float InAmount )
+{
+	if (InAmount <= 0.0f) return;
+
+	if (CurrentHP + InAmount >= MaxHP)
+	{
+		AP_GameStateBase* GS = GetWorld ()->GetGameState<AP_GameStateBase> ();
+		if (GS)
+		{
+			GS->CountRecoveryHealth ();
+		}
+	}
+
+	CurrentHP = FMath::Clamp ( CurrentHP + InAmount , 0.0f , MaxHP );
+
+	if (OnHPChanged.IsBound ())
+	{
+		OnHPChanged.Broadcast ( CurrentHP , MaxHP );
+	}
+
+	UE_LOG ( LogTemp , Log , TEXT ( "[%s] 체력 회복: +%.1f (현재: %.1f)" ) , *GetOwner ()->GetName () , InAmount , CurrentHP );
+}
+
+void UB_UnitStatusComponent::RecoverSanity ( float InAmount )
+{
+	ModifySanity ( FMath::Abs ( InAmount ) );
+
+	UE_LOG ( LogTemp , Log , TEXT ( "[%s] 정신력 회복 요청: +%.1f" ) , *GetOwner ()->GetName () , FMath::Abs ( InAmount ) );
+
+}
+
+void UB_UnitStatusComponent::ResetCombatState() 
 {
 	SetCombatState ( false );
 	UE_LOG(LogTemp, Warning, TEXT("전투 모드 비활성화"));
@@ -162,12 +224,32 @@ void UB_UnitStatusComponent::UpdateBehaviorState ()
 	if (CurrentState != NewState)
 	{
 		CurrentState = NewState;
+		if (CurrentState == EUnitBehaviorState::Panic)
+		{
+			GetWorld ()->GetTimerManager ().SetTimer (
+				PanicSanityTimerHandle ,
+				this ,
+				&UB_UnitStatusComponent::ReduceSanityInPanic ,
+				1.0f ,
+				true
+			);
+		}
+		else
+		{
+			GetWorld ()->GetTimerManager ().ClearTimer ( PanicSanityTimerHandle );
+		}
 		if (OnStateChanged.IsBound())
 		{
 			OnStateChanged.Broadcast(CurrentState);
 		}
 	}
 
+}
+
+void UB_UnitStatusComponent::ReduceSanityInPanic ()
+{
+	ModifySanity ( -0.6f );
+	UE_LOG ( LogTemp , Warning , TEXT ( "패닉 정신력 하락 (%.1f)" ) , CurrentSanity );
 }
 
 

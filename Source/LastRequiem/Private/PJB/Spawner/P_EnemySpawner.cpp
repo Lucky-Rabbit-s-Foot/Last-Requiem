@@ -5,7 +5,7 @@
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "NavigationSystem.h"
-#include "PJB/Data/P_DataTableRows.h"
+#include "PJB/Data/P_SpawnDataRow.h"
 #include "PJB/Data/P_SpawnerDataAsset.h"
 #include "PJB/Enemy/P_EnemyBase.h"
 #include "PJB/System/P_GameStateBase.h"
@@ -37,76 +37,89 @@ void AP_EnemySpawner::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	StartSpawnEnemy ();
+	if (AP_GameStateBase* GS = GetWorld ()->GetGameState<AP_GameStateBase> ())
+	{
+		GS->OnWaveStart.AddDynamic ( this , &AP_EnemySpawner::StartSpawning );
+		GS->OnWaveEnd.AddDynamic ( this , &AP_EnemySpawner::StopSpawning );
+	}
 }
 
-void AP_EnemySpawner::StartSpawnEnemy ()
+void AP_EnemySpawner::StartSpawning ()
 {
-	if (!DA || DA->SpawnInterval <= 0.0f || !EnemyDataTable) return;
+	AP_GameStateBase* GS = GetWorld ()->GetGameState<AP_GameStateBase> ();
+	if (!GS) return;
+
+	EnemyDataTable = GS->CurrentWaveSpawnData;
+	if (!EnemyDataTable) return;
 
 	GetWorldTimerManager ().SetTimer (
 		SpawnTimerHandle ,
 		this ,
-		&AP_EnemySpawner::SpawnEnemy ,
-		DA->SpawnInterval ,
+		&AP_EnemySpawner::SpawnEnemies ,
+		GS->CurrentSpawnInterval ,
 		true ,
-		DA->SpawnDelay
+		0.0f
 	);
 }
 
-
-void AP_EnemySpawner::SpawnEnemy ()
+void AP_EnemySpawner::StopSpawning ()
 {
-	if (!EnemyDataTable || !EnemyTagToSpawn.IsValid ()) return;
-	
-	FP_EnemySpawnRow* SelectedRow = nullptr;
+	GetWorldTimerManager ().ClearTimer ( SpawnTimerHandle );
+}
 
+void AP_EnemySpawner::SpawnEnemies ()
+{
+	if (!EnemyDataTable) return;
+	
 	static const FString ContextString ( TEXT ( "EnemySpawnContext" ) );
 	TArray<FP_EnemySpawnRow*> AllRows;
 	EnemyDataTable->GetAllRows<FP_EnemySpawnRow> ( ContextString , AllRows );
 
 	for(FP_EnemySpawnRow* Row : AllRows)
 	{
-		if (!Row || !Row->EnemyTag.MatchesTag ( EnemyTagToSpawn )) continue;
-
-		SelectedRow = Row;
-		if (!SelectedRow || !SelectedRow->EnemyClass || !SelectedRow->EnemyDataAsset) return;
+		if (!Row || !Row->EnemyClass || !Row->EnemyDataAsset) return;
 
 		FVector SpawnLocation = GetActorLocation ();
-		FTransform SpawnTransform = GetActorTransform ();
-
 		if (UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent ( GetWorld () ))
 		{
 			FNavLocation RandomNavLocation;
 			if (NavSys->GetRandomPointInNavigableRadius ( SpawnLocation , DA->SpawnRadius , RandomNavLocation ))
 			{
 				SpawnLocation = RandomNavLocation.Location;
-				SpawnLocation.Z += 50.0f;
+				SpawnLocation.Z = GetActorLocation().Z + 100.0f;
 			}
 		}
-		SpawnTransform.SetLocation ( SpawnLocation );
-
-		AP_EnemyBase* SpawnedEnemy = GetWorld ()->SpawnActorDeferred<AP_EnemyBase> (
-			SelectedRow->EnemyClass ,
-			SpawnTransform ,
-			nullptr ,
-			nullptr ,
-			ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn
-		);
 		
-		if (SpawnedEnemy)
+		FTransform SpawnTransform ( GetActorRotation () , SpawnLocation );
+		for (int i = 0; i < Row->SpawnCount; ++i)
 		{
-			SpawnedEnemy->InitEnemyData ( SelectedRow->EnemyDataAsset );
-			if (AK_Drone* Drone = Cast<AK_Drone> ( UGameplayStatics::GetPlayerPawn ( GetWorld () , 0 ) ) )
-			{
-				SpawnedEnemy->BindDrone ( Drone );
-			}
+			SpawnEachEnemy ( Row , SpawnTransform );
+		}
+	}
+}
 
-			UGameplayStatics::FinishSpawningActor ( SpawnedEnemy , SpawnTransform );
-			if (SpawnedEnemy->GetController () == nullptr)
-			{
-				SpawnedEnemy->SpawnDefaultController ();
-			}
+void AP_EnemySpawner::SpawnEachEnemy ( FP_EnemySpawnRow* SelectedRow , FTransform& SpawnTransform )
+{
+	AP_EnemyBase* SpawnedEnemy = GetWorld ()->SpawnActorDeferred<AP_EnemyBase> (
+		SelectedRow->EnemyClass ,
+		SpawnTransform ,
+		nullptr ,
+		nullptr ,
+		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn
+	);
+
+	if (SpawnedEnemy)
+	{
+		SpawnedEnemy->InitEnemyData ( SelectedRow->EnemyDataAsset );
+		if (AK_Drone* Drone = Cast<AK_Drone> ( UGameplayStatics::GetPlayerPawn ( GetWorld () , 0 ) ))
+		{
+			SpawnedEnemy->BindDrone ( Drone );
+		}
+
+		UGameplayStatics::FinishSpawningActor ( SpawnedEnemy , SpawnTransform );
+		if (SpawnedEnemy->GetController () == nullptr)
+		{
+			SpawnedEnemy->SpawnDefaultController ();
 		}
 	}
 }

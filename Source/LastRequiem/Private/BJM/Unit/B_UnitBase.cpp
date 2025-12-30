@@ -4,6 +4,7 @@
 #include "NavigationSystem.h"
 #include "BJM/Unit/B_UnitStatusComponent.h"
 #include "BJM/Unit/B_UnitAIController.h"
+#include "BJM/Announcer/B_UIAnnouncer.h"
 #include "PJB/Fortress/P_Fortress.h"
 #include "AIController.h" 
 #include "Kismet/GameplayStatics.h"
@@ -13,9 +14,12 @@
 #include "KWB/UI/Monitor/W_SituationMapWidget.h"
 #include "KWB/UI/W_MapWidget.h"
 #include "KWB/Component/IndicatorSpriteComponent.h"
+#include "KWB/Component/W_SelectedSpriteComponent.h"
 #include "Perception/AISense_Damage.h"
 #include "TimerManager.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "BehaviorTree/BehaviorTreeComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameplayTagsManager.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SpotLightComponent.h"
@@ -24,6 +28,11 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
 #include "Sound/SoundAttenuation.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
+#include "Components/WidgetComponent.h"
+#include "KWB/UI/W_ShowNameWidget.h"
+#include "KHS/Drone/K_Drone.h"
 
 // Sets default values
 AB_UnitBase::AB_UnitBase()
@@ -34,6 +43,10 @@ AB_UnitBase::AB_UnitBase()
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent> ( TEXT ( "WeaponMesh" ) );
 	WeaponMesh->SetupAttachment ( GetMesh () , FName ( "WeaponSocket" ) );
 	WeaponMesh->SetCollisionProfileName ( TEXT ( "NoCollision" ) );
+
+	NiagaraComp = CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraEffect_V3"));
+	NiagaraComp->SetupAttachment(WeaponMesh, FName("Muzzle"));
+	NiagaraComp->bAutoActivate = false;
 
 	GunFlashlight = CreateDefaultSubobject<USpotLightComponent> ( TEXT ( "GunFlashlight" ) );
 	GunFlashlight->SetupAttachment ( WeaponMesh , FName ( "Flash" ) );
@@ -59,6 +72,20 @@ AB_UnitBase::AB_UnitBase()
 	IndicatorSprite = CreateDefaultSubobject<UIndicatorSpriteComponent> ( TEXT ( "IndicatorSprite" ) );
 	IndicatorSprite->SetupAttachment ( RootComponent );
 
+	ShowNameWidgetComponent = CreateDefaultSubobject<UWidgetComponent> ( TEXT ( "ShowNameWidget" ) );
+	ShowNameWidgetComponent->SetupAttachment ( RootComponent );
+	ShowNameWidgetComponent->SetWidgetSpace ( EWidgetSpace::Screen );
+	ShowNameWidgetComponent->SetDrawAtDesiredSize ( true );
+	ShowNameWidgetComponent->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
+	ShowNameWidgetComponent->SetRelativeLocation ( FVector ( 0.0f , 0.0f , 120.0f ) );
+
+	SelectedSpriteComponent = CreateDefaultSubobject<UW_SelectedSpriteComponent> ( TEXT ( "SelectedSpriteComponent" ) );
+	SelectedSpriteComponent->SetupAttachment ( RootComponent );
+
+	SelectedSpriteComponent->SetVisibility ( false , true );
+	SelectedSpriteComponent->SetHiddenInGame ( true );
+	SelectedSpriteComponent->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
+
 }
 
 void AB_UnitBase::GetOwnedGameplayTags ( FGameplayTagContainer& TagContainer ) const
@@ -71,7 +98,6 @@ void AB_UnitBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	
 	//GetWorld ()->GetTimerManager ().SetTimer (
 	//	FindWidgetTimerHandle ,
 	//	this ,
@@ -97,7 +123,15 @@ void AB_UnitBase::BeginPlay()
 	}
 
 	UnitDataUpdate ();
+	InitializeShowNameWidget ();
+	BindDroneDetection ();
+}
 
+void AB_UnitBase::EndPlay ( const EEndPlayReason::Type EndPlayReason )
+{
+	UnbindDroneDetection ();
+
+	Super::EndPlay ( EndPlayReason );
 }
 
 // Called every frame
@@ -114,6 +148,87 @@ void AB_UnitBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+void AB_UnitBase::InitializeShowNameWidget ()
+{
+	if (!ShowNameWidgetComponent)
+	{
+		return;
+	}
+
+	if (ShowNameWidgetClass)
+	{
+		ShowNameWidgetComponent->SetWidgetClass ( ShowNameWidgetClass );
+	}
+
+	ShowNameWidgetComponent->InitWidget ();
+	ShowNameWidget = Cast<UW_ShowNameWidget> ( ShowNameWidgetComponent->GetUserWidgetObject () );
+	if (ShowNameWidget)
+	{
+		ShowNameWidget->InitializeOwner ( this );
+		ShowNameWidget->SetShowNameState ( EUnitShowNameState::UNDETECTED , false );
+	}
+}
+
+void AB_UnitBase::BindDroneDetection ()
+{
+	if (BoundDrone.IsValid ())
+	{
+		return;
+	}
+
+	AK_Drone* Drone = Cast<AK_Drone> ( UGameplayStatics::GetPlayerPawn ( GetWorld () , 0 ) );
+	if (!Drone)
+	{
+		return;
+	}
+
+	BoundDrone = Drone;
+	UnitDetectedHandle = Drone->onUnitDetected.AddUObject ( this , &AB_UnitBase::HandleDroneUnitDetected );
+	UnitLostHandle = Drone->onUnitLostDetection.AddUObject ( this , &AB_UnitBase::HandleDroneUnitLost );
+}
+
+void AB_UnitBase::UnbindDroneDetection ()
+{
+	if (!BoundDrone.IsValid ())
+	{
+		return;
+	}
+
+	if (UnitDetectedHandle.IsValid ())
+	{
+		BoundDrone->onUnitDetected.Remove ( UnitDetectedHandle );
+	}
+
+	if (UnitLostHandle.IsValid ())
+	{
+		BoundDrone->onUnitLostDetection.Remove ( UnitLostHandle );
+	}
+
+	BoundDrone.Reset ();
+	UnitDetectedHandle.Reset ();
+	UnitLostHandle.Reset ();
+}
+
+void AB_UnitBase::HandleDroneUnitDetected ( AActor* DetectedActor )
+{
+	if (DetectedActor != this || !ShowNameWidget)
+	{
+		return;
+	}
+
+	ShowNameWidget->SetShowNameState ( EUnitShowNameState::DETECTED , true );
+}
+
+void AB_UnitBase::HandleDroneUnitLost ( AActor* LostActor )
+{
+	if (LostActor != this || !ShowNameWidget)
+	{
+		return;
+	}
+
+	ShowNameWidget->SetShowNameState ( EUnitShowNameState::UNDETECTED , false );
 }
 
 //void AB_UnitBase::FindMapWidgetLoop ()
@@ -301,6 +416,11 @@ void AB_UnitBase::OnBehaviorStateChanged_Unit ( EUnitBehaviorState NewState )
 		UE_LOG ( LogTemp , Warning , TEXT ( "공포 / 요새로 후퇴" ) );
 		break;
 
+	case EUnitBehaviorState::Panic:
+		CommandStop ();
+		UE_LOG ( LogTemp , Warning , TEXT ( "패닉 상태! 통제 불능!" ) );
+		break;
+
 	case EUnitBehaviorState::Madness:
 		//GameplayTags.RemoveTag ( UnitTag );
 		//GameplayTags.AddTag ( EnemyTag );
@@ -314,6 +434,19 @@ void AB_UnitBase::ProcessMoveCommand(float InX, float InY)
 {
 	AAIController* AIController = Cast<AAIController> ( GetController () );
 	if (!AIController) return;
+
+	if (StatusComponent)
+	{
+		EUnitBehaviorState State = StatusComponent->CurrentState;
+		if (State == EUnitBehaviorState::Fear ||
+			State == EUnitBehaviorState::Panic ||
+			State == EUnitBehaviorState::Madness)
+		{
+			PlayCommandSound ( Cmd_DisobeySound );
+			UE_LOG ( LogTemp , Warning , TEXT ( "상태 이상으로 명령 거부됨" ) );
+			return;
+		}
+	}
 
 	UBlackboardComponent* BlackboardComp = AIController->GetBlackboardComponent ();
 	if (BlackboardComp)
@@ -414,6 +547,16 @@ void AB_UnitBase::CommandMoveToLocation ( FVector TargetLocation )
 
 void AB_UnitBase::CommandAttackMove ( FVector TargetLocation )
 {
+	if (StatusComponent)
+	{
+		EUnitBehaviorState State = StatusComponent->CurrentState;
+		if (State == EUnitBehaviorState::Fear || State == EUnitBehaviorState::Panic || State == EUnitBehaviorState::Madness)
+		{
+			PlayCommandSound ( Cmd_DisobeySound );
+			return;
+		}
+	}
+
 	PlayCommandSound(Cmd_AttackSound);
 
 	AAIController* AIController = Cast<AAIController> ( GetController () );
@@ -429,6 +572,16 @@ void AB_UnitBase::CommandAttackMove ( FVector TargetLocation )
 
 void AB_UnitBase::CommandStop ()
 {
+	if (StatusComponent)
+	{
+		EUnitBehaviorState State = StatusComponent->CurrentState;
+		if (State == EUnitBehaviorState::Fear || State == EUnitBehaviorState::Panic || State == EUnitBehaviorState::Madness)
+		{
+			PlayCommandSound ( Cmd_DisobeySound );
+			return; // 무시
+		}
+	}
+
 	AAIController* AIController = Cast<AAIController> ( GetController () );
 	if (AIController)
 	{
@@ -443,6 +596,16 @@ void AB_UnitBase::CommandStop ()
 
 void AB_UnitBase::CommandHold ()
 {
+	if (StatusComponent)
+	{
+		EUnitBehaviorState State = StatusComponent->CurrentState;
+		if (State == EUnitBehaviorState::Fear || State == EUnitBehaviorState::Panic || State == EUnitBehaviorState::Madness)
+		{
+			PlayCommandSound ( Cmd_DisobeySound );
+			return; // 무시
+		}
+	}
+
 	AAIController* AIController = Cast<AAIController> ( GetController () );
 	if (AIController)
 	{
@@ -457,6 +620,16 @@ void AB_UnitBase::CommandHold ()
 
 void AB_UnitBase::CommandRetreat ()
 {
+	if (StatusComponent)
+	{
+		EUnitBehaviorState State = StatusComponent->CurrentState;
+		if (State == EUnitBehaviorState::Fear || State == EUnitBehaviorState::Panic || State == EUnitBehaviorState::Madness)
+		{
+			PlayCommandSound ( Cmd_DisobeySound );
+			return; // 무시
+		}
+	}
+
 	AAIController* AIController = Cast<AAIController> ( GetController () );
 	if (!AIController) return;
 
@@ -551,6 +724,7 @@ void AB_UnitBase::ReceiveSupport_HP ( float InValue )
 	float RecoverHPAmount = InValue * HPRecoveryRatio;
 	StatusComponent->RecoverHP ( RecoverHPAmount );
 	PlayVoiceForEvent(EUnitVoiceEvent::Recovery);
+	PlayHealingHPEffect();
 }
 
 void AB_UnitBase::ReceiveSupport_Sanity ( float InValue )
@@ -560,6 +734,7 @@ void AB_UnitBase::ReceiveSupport_Sanity ( float InValue )
 	float RecoverSanityAmount = InValue * SanityRecoveryRatio;
 	StatusComponent->RecoverSanity ( RecoverSanityAmount );
 	PlayVoiceForEvent(EUnitVoiceEvent::Recovery);
+	PlayHealingSanityEffect();
 }
 
 float AB_UnitBase::TakeDamage ( float DamageAmount , FDamageEvent const& DamageEvent , AController* EventInstigator , AActor* DamageCauser )
@@ -587,7 +762,23 @@ void AB_UnitBase::UnitAttack(AActor* TargetActor)
 		FGameplayTagContainer TargetTags;
 		TagInterface->GetOwnedGameplayTags ( TargetTags );
 
-		if (!TargetTags.HasTag ( EnemyTag ))
+		bool bIsTargetEnemy = TargetTags.HasTag ( EnemyTag );
+		bool bAmIMad = (StatusComponent && StatusComponent->CurrentState == EUnitBehaviorState::Madness);
+
+
+		//if (!TargetTags.HasTag ( EnemyTag ))
+		//{
+		//	CurrentAttackTarget = nullptr;
+
+		//	AAIController* AIC = Cast<AAIController> ( GetController () );
+		//	if (AIC && AIC->GetBlackboardComponent ())
+		//	{
+		//		AIC->GetBlackboardComponent ()->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
+		//	}
+		//	return;
+		//}
+
+		if (!bIsTargetEnemy && !bAmIMad)
 		{
 			CurrentAttackTarget = nullptr;
 
@@ -598,6 +789,7 @@ void AB_UnitBase::UnitAttack(AActor* TargetActor)
 			}
 			return;
 		}
+
 	}
 
 	SetCombatState_Unit ( true );
@@ -613,6 +805,9 @@ void AB_UnitBase::UnitAttack(AActor* TargetActor)
 	{
 		AnimInstance->Montage_Play ( AttackMontage );
 		PlayVoiceForEvent(EUnitVoiceEvent::Combat);
+
+		PlayMuzzleEffect();
+
 	}
 	else
 	{
@@ -643,6 +838,9 @@ void AB_UnitBase::OnAttackHit_Unit ()
 	}
 
 	UE_LOG ( LogTemp , Warning , TEXT ( "타격" ) );
+	PlayMuzzleEffect();
+
+
 }
 
 void AB_UnitBase::SetCombatState_Unit ( bool bInCombat )
@@ -713,11 +911,18 @@ void AB_UnitBase::OnDie_Unit ()
 	PlayVoiceForEvent(EUnitVoiceEvent::Death);
 	bIsAlive = false;
 
+	if (UAnimInstance* AnimInstance = GetMesh ()->GetAnimInstance ())
+	{
+		AnimInstance->StopAllMontages ( 0.2f );
+	}
+
+	CurrentAttackTarget = nullptr;
+
 	// 우빈님 추가
 	if (IndicatorSprite)
 	{
-		IndicatorSprite->SetIndicatorState ( EIndicatorSpriteState::Dead );
-		IndicatorSprite->StopGlow ();
+		bIsSelectedByPlayer = false;  
+		RefreshIndicatorState();
 	}
 
 
@@ -767,26 +972,67 @@ void AB_UnitBase::OnDie_Unit ()
 
 	OnUnitDieDelegate.Broadcast ( this );
 
+	if (AB_UIAnnouncer* Announcer = Cast<AB_UIAnnouncer> ( UGameplayStatics::GetActorOfClass ( GetWorld () , AB_UIAnnouncer::StaticClass () ) ))
+	{
+		Announcer->PlayUnitDeathSound ( MyUnitName.ToString () );
+	}
+
 	// 택 제거
 	FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
 	GameplayTags.RemoveTag ( UnitTag );
 
-	// 이동 뺌
 	if (AAIController* AIController = Cast<AAIController> ( GetController () ))
 	{
+		if (UBlackboardComponent* BBComp = AIController->GetBlackboardComponent ())
+		{
+			BBComp->SetValueAsObject ( TEXT ( "TargetEnemy" ) , nullptr );
+			BBComp->SetValueAsVector ( TEXT ( "TargetLocation" ) , GetActorLocation () ); // 이동 목표를 현재 위치로
+		}
+
+		if (UBehaviorTreeComponent* BTComp = Cast<UBehaviorTreeComponent> ( AIController->GetBrainComponent () ))
+		{
+			BTComp->StopTree ( EBTStopMode::Safe );
+		}
+
 		AIController->StopMovement ();
+
 		AIController->UnPossess ();
+
+		AIController->Destroy ();
 	}
 
+
+	if (GetCharacterMovement ())
+	{
+		GetCharacterMovement ()->StopMovementImmediately ();
+		GetCharacterMovement ()->DisableMovement ();
+		GetCharacterMovement ()->SetComponentTickEnabled ( false ); // 틱 업데이트 중지
+	}
+
+	// 캡슐 콜리전 해제
 	GetCapsuleComponent ()->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
 	GetCapsuleComponent ()->SetCollisionResponseToAllChannels ( ECR_Ignore );
 
-	//GetMesh ()->SetCollisionProfileName ( TEXT ( "Ragdoll" ) );
-	//GetMesh ()->SetSimulatePhysics ( true );
+	// SetLifeSpan ( 5.0f ); // 시체 5초 뒤 삭제
 
-	//SetLifeSpan ( 5.0f );
+	UE_LOG ( LogTemp , Warning , TEXT ( "%s 사망 처리 완료" ) , *GetName () );
 
-	UE_LOG ( LogTemp , Warning , TEXT ( "%s 태그 제거" ) , *GetName () );
+	//// 이동 뺌
+	//if (AAIController* AIController = Cast<AAIController> ( GetController () ))
+	//{
+	//	AIController->StopMovement ();
+	//	AIController->UnPossess ();
+	//}
+
+	//GetCapsuleComponent ()->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
+	//GetCapsuleComponent ()->SetCollisionResponseToAllChannels ( ECR_Ignore );
+
+	////GetMesh ()->SetCollisionProfileName ( TEXT ( "Ragdoll" ) );
+	////GetMesh ()->SetSimulatePhysics ( true );
+
+	////SetLifeSpan ( 5.0f );
+
+	//UE_LOG ( LogTemp , Warning , TEXT ( "%s 태그 제거" ) , *GetName () );
 }
 
 void AB_UnitBase::OnHPChanged_Wrapper ( float InCurrentHP , float InMaxHP )
@@ -801,21 +1047,22 @@ void AB_UnitBase::OnSanityChanged_Wrapper ( float InCurrentSanity , float InMaxS
 
 void AB_UnitBase::OnCombatStateChanged_Wrapper ( bool bInCombat )
 {
-	if (IndicatorSprite)
-	{
-		IndicatorSprite->SetIndicatorState ( bInCombat ? EIndicatorSpriteState::Combat : EIndicatorSpriteState::Normal );
-	}
-
-	UnitDataUpdate ();
+	RefreshIndicatorState();
+	UnitDataUpdate();
 }
 
 void AB_UnitBase::SetSelectedSprite ( bool bIsSelected )
 {
-	if (IndicatorSprite == nullptr) return;
+	if (!bIsAlive)
+	{
+		bIsSelectedByPlayer = false;
+		RefreshIndicatorState();
+		return;
+	}
 
-	IndicatorSprite->SetIndicatorState ( EIndicatorSpriteState::Selected );
+	bIsSelectedByPlayer = bIsSelected;
+	RefreshIndicatorState(); 
 }
-
 
 void AB_UnitBase::SetSpeakingState ( bool bNewState )
 {
@@ -980,6 +1227,111 @@ void AB_UnitBase::PlayCommandSound(USoundBase* InSound)
 	}
 }
 
+void AB_UnitBase::PlayMuzzleEffect()
+{
+	if (MuzzleFlashVFX == nullptr || WeaponMesh == nullptr) return;
+
+	if (NiagaraComp->GetAsset() != MuzzleFlashVFX)
+	{
+		NiagaraComp->SetAsset(MuzzleFlashVFX);
+	}
+
+
+	NiagaraComp->Activate(true);
+
+	UE_LOG(LogTemp, Warning, TEXT("이펙트 발동! 위치: %s"), *NiagaraComp->GetComponentLocation().ToString());
+
+	//UNiagaraFunctionLibrary::SpawnSystemAttached(
+	//	MuzzleFlashVFX,
+	//	WeaponMesh,
+	//	FName("Muzzle"),
+	//	FVector::ZeroVector,
+	//	FRotator::ZeroRotator,
+	//	EAttachLocation::KeepRelativeOffset,
+	//	true
+	//);
+}
+
+void AB_UnitBase::PlayFootstepSound()
+{
+	if (FootstepSound == nullptr) return;
+
+	// 1. 소리 재생 (내 발 밑에서)
+	UGameplayStatics::SpawnSoundAtLocation(
+		this,
+		FootstepSound,
+		GetActorLocation() - FVector(0, 0, 90.0f),
+		FRotator::ZeroRotator,
+		1.0f, 
+		1.0f, 
+		0.0f,
+		UnitVoiceAttenuation 
+	);
+}
+
+void AB_UnitBase::PlayHealingHPEffect()
+{
+	if (HealingHP == nullptr) return;
+
+	UNiagaraFunctionLibrary::SpawnSystemAttached(
+		HealingHP,                 
+		GetMesh(),                 
+		FName("root"),            
+		FVector::ZeroVector,        
+		FRotator::ZeroRotator,     
+		EAttachLocation::SnapToTarget, 
+		true                      
+	);
+}
+
+void AB_UnitBase::PlayHealingSanityEffect()
+{
+	if (HealingSanity == nullptr) return;
+
+	UNiagaraFunctionLibrary::SpawnSystemAttached(
+		HealingSanity,
+		GetMesh(),
+		FName("root"),
+		FVector::ZeroVector,
+		FRotator::ZeroRotator,
+		EAttachLocation::SnapToTarget,
+		true
+	);
+}
+
+void AB_UnitBase::RefreshIndicatorState()
+{
+	if (!IndicatorSprite)
+		return;
+
+	// 1) Dead가 최우선
+	if (!bIsAlive)
+	{
+		IndicatorSprite->SetIndicatorState(EIndicatorSpriteState::Dead);
+
+		IndicatorSprite->SetWorldRotation ( FRotator ( 0.0f , 90.0f , -90.0f ) );
+		return;
+	}
+
+	// 2) Combat (StatusComponent 기준)
+	const bool bInCombat = (StatusComponent && StatusComponent->bIsInCombat);
+	if (bInCombat)
+	{
+		IndicatorSprite->SetIndicatorState(EIndicatorSpriteState::Combat);
+		return;
+	}
+
+	// 3) Selected
+	if (bIsSelectedByPlayer)
+	{
+		IndicatorSprite->SetIndicatorState(EIndicatorSpriteState::Selected);
+		return;
+	}
+
+	// 4) Normal
+	IndicatorSprite->SetIndicatorState(EIndicatorSpriteState::Normal);
+}
+
 void AB_UnitBase::PlayWeaponFireSound ()
 {
 	if (!WeaponFireSound) return;
@@ -998,4 +1350,6 @@ void AB_UnitBase::PlayWeaponFireSound ()
 		nullptr // Attenuation
 	);
 
+
 }
+

@@ -7,15 +7,22 @@
 #include "GameplayTagContainer.h"
 #include "GameplayTagAssetInterface.h"
 #include "B_UnitAIController.h"
+#include "NiagaraSystem.h"
+#include "Delegates/Delegate.h"
 
 #include "B_UnitBase.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnUnitDieDelegate, AActor*, InUnit );
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnCombatStateChangedDelegate , bool , bIsCombat );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams ( FOnUnitSpeak , AActor* , InSpeaker , bool , bIsSpeaking );
 
 class UB_UnitStatusComponent;
 class UIndicatorSpriteComponent;
 class UAudioComponent;
+class UWidgetComponent;
+class UW_ShowNameWidget;
+class AK_Drone;
+class UW_SelectedSpriteComponent;
 
 UCLASS()
 class LASTREQUIEM_API AB_UnitBase : public ACharacter, public IGameplayTagAssetInterface
@@ -31,6 +38,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void EndPlay ( const EEndPlayReason::Type EndPlayReason ) override;
 
 public:	
 	// Called every frame
@@ -42,6 +50,9 @@ public:
 	UPROPERTY ( VisibleAnywhere , BlueprintReadWrite , Category = "Unit|Visual" )
 	USkeletalMeshComponent* WeaponMesh;
 
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Combat|VFX" )
+	UNiagaraComponent* NiagaraComp;
+
 	UPROPERTY ( VisibleAnywhere , BlueprintReadWrite , Category = "Unit|Visual" )
 	class USpotLightComponent* GunFlashlight;
 
@@ -50,6 +61,9 @@ public:
 
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Unit|Component" )
 	UIndicatorSpriteComponent* IndicatorSprite = nullptr;
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Unit|Component" )
+	UW_SelectedSpriteComponent* SelectedSpriteComponent = nullptr;
 
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Data|Gameplay Tag" )
 	FGameplayTagContainer GameplayTags;
@@ -75,6 +89,12 @@ public:
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Data" )
 	FText MyUnitName;
 
+	UPROPERTY ( EditDefaultsOnly , BlueprintReadOnly , Category = "Unit|UI" )
+	TSubclassOf<UW_ShowNameWidget> ShowNameWidgetClass;
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Unit|UI" )
+	UWidgetComponent* ShowNameWidgetComponent = nullptr;
+
 	UFUNCTION ( BlueprintCallable , Category = "Unit|Data" )
 	FUnitProfileData GetUnitProfileData ();
 
@@ -90,8 +110,8 @@ public:
 
 	virtual void OnConstruction ( const FTransform& Transform ) override;
 
-protected:
 	void UnitDataUpdate ();
+protected:
 
 public:
 
@@ -134,8 +154,29 @@ public:
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Unit|State" )
 	bool bIsAttackMode = false;
 
+	UPROPERTY ( VisibleAnywhere , BlueprintReadWrite , Category = "Unit|State" )
+	bool bIsSpeaking = false;
+
 	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Data" )
 	FVector FortressLocation;
+
+	UFUNCTION ( BlueprintCallable , Category = "Unit|Logic" )
+	void SetSpeakingState ( bool bNewState );
+
+public:
+	UFUNCTION ( BlueprintCallable , Category = "Unit|Support" )
+	void ReceiveSupport_HP ( float InValue );
+
+	UFUNCTION ( BlueprintCallable , Category = "Unit|Support" )
+	void ReceiveSupport_Sanity ( float InValue );
+
+protected:
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Stats" )
+	float HPRecoveryRatio = 0.25f;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Unit|Stats" )
+	float SanityRecoveryRatio = 0.3f;
+
 
 public:
 
@@ -170,6 +211,11 @@ public:
 	UPROPERTY ( BlueprintAssignable , Category = "Unit|Event" )
 	FOnCombatStateChangedDelegate OnCombatStateChanged;
 
+	//UPROPERTY ( BlueprintAssignable , Category = "Unit|Event" )
+	//FOnUnitSpeak OnUnitSpeak;
+
+	UPROPERTY ( BlueprintAssignable , Category = "Unit|Event" )
+	FOnUnitSpeak OnUnitSpeakDelegate;
 	
 	UFUNCTION ( BlueprintCallable , Category = "Unit|State" )
 	void SetCombatState_Unit ( bool bInCombat );
@@ -203,6 +249,30 @@ protected:
 	UFUNCTION ()
 	void OnCombatStateChanged_Wrapper ( bool bInCombat );
 
+public:
+	void SetSelectedSprite ( bool bIsSelected );
+
+protected:
+	FTimerHandle SpeakingTimerHandle;
+
+	void InitializeShowNameWidget ();
+	void BindDroneDetection ();
+	void UnbindDroneDetection ();
+	void HandleDroneUnitDetected ( AActor* DetectedActor );
+	void HandleDroneUnitLost ( AActor* LostActor );
+
+	UPROPERTY ( Transient )
+	TObjectPtr<UW_ShowNameWidget> ShowNameWidget = nullptr;
+
+	TWeakObjectPtr<AK_Drone> BoundDrone;
+	FDelegateHandle UnitDetectedHandle;
+	FDelegateHandle UnitLostHandle;
+
+public:
+	UFUNCTION ( BlueprintCallable , Category = "Unit|Action" )
+	void PlayUnitVoice ( USoundBase* InVoiceSound );
+
+	void StopUnitVoice ();
 
 protected:
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Unit|Sound Data" )
@@ -259,5 +329,37 @@ public:
 
 	UFUNCTION ( BlueprintCallable )
 	void PlayWeaponFireSound ();
+
+public:
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Combat|VFX" )
+	UNiagaraSystem* MuzzleFlashVFX;
+
+	UFUNCTION ( BlueprintCallable , Category = "Combat" )
+	void PlayMuzzleEffect ();
+
+public:
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Sound" )
+	USoundBase* FootstepSound;
+
+	UFUNCTION ( BlueprintCallable , Category = "Sound" )
+	void PlayFootstepSound ();
+
+public:
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Combat|VFX" )
+	UNiagaraSystem* HealingHP;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "Combat|VFX" )
+	UNiagaraSystem* HealingSanity;
+
+	void PlayHealingHPEffect ();
+
+	void PlayHealingSanityEffect ();
+
+private:
+	bool bIsSelectedByPlayer = false;
+
+	void RefreshIndicatorState ();
+
+
 
 };
