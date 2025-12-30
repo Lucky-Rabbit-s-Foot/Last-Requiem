@@ -394,6 +394,9 @@ void AB_UnitBase::UnitMentalCheck_Move(float InX, float InY)
 
 void AB_UnitBase::OnBehaviorStateChanged_Unit ( EUnitBehaviorState NewState )
 {
+
+	if (!bIsAlive) return;
+
 	AttackDamage = OriginalAttackDamage;
 	AttackRange = OriginalAttackRange;
 
@@ -911,6 +914,14 @@ void AB_UnitBase::OnDie_Unit ()
 	PlayVoiceForEvent(EUnitVoiceEvent::Death);
 	bIsAlive = false;
 
+	// 택 제거
+	FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
+	GameplayTags.RemoveTag ( UnitTag );
+
+	// 캡슐 콜리전 해제
+	GetCapsuleComponent ()->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
+	GetCapsuleComponent ()->SetCollisionResponseToAllChannels ( ECR_Ignore );
+
 	if (UAnimInstance* AnimInstance = GetMesh ()->GetAnimInstance ())
 	{
 		AnimInstance->StopAllMontages ( 0.2f );
@@ -957,7 +968,7 @@ void AB_UnitBase::OnDie_Unit ()
 			if (FellowUnit && FellowUnit->IsAlive ())
 			{
 				// 아군확인2
-				FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
+				//FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
 				if (FellowUnit->GameplayTags.HasTag ( UnitTag ))
 				{
 					if (FellowUnit->StatusComponent)
@@ -977,9 +988,6 @@ void AB_UnitBase::OnDie_Unit ()
 		Announcer->PlayUnitDeathSound ( MyUnitName.ToString () );
 	}
 
-	// 택 제거
-	FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
-	GameplayTags.RemoveTag ( UnitTag );
 
 	if (AAIController* AIController = Cast<AAIController> ( GetController () ))
 	{
@@ -1009,9 +1017,6 @@ void AB_UnitBase::OnDie_Unit ()
 		GetCharacterMovement ()->SetComponentTickEnabled ( false ); // 틱 업데이트 중지
 	}
 
-	// 캡슐 콜리전 해제
-	GetCapsuleComponent ()->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
-	GetCapsuleComponent ()->SetCollisionResponseToAllChannels ( ECR_Ignore );
 
 	// SetLifeSpan ( 5.0f ); // 시체 5초 뒤 삭제
 
