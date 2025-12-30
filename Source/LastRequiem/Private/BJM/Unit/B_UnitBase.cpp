@@ -1308,6 +1308,8 @@ void AB_UnitBase::RefreshIndicatorState()
 	if (!bIsAlive)
 	{
 		IndicatorSprite->SetIndicatorState(EIndicatorSpriteState::Dead);
+
+		IndicatorSprite->SetWorldRotation ( FRotator ( 0.0f , 90.0f , -90.0f ) );
 		return;
 	}
 
