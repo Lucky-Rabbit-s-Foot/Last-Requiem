@@ -438,38 +438,6 @@ void AK_DroneController::OnOpenPauseUI ( const FInputActionValue& value )
 			BindPauseUIDelegates ( pauseUI );
 		}
 	}
-
-
-	//if (!pauseUIFactory)
-	//{
-	//	KHS_WARN ( TEXT ( "No Valid SettingWidget" ) );
-	//	return;
-	//}
-
-	//auto* UIManager = GetGameInstance ()->GetSubsystem<UK_UIManagerSubsystem> ();
-	//if (!UIManager)
-	//{
-	//	KHS_WARN ( TEXT ( "No Valid UI Subsystem" ) );
-	//	return;
-	//}
-
-	//auto* pauseUI = UIManager->GetOrCreateWidget<UP_PauseWidget> ( pauseUIFactory );
-	//if (!pauseUI)
-	//{
-	//	KHS_WARN ( TEXT ( "No Valid Casted Widget" ) );
-	//	return;
-	//}
-
-	//if (pauseUI->IsOpen ())
-	//{
-	//	return;
-	//}
-
-	//SetPause ( true );
-
-	//UIManager->OpenUI<UP_PauseWidget> ( pauseUIFactory );
-	//pauseUI->onCloseUIRequested.AddDynamic ( this , &AK_DroneController::HandleUICloseRequest );
-	//BindPauseUIDelegates ( pauseUI );
 }
 
 void AK_DroneController::OnDroneUseSkill01(const FInputActionValue& value)
@@ -567,6 +535,15 @@ void AK_DroneController::HandleUICloseRequest(class UK_BaseUIWidget* requestWidg
 	}
 	// (20251226) P : Pause UI (End)
 
+	UP_TutorialAlbum* tutorial = Cast<UP_TutorialAlbum>(requestWidget);
+	if (tutorial)
+	{
+		cachedTutorialUI = nullptr;
+		AK_Drone* drone = Cast<AK_Drone>(GetPawn());
+		drone->InitializeDetectedUnitSlot();
+		SetPause(false);
+	}
+	
 	//인스턴스로 직접 닫는 오버로딩 CloseUI함수 호출
 	UIManager->CloseUI(requestWidget);
 	
