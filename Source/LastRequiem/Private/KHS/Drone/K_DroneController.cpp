@@ -253,6 +253,7 @@ void AK_DroneController::BindPauseUIDelegates ( UP_PauseWidget* pauseUI )
 
 	pauseUI->onRestartRequestedDel.AddDynamic ( this , &AK_DroneController::HandleRestartButtonClicked );
 	pauseUI->onQuitGameRequestedDel.AddDynamic ( this , &AK_DroneController::HandleQuitGameButtonClicked );
+	pauseUI->onTutorialRequestedDel.AddDynamic ( this , &AK_DroneController::HandleTutorialButtonClicked );
 
 	bPauseUIBound = true;
 }
