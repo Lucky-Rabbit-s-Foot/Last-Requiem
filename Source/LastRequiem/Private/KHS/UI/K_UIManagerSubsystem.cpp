@@ -185,7 +185,10 @@ void UK_UIManagerSubsystem::ResetAllUIStates()
 			}
 		}
 	}
-	
+	// (20251230) P: 캐싱된 위젯들 비우기 (Start)
+	cachedWidgets.Empty ();
+	// (20251230) P: 캐싱된 위젯들 비우기 (End)
+	 
 	//관련 컨테이너 비우기
 	persitentUIMap.Empty();
 	popUpUIStack.Empty();

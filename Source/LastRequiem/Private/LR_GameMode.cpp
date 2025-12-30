@@ -6,6 +6,7 @@
 #include "PJB/Data/P_SpawnDataRow.h"
 #include "PJB/Data/P_WaveDataRow.h"
 #include "PJB/System/P_GameStateBase.h"
+#include "KHS/UI/K_UIManagerSubsystem.h"
 
 ALR_GameMode::ALR_GameMode ()
 {
@@ -109,7 +110,6 @@ void ALR_GameMode::OnGameOver ()
 	ULR_GameInstance* GI = Cast<ULR_GameInstance> ( GetGameInstance () );
 	if (!GS || !GI) return;
 	
-	
 	GS->OnGameOver.Broadcast ();
 	GS->SetPlayTime ();
 
@@ -119,6 +119,13 @@ void ALR_GameMode::OnGameOver ()
 	FTimerHandle WaitHandle;
 	GetWorldTimerManager ().SetTimer ( WaitHandle , FTimerDelegate::CreateLambda ( [this]()
 		{
+			UK_UIManagerSubsystem* UIManager = GetGameInstance ()->GetSubsystem<UK_UIManagerSubsystem> ();
+			if (UIManager)
+			{
+				UIManager->CloseAllPopupUI ();
+				UIManager->ResetAllUIStates ();
+			}
+
 			UGameplayStatics::OpenLevel ( this , FName ( TEXT ( "LR_Outro" ) ) );
 		} ) , GameOverDelayTime , false );
 }
