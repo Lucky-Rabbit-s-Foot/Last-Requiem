@@ -503,7 +503,7 @@ void AB_UnitBase::ProcessMoveCommand(float InX, float InY)
 void AB_UnitBase::CommandMoveToLocation ( FVector TargetLocation )
 {
 
-	DrawDebugSphere ( GetWorld () , TargetLocation , 50.0f , 16 , FColor::Red , false , 3.0f );
+	//DrawDebugSphere ( GetWorld () , TargetLocation , 50.0f , 16 , FColor::Red , false , 3.0f );
 	UE_LOG ( LogTemp , Error , TEXT ( "이동좌표: %s" ) , *TargetLocation.ToString () );
 
 	AAIController* AIController = Cast<AAIController> ( GetController () );
@@ -535,7 +535,7 @@ void AB_UnitBase::CommandMoveToLocation ( FVector TargetLocation )
 	
 		FinalLocation = ProjectedLocation.Location;
 
-		DrawDebugSphere ( GetWorld () , ProjectedLocation.Location , 50.0f , 16 , FColor::Green , false , 3.0f );
+		//DrawDebugSphere ( GetWorld () , ProjectedLocation.Location , 50.0f , 16 , FColor::Green , false , 3.0f );
 		UE_LOG ( LogTemp , Warning , TEXT ( "보정된 좌표: %s" ) , *ProjectedLocation.Location.ToString () );
 		BlackboardComp->SetValueAsVector ( TEXT ( "TargetLocation" ) , FinalLocation );
 		BlackboardComp->SetValueAsEnum ( TEXT ( "Command" ) , (uint8)EUnitCommandType::Move );
@@ -954,7 +954,7 @@ void AB_UnitBase::OnDie_Unit ()
 
 	if (bResult)
 	{
-		DrawDebugSphere ( GetWorld () , GetActorLocation () , ShockRadius , 24 , FColor::Red , false , 2.0f );
+		//DrawDebugSphere ( GetWorld () , GetActorLocation () , ShockRadius , 24 , FColor::Red , false , 2.0f );
 
 		for (auto const& Overlap : OverlapResults)
 		{

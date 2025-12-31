@@ -46,7 +46,7 @@ void AB_UnitGrenadier::OnAttackHit_Unit ()
 			);
 		}
 
-		DrawDebugSphere ( GetWorld () , ExplosionLocation , ExplosionRadius , 12 , FColor::Orange , false , 1.0f );
+		//DrawDebugSphere ( GetWorld () , ExplosionLocation , ExplosionRadius , 12 , FColor::Orange , false , 1.0f );
 
 	}
 }
