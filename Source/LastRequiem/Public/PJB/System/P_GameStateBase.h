@@ -16,6 +16,7 @@ enum class EGamePhase : uint8
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnGameEventSignature );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnAddScore , int32 , Score );
 
 UCLASS()
 class LASTREQUIEM_API AP_GameStateBase : public AGameStateBase
@@ -25,6 +26,10 @@ class LASTREQUIEM_API AP_GameStateBase : public AGameStateBase
 public:
 	AP_GameStateBase ();
 
+protected:
+	virtual void BeginPlay () override;
+
+public:
 	UFUNCTION()
 	void CountEnemyKill ( int32 InEnemyID );
 	UFUNCTION ()
@@ -34,16 +39,28 @@ public:
 	UFUNCTION ()
 	void CountDestructEnemyObstacle ();
 
+	UFUNCTION ()
+	void AddScoreForInfo ( int32 InScore );
+	UFUNCTION ()
+	void AddTimeScore ();
+	UFUNCTION ()
+	void StopTimeScore ();
+	FTimerHandle ScoreTimerHandle;
+
 	FOnGameEventSignature OnGameStart;
 	FOnGameEventSignature OnWaveStart;
 	FOnGameEventSignature OnWaveStop;
 	FOnGameEventSignature OnWaveEnd;
 	FOnGameEventSignature OnGameOver;
 
+	FOnAddScore OnAddScore;
+
 	bool bIsWaveStop = false;
 
 	UPROPERTY ( BlueprintReadOnly , Category = "GameFlow" )
 	int32 CurrentWave = 0;
+	UPROPERTY ( BlueprintReadOnly , Category = "GameFlow" )
+	int32 TotalWave = 10;
 
 	UPROPERTY ( BlueprintReadOnly , Category = "GameFlow" )
 	float RemainingTime = 0.0f;
@@ -65,6 +82,11 @@ public:
 	AActor* GetFortress () const { return Fortress.Get (); }
 
 	FP_GameResultData GameResultData;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|Score" )
+	UP_ScoringDataAsset* ScoreModifier = nullptr;
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category = "Data|Score" )
+	int32 TotalScore = 0;
 
 private:
 	TWeakObjectPtr<AActor> Fortress;
