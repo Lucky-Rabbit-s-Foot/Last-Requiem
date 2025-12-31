@@ -187,6 +187,10 @@ void AB_UnitBase::BindDroneDetection ()
 	BoundDrone = Drone;
 	UnitDetectedHandle = Drone->onUnitDetected.AddUObject ( this , &AB_UnitBase::HandleDroneUnitDetected );
 	UnitLostHandle = Drone->onUnitLostDetection.AddUObject ( this , &AB_UnitBase::HandleDroneUnitLost );
+
+	Drone->onUnitDetected.Broadcast ( this );
+	
+	Drone->onUnitLostDetection.Broadcast ( this );
 }
 
 void AB_UnitBase::UnbindDroneDetection ()
