@@ -255,7 +255,7 @@ void AK_DroneController::UnbindSettingUIDelegates()
 // (20251226) P : Pause UI (Start)
 void AK_DroneController::BindPauseUIDelegates ( UP_PauseWidget* pauseUI )
 {
-	if (!pauseUI || bSituationMapUIBound)
+	if (!pauseUI || bPauseUIBound)
 	{
 		KHS_INFO ( TEXT ( "NO Valid Setting Ui or is already bound with Controller" ) );
 		return;
@@ -271,15 +271,15 @@ void AK_DroneController::BindPauseUIDelegates ( UP_PauseWidget* pauseUI )
 }
 void AK_DroneController::UnbindPauseUIDelegates ()
 {
-	if (!bSituationMapUIBound || !cachedPauseUI)
+	if (!bPauseUIBound || !cachedPauseUI)
 	{
 		KHS_INFO ( TEXT ( "NO Valid cached Ui or is already unbound with Controller" ) );
 		return;
 	}
 
-	cachedPauseUI->LevelSelector->onRestartRequestedDel.RemoveDynamic ( this , &AK_DroneController::HandleRestartButtonClicked );
-	cachedPauseUI->LevelSelector->onQuitGameRequestedDel.RemoveDynamic ( this , &AK_DroneController::HandleQuitGameButtonClicked );
-	cachedPauseUI->LevelSelector->onTutorialRequestedDel.RemoveDynamic ( this , &AK_DroneController::HandleTutorialButtonClicked );
+	cachedPauseUI->onRestartRequestedDel.RemoveDynamic ( this , &AK_DroneController::HandleRestartButtonClicked );
+	cachedPauseUI->onQuitGameRequestedDel.RemoveDynamic ( this , &AK_DroneController::HandleQuitGameButtonClicked );
+	cachedPauseUI->onTutorialRequestedDel.RemoveDynamic ( this , &AK_DroneController::HandleTutorialButtonClicked );
 
 	cachedPauseUI = nullptr;
 	bPauseUIBound = false;
