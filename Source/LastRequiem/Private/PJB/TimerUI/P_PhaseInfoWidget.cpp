@@ -23,8 +23,6 @@ void UP_PhaseInfoWidget::NativeConstruct ()
 
 void UP_PhaseInfoWidget::RefreshWave ()
 {
-	LOG_MESSAGE_SCREEN ( Log , TEXT("UP_PhaseInfoWidget::RefreshWave called" ));
-
 	AP_GameStateBase* GS = GetWorld () ? GetWorld ()->GetGameState<AP_GameStateBase> () : nullptr;
 	if (GS)
 	{
@@ -43,7 +41,6 @@ void UP_PhaseInfoWidget::RefreshWave ()
 
 void UP_PhaseInfoWidget::RefreshScore ( int32 InScore )
 {
-	LOG_MESSAGE_SCREEN ( Log , TEXT("UP_PhaseInfoWidget::RefreshScore called" ));
 	AP_GameStateBase* GS = GetWorld () ? GetWorld ()->GetGameState<AP_GameStateBase> () : nullptr;
 	if (GS)
 	{
