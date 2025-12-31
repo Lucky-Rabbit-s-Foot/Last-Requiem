@@ -279,7 +279,8 @@ void AK_DroneController::UnbindPauseUIDelegates ()
 
 	cachedPauseUI->LevelSelector->onRestartRequestedDel.RemoveDynamic ( this , &AK_DroneController::HandleRestartButtonClicked );
 	cachedPauseUI->LevelSelector->onQuitGameRequestedDel.RemoveDynamic ( this , &AK_DroneController::HandleQuitGameButtonClicked );
-	
+	cachedPauseUI->LevelSelector->onTutorialRequestedDel.RemoveDynamic ( this , &AK_DroneController::HandleTutorialButtonClicked );
+
 	cachedPauseUI = nullptr;
 	bPauseUIBound = false;
 }
