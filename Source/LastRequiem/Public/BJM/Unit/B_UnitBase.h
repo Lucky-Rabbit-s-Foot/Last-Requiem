@@ -376,5 +376,8 @@ protected:
 private:
 	FString GetMentalStateText ( EUnitBehaviorState State );
 
+protected:
+
+	FTimerHandle TimerHandle_PlaybackCheck;
 
 };
