@@ -35,6 +35,11 @@ void ALR_GameMode::Tick ( float DeltaSeconds )
 		if (GetWorldTimerManager ().IsTimerActive ( PhaseTimerHandle ))
 		{
 			GS->RemainingTime = GetWorldTimerManager ().GetTimerRemaining ( PhaseTimerHandle );
+			if (!GS->bIsWaveStop && GS->RemainingTime < WaveStopTime)
+			{
+				GS->bIsWaveStop = true;
+				GS->OnWaveStop.Broadcast ();
+			}
 		}
 		GS->RealGameTimeSeconds += DeltaSeconds;
 	}
@@ -66,7 +71,8 @@ void ALR_GameMode::StartWave ()
 
 	GS->CurrentWave++;
 	GS->CurrentPhase = EGamePhase::Wave;
-	
+	GS->bIsWaveStop = false;
+
 	int32 LookupWave = FMath::Min ( GS->CurrentWave , TotalWaves );
 	FName RowName = FName ( *FString::Printf ( TEXT ( "Wave%d" ) , LookupWave ) );
 	if (WaveDataTable)

@@ -36,8 +36,11 @@ public:
 
 	FOnGameEventSignature OnGameStart;
 	FOnGameEventSignature OnWaveStart;
+	FOnGameEventSignature OnWaveStop;
 	FOnGameEventSignature OnWaveEnd;
 	FOnGameEventSignature OnGameOver;
+
+	bool bIsWaveStop = false;
 
 	UPROPERTY ( BlueprintReadOnly , Category = "GameFlow" )
 	int32 CurrentWave = 0;

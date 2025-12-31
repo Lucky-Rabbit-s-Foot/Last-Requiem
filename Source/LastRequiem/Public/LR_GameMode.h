@@ -28,6 +28,9 @@ protected:
 	UPROPERTY ( EditDefaultsOnly , Category = "Data|Wave" )
 	float WaveTime = 20.0f;
 
+	UPROPERTY ( EditDefaultsOnly , Category = "Data|Wave" )
+	float WaveStopTime = 20.0f;
+
 	UPROPERTY ( EditDefaultsOnly , Category = "Data|GameOver" )
 	float GameOverDelayTime = 5.0f;
 
