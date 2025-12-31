@@ -40,7 +40,7 @@ void AP_EnemySpawner::BeginPlay()
 	if (AP_GameStateBase* GS = GetWorld ()->GetGameState<AP_GameStateBase> ())
 	{
 		GS->OnWaveStart.AddDynamic ( this , &AP_EnemySpawner::StartSpawning );
-		GS->OnWaveEnd.AddDynamic ( this , &AP_EnemySpawner::StopSpawning );
+		GS->OnWaveStop.AddDynamic ( this , &AP_EnemySpawner::StopSpawning );
 	}
 }
 
