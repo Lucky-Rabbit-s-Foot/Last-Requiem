@@ -125,6 +125,12 @@ void ALR_GameMode::OnGameOver ( AP_Fortress* Fortress )
 	FTimerHandle WaitHandle;
 	GetWorldTimerManager ().SetTimer ( WaitHandle , FTimerDelegate::CreateLambda ( [this]()
 		{
+			AP_GameStateBase* GS = GetGameState<AP_GameStateBase> ();
+			if (!GS) return;
+
+			GS->CurrentPhase = EGamePhase::GameOver;
+			GS->StopTimeScore ();
+
 			UK_UIManagerSubsystem* UIManager = GetGameInstance ()->GetSubsystem<UK_UIManagerSubsystem> ();
 			if (UIManager)
 			{
