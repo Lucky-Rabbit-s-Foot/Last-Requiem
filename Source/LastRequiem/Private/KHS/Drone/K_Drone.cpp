@@ -44,6 +44,18 @@ void AK_Drone::PostInitializeComponents()
 		sphereComp->SetSimulatePhysics(true);
 		sphereComp->SetMassOverrideInKg(NAME_None, DRONE_MASS_WEIGHT); //드론 질량
 	}
+	
+	//Unit 최초 탐색 후
+	//타이머로 n초마다 UpdateDetectedUnitSlot 호출
+	InitializeDetectedUnitSlot();
+	
+	GetWorldTimerManager().SetTimer(
+		detectionTimerHandle,
+		this,
+		&AK_Drone::UpdateDetectedUnitSlot,
+		1.0f,
+		true
+	);
 }
 
 // Called when the game starts or when spawned
@@ -65,18 +77,6 @@ void AK_Drone::BeginPlay()
 	}
 	// (20251224) P : 드론 충돌 (End)
 
-	//Unit 최초 탐색 후
-	//타이머로 n초마다 UpdateDetectedUnitSlot 호출
-	InitializeDetectedUnitSlot();
-	
-	GetWorldTimerManager().SetTimer(
-		detectionTimerHandle,
-		this,
-		&AK_Drone::UpdateDetectedUnitSlot,
-		1.0f,
-		true
-	);
-
 	if (audioComp && flightSound)
 	{
 		audioComp->SetSound ( flightSound );
@@ -95,6 +95,10 @@ void AK_Drone::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	// (20251223) W : 드론 스킬 타이머 정리
 	GetWorldTimerManager ().ClearTimer ( Skill01CooldownTimerHandle );
 	GetWorldTimerManager ().ClearTimer ( Skill02CooldownTimerHandle );
+	
+	//캐싱 컨테이너 비우기
+	previouslyDetectedUnits.Empty();
+	previouslyDetectedEnemys.Empty();
 	
 	Super::EndPlay(EndPlayReason);
 }
@@ -389,6 +393,7 @@ void AK_Drone::UpdateDetectedUnitSlot()
 		AP_EnemyObstacle* detectedEnemyObstacle = Cast<AP_EnemyObstacle> ( detectedActor );
 		if( detectedEnemyObstacle )
 		{
+			currentDetectedEnemys.Add ( detectedActor );
 			onUnitDetected.Broadcast ( detectedActor );
 		}
 	}

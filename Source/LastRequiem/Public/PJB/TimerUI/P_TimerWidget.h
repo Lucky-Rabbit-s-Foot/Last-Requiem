@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "KHS/UI/K_BaseUIWidget.h"
+#include "PJB/System/P_GameStateBase.h"
 
 #include "P_TimerWidget.generated.h"
 
@@ -20,4 +21,13 @@ protected:
 
 	UPROPERTY ()
 	class AP_GameStateBase* GameStateBase;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "LR|Color" )
+	FLinearColor PreparationColor = FLinearColor::White;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadWrite , Category = "LR|Color" )
+	FLinearColor WaveColor = FLinearColor::Red;
+private:
+	EGamePhase CachedPhase;
+	bool bIsInitialized = false;
 };

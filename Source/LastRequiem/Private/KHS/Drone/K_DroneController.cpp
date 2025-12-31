@@ -16,9 +16,11 @@
 #include "BJM/Unit/B_UnitBase.h"
 #include "PJB/Pause/P_PauseWidget.h"
 #include "PJB/LevelSelector/P_PauseLevelSelector.h"
+#include "PJB/Pause/P_TutorialAlbum.h"
 
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "LR_GameInstance.h"
 #include "KHS/UI/K_TutorialWidget.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -70,6 +72,12 @@ void AK_DroneController::OnPossess(APawn* InPawn)
 	Super::OnPossess(InPawn);
 	
 	InitializePersistentUI();
+	
+	ULR_GameInstance* gi = Cast<ULR_GameInstance>(GetGameInstance());
+	if (gi && gi->CanShowTutorial())
+	{
+		OpenTutorialUI();
+	}
 }
 
 
@@ -90,6 +98,38 @@ void AK_DroneController::InitializePersistentUI()
 	}
 	
 	//KHS_SCREEN_INFO(TEXT("==== Initialize Persistent UI END! ===="));
+}
+
+void AK_DroneController::OpenTutorialUI()
+{
+	if (!tutorialUIFactory)
+	{
+		KHS_WARN(TEXT("Tutorial : No Valid Widget"));
+		return;
+	}
+	
+	auto* UIManager = GetGameInstance()->GetSubsystem<UK_UIManagerSubsystem>();
+	if (!UIManager)
+	{
+		KHS_WARN(TEXT("UIManager : No Valid Instance"));
+		return;
+	}
+	
+	SetPause(true);
+	
+	auto* tutorialUI = UIManager->OpenUI<UP_TutorialAlbum>(tutorialUIFactory);
+	if (tutorialUI)
+	{
+		//닫기 델리게이트 구독
+		tutorialUI->onCloseUIRequested.AddDynamic(this, &AK_DroneController::HandleUICloseRequest);
+	}
+	
+	//튜토리얼 시청여부 GI에 등록.
+	ULR_GameInstance* gi = Cast<ULR_GameInstance>(GetGameInstance());
+	if (gi)
+	{
+		gi->MarkTutorialAsShown();
+	}
 }
 
 void AK_DroneController::BindPersistentUIDelegates()
@@ -215,7 +255,7 @@ void AK_DroneController::UnbindSettingUIDelegates()
 // (20251226) P : Pause UI (Start)
 void AK_DroneController::BindPauseUIDelegates ( UP_PauseWidget* pauseUI )
 {
-	if (!pauseUI || bSituationMapUIBound)
+	if (!pauseUI || bPauseUIBound)
 	{
 		KHS_INFO ( TEXT ( "NO Valid Setting Ui or is already bound with Controller" ) );
 		return;
@@ -225,20 +265,22 @@ void AK_DroneController::BindPauseUIDelegates ( UP_PauseWidget* pauseUI )
 
 	pauseUI->onRestartRequestedDel.AddDynamic ( this , &AK_DroneController::HandleRestartButtonClicked );
 	pauseUI->onQuitGameRequestedDel.AddDynamic ( this , &AK_DroneController::HandleQuitGameButtonClicked );
+	pauseUI->onTutorialRequestedDel.AddDynamic ( this , &AK_DroneController::HandleTutorialButtonClicked );
 
 	bPauseUIBound = true;
 }
 void AK_DroneController::UnbindPauseUIDelegates ()
 {
-	if (!bSituationMapUIBound || !cachedPauseUI)
+	if (!bPauseUIBound || !cachedPauseUI)
 	{
 		KHS_INFO ( TEXT ( "NO Valid cached Ui or is already unbound with Controller" ) );
 		return;
 	}
 
-	cachedPauseUI->LevelSelector->onRestartRequestedDel.RemoveDynamic ( this , &AK_DroneController::HandleRestartButtonClicked );
-	cachedPauseUI->LevelSelector->onQuitGameRequestedDel.RemoveDynamic ( this , &AK_DroneController::HandleQuitGameButtonClicked );
-	
+	cachedPauseUI->onRestartRequestedDel.RemoveDynamic ( this , &AK_DroneController::HandleRestartButtonClicked );
+	cachedPauseUI->onQuitGameRequestedDel.RemoveDynamic ( this , &AK_DroneController::HandleQuitGameButtonClicked );
+	cachedPauseUI->onTutorialRequestedDel.RemoveDynamic ( this , &AK_DroneController::HandleTutorialButtonClicked );
+
 	cachedPauseUI = nullptr;
 	bPauseUIBound = false;
 }
@@ -410,38 +452,6 @@ void AK_DroneController::OnOpenPauseUI ( const FInputActionValue& value )
 			BindPauseUIDelegates ( pauseUI );
 		}
 	}
-
-
-	//if (!pauseUIFactory)
-	//{
-	//	KHS_WARN ( TEXT ( "No Valid SettingWidget" ) );
-	//	return;
-	//}
-
-	//auto* UIManager = GetGameInstance ()->GetSubsystem<UK_UIManagerSubsystem> ();
-	//if (!UIManager)
-	//{
-	//	KHS_WARN ( TEXT ( "No Valid UI Subsystem" ) );
-	//	return;
-	//}
-
-	//auto* pauseUI = UIManager->GetOrCreateWidget<UP_PauseWidget> ( pauseUIFactory );
-	//if (!pauseUI)
-	//{
-	//	KHS_WARN ( TEXT ( "No Valid Casted Widget" ) );
-	//	return;
-	//}
-
-	//if (pauseUI->IsOpen ())
-	//{
-	//	return;
-	//}
-
-	//SetPause ( true );
-
-	//UIManager->OpenUI<UP_PauseWidget> ( pauseUIFactory );
-	//pauseUI->onCloseUIRequested.AddDynamic ( this , &AK_DroneController::HandleUICloseRequest );
-	//BindPauseUIDelegates ( pauseUI );
 }
 
 void AK_DroneController::OnDroneUseSkill01(const FInputActionValue& value)
@@ -539,6 +549,15 @@ void AK_DroneController::HandleUICloseRequest(class UK_BaseUIWidget* requestWidg
 	}
 	// (20251226) P : Pause UI (End)
 
+	UP_TutorialAlbum* tutorial = Cast<UP_TutorialAlbum>(requestWidget);
+	if (tutorial)
+	{
+		cachedTutorialUI = nullptr;
+		AK_Drone* drone = Cast<AK_Drone>(GetPawn());
+		drone->InitializeDetectedUnitSlot();
+		SetPause(false);
+	}
+	
 	//인스턴스로 직접 닫는 오버로딩 CloseUI함수 호출
 	UIManager->CloseUI(requestWidget);
 	
@@ -655,7 +674,7 @@ void AK_DroneController::HandleTutorialButtonClicked()
 		return;
 	}
 	
-	auto* tutorialUI = UIManager->OpenUI<UK_TutorialWidget>(tutorialUIFactory);
+	auto* tutorialUI = UIManager->OpenUI<UP_TutorialAlbum>(tutorialUIFactory);
 	if (tutorialUI)
 	{
 		//닫기 델리게이트 구독

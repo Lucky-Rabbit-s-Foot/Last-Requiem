@@ -51,9 +51,9 @@ void UP_ScoreBoard::NativeDestruct ()
 void UP_ScoreBoard::UpdateAllScores ( FP_GameResultData& Count , FP_GameResultData& Score )
 {
 	SetScore ( PlayTime , TEXT ( "플레이 시간" ) , Count.PlayTime , Score.PlayTime );
-	SetScore ( HealthRecovery , TEXT ( "체력 회복" ) , Count.Heal , Score.Heal );
-	SetScore ( SanityRecovery , TEXT ( "정신력 회복" ) , Count.Sanity , Score.Sanity );
-	SetScore ( DestroyObject , TEXT ( "구조물 파괴" ) , Count.Dest , Score.Dest );
+	SetScore ( HealthRecovery , TEXT ( "분대원 체력 회복" ) , Count.Heal , Score.Heal );
+	SetScore ( SanityRecovery , TEXT ( "분대원 정신력 회복" ) , Count.Sanity , Score.Sanity );
+	SetScore ( DestroyObject , TEXT ( "봉인 장치 파괴" ) , Count.Dest , Score.Dest );
 
 	SetScore ( MeleeCount , TEXT ( "근거리 처치" ) , Count.Melee , Score.Melee );
 	SetScore ( EnhancedMeleeCount , TEXT ( "강화 근거리 처치" ) , Count.EnMelee , Score.EnMelee );

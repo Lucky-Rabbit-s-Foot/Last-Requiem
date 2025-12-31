@@ -8,8 +8,11 @@
 
 #include "P_Fortress.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnFortressDamagedDelegate );
-DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnFortressBrokenDelegate );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnFortressDamagedDelegate , AP_Fortress* , Fortress );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnFortressBrokenDelegate , AP_Fortress* , Fortress );
+
+//DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnFortressDamagedDelegate );
+//DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnFortressBrokenDelegate );
 
 UCLASS()
 class LASTREQUIEM_API AP_Fortress : public AActor , public IGameplayTagAssetInterface

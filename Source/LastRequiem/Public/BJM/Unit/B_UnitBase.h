@@ -15,6 +15,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnUnitDieDelegate, AActor*, InUnit );
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FOnCombatStateChangedDelegate , bool , bIsCombat );
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams ( FOnUnitSpeak , AActor* , InSpeaker , bool , bIsSpeaking );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams ( FOnUnitSpeakChanged , AB_UnitBase* , Unit , bool , bIsSpeaking , FString , StateText );
 
 class UB_UnitStatusComponent;
 class UIndicatorSpriteComponent;
@@ -270,7 +271,7 @@ protected:
 
 public:
 	UFUNCTION ( BlueprintCallable , Category = "Unit|Action" )
-	void PlayUnitVoice ( USoundBase* InVoiceSound );
+	void PlayUnitVoice ( USoundBase* InVoiceSound , FString StateText );
 
 	void StopUnitVoice ();
 
@@ -361,5 +362,22 @@ private:
 	void RefreshIndicatorState ();
 
 
+public:
+	UPROPERTY ( BlueprintAssignable )
+	FOnUnitSpeakChanged OnUnitSpeakChanged;
+
+protected:
+	UPROPERTY ()
+	UAudioComponent* CurrentVoiceComp;
+
+	UFUNCTION ()
+	void OnVoiceFinished ();
+
+private:
+	FString GetMentalStateText ( EUnitBehaviorState State );
+
+protected:
+
+	FTimerHandle TimerHandle_PlaybackCheck;
 
 };

@@ -51,6 +51,7 @@ private:
 	 */
 	//UI Management Internal Helpers
 	void InitializePersistentUI();
+	void OpenTutorialUI();
 	
 	
 	//개별 UI 델리게이트 바인딩/언바인딩 헬퍼
@@ -112,7 +113,7 @@ protected:
 	UPROPERTY()
 	TObjectPtr<class UK_SettingWidget> cachedSettingUI;
 	UPROPERTY()
-	TObjectPtr<class UK_TutorialWidget> cachedTutorialUI;
+	TObjectPtr<class UP_TutorialAlbum> cachedTutorialUI;
 
 	// (20251226) P : Pause UI (Start)
 	UPROPERTY ()
@@ -124,6 +125,7 @@ protected:
 	bool bPersistentUIBound = false;
 	bool bSituationMapUIBound = false;
 	bool bSettingUIBound = false;
+	
 	
 	//UI Classes
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|UI")
@@ -144,7 +146,7 @@ protected:
 	// (20251226) P : Pause UI (End)
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|UI")
-	TSubclassOf<class UK_TutorialWidget> tutorialUIFactory;
+	TSubclassOf<class UP_TutorialAlbum> tutorialUIFactory;
 	
 	//Input
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LR|Input")

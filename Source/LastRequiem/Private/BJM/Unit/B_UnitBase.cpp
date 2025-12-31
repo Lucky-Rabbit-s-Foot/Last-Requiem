@@ -187,6 +187,10 @@ void AB_UnitBase::BindDroneDetection ()
 	BoundDrone = Drone;
 	UnitDetectedHandle = Drone->onUnitDetected.AddUObject ( this , &AB_UnitBase::HandleDroneUnitDetected );
 	UnitLostHandle = Drone->onUnitLostDetection.AddUObject ( this , &AB_UnitBase::HandleDroneUnitLost );
+
+	Drone->onUnitDetected.Broadcast ( this );
+	
+	Drone->onUnitLostDetection.Broadcast ( this );
 }
 
 void AB_UnitBase::UnbindDroneDetection ()
@@ -394,6 +398,9 @@ void AB_UnitBase::UnitMentalCheck_Move(float InX, float InY)
 
 void AB_UnitBase::OnBehaviorStateChanged_Unit ( EUnitBehaviorState NewState )
 {
+
+	if (!bIsAlive) return;
+
 	AttackDamage = OriginalAttackDamage;
 	AttackRange = OriginalAttackRange;
 
@@ -500,7 +507,7 @@ void AB_UnitBase::ProcessMoveCommand(float InX, float InY)
 void AB_UnitBase::CommandMoveToLocation ( FVector TargetLocation )
 {
 
-	DrawDebugSphere ( GetWorld () , TargetLocation , 50.0f , 16 , FColor::Red , false , 3.0f );
+	//DrawDebugSphere ( GetWorld () , TargetLocation , 50.0f , 16 , FColor::Red , false , 3.0f );
 	UE_LOG ( LogTemp , Error , TEXT ( "이동좌표: %s" ) , *TargetLocation.ToString () );
 
 	AAIController* AIController = Cast<AAIController> ( GetController () );
@@ -532,7 +539,7 @@ void AB_UnitBase::CommandMoveToLocation ( FVector TargetLocation )
 	
 		FinalLocation = ProjectedLocation.Location;
 
-		DrawDebugSphere ( GetWorld () , ProjectedLocation.Location , 50.0f , 16 , FColor::Green , false , 3.0f );
+		//DrawDebugSphere ( GetWorld () , ProjectedLocation.Location , 50.0f , 16 , FColor::Green , false , 3.0f );
 		UE_LOG ( LogTemp , Warning , TEXT ( "보정된 좌표: %s" ) , *ProjectedLocation.Location.ToString () );
 		BlackboardComp->SetValueAsVector ( TEXT ( "TargetLocation" ) , FinalLocation );
 		BlackboardComp->SetValueAsEnum ( TEXT ( "Command" ) , (uint8)EUnitCommandType::Move );
@@ -911,6 +918,14 @@ void AB_UnitBase::OnDie_Unit ()
 	PlayVoiceForEvent(EUnitVoiceEvent::Death);
 	bIsAlive = false;
 
+	// 택 제거
+	FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
+	GameplayTags.RemoveTag ( UnitTag );
+
+	// 캡슐 콜리전 해제
+	GetCapsuleComponent ()->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
+	GetCapsuleComponent ()->SetCollisionResponseToAllChannels ( ECR_Ignore );
+
 	if (UAnimInstance* AnimInstance = GetMesh ()->GetAnimInstance ())
 	{
 		AnimInstance->StopAllMontages ( 0.2f );
@@ -943,7 +958,7 @@ void AB_UnitBase::OnDie_Unit ()
 
 	if (bResult)
 	{
-		DrawDebugSphere ( GetWorld () , GetActorLocation () , ShockRadius , 24 , FColor::Red , false , 2.0f );
+		//DrawDebugSphere ( GetWorld () , GetActorLocation () , ShockRadius , 24 , FColor::Red , false , 2.0f );
 
 		for (auto const& Overlap : OverlapResults)
 		{
@@ -957,7 +972,7 @@ void AB_UnitBase::OnDie_Unit ()
 			if (FellowUnit && FellowUnit->IsAlive ())
 			{
 				// 아군확인2
-				FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
+				//FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
 				if (FellowUnit->GameplayTags.HasTag ( UnitTag ))
 				{
 					if (FellowUnit->StatusComponent)
@@ -977,9 +992,6 @@ void AB_UnitBase::OnDie_Unit ()
 		Announcer->PlayUnitDeathSound ( MyUnitName.ToString () );
 	}
 
-	// 택 제거
-	FGameplayTag UnitTag = FGameplayTag::RequestGameplayTag ( FName ( "Unit" ) );
-	GameplayTags.RemoveTag ( UnitTag );
 
 	if (AAIController* AIController = Cast<AAIController> ( GetController () ))
 	{
@@ -1009,9 +1021,6 @@ void AB_UnitBase::OnDie_Unit ()
 		GetCharacterMovement ()->SetComponentTickEnabled ( false ); // 틱 업데이트 중지
 	}
 
-	// 캡슐 콜리전 해제
-	GetCapsuleComponent ()->SetCollisionEnabled ( ECollisionEnabled::NoCollision );
-	GetCapsuleComponent ()->SetCollisionResponseToAllChannels ( ECR_Ignore );
 
 	// SetLifeSpan ( 5.0f ); // 시체 5초 뒤 삭제
 
@@ -1078,57 +1087,212 @@ void AB_UnitBase::SetSpeakingState ( bool bNewState )
 	
 }
 
-void AB_UnitBase::PlayUnitVoice ( USoundBase* InVoiceSound )
+void AB_UnitBase::PlayUnitVoice ( USoundBase* InVoiceSound , FString StateText )
 {
+
 	if (!bIsAlive || InVoiceSound == nullptr) return;
 
-	UAudioComponent* AudioComp = UGameplayStatics::SpawnSoundAttached(
-		InVoiceSound,                        // 소리 파일
-		GetMesh(),                           // 붙일 곳
-		FName("HeadSocket"),                 // 소켓 이름
-		FVector::ZeroVector,                 // 위치 오프셋
-		FRotator::ZeroRotator,               // 회전값
-		EAttachLocation::KeepRelativeOffset, // 붙이기 설정
-		false,                               // 액터 파괴 시 멈춤 여부
-		1.0f,                                // 볼륨 Multiplier
-		1.0f,                                // 피치 Multiplier
-		0.0f,                                // 시작 시간
-		UnitVoiceAttenuation,                // 감쇠 설정
-		UnitVoiceConcurrency				 // 동시성 설정
-	);
-
-	if (AudioComp)
+	// 1. 기존에 재생 중이던 소리가 있다면 정리
+	if (CurrentVoiceComp)
 	{
-		if (UnitSoundClass)
-		{
-			AudioComp->SoundClassOverride = UnitSoundClass;
-		}
-
-		AudioComp->Play();
+		CurrentVoiceComp->Stop ();
+		CurrentVoiceComp = nullptr;
 	}
 
-	SetSpeakingState ( true );
-
-	float SoundDuration = InVoiceSound->GetDuration ();
-
-	if (SoundDuration <= 0.0f) SoundDuration = 1.0f;
-
-	GetWorld ()->GetTimerManager ().ClearTimer ( SpeakingTimerHandle );
-
-	GetWorld ()->GetTimerManager ().SetTimer (
-		SpeakingTimerHandle ,
-		this ,
-		&AB_UnitBase::StopUnitVoice , 
-		SoundDuration ,
-		false
+	// 2. 소리 컴포넌트 생성
+	CurrentVoiceComp = UGameplayStatics::SpawnSoundAttached (
+		InVoiceSound ,
+		GetMesh () ,
+		FName ( "HeadSocket" ) ,
+		FVector::ZeroVector ,
+		FRotator::ZeroRotator ,
+		EAttachLocation::KeepRelativeOffset ,
+		false ,
+		1.0f ,
+		1.0f ,
+		0.0f ,
+		UnitVoiceAttenuation ,
+		UnitVoiceConcurrency
 	);
 
-	UE_LOG ( LogTemp , Log , TEXT ( "[%s] 음성 재생 시작 (%.1f초)" ) , *GetName () , SoundDuration );
+	if (CurrentVoiceComp)
+	{
+		CurrentVoiceComp->OnAudioFinished.AddDynamic ( this , &AB_UnitBase::OnVoiceFinished );
+
+		if (UnitSoundClass)
+		{
+			CurrentVoiceComp->SoundClassOverride = UnitSoundClass;
+		}
+
+		// 3. 일단 재생 요청!
+		CurrentVoiceComp->Play ();
+
+		// (패키징 빌드에서 동시성 처리가 너무 빨라서 생기는 문제 해결용)
+
+		GetWorld ()->GetTimerManager ().SetTimer (
+			TimerHandle_PlaybackCheck ,
+			[this , StateText]() // 람다 함수 (즉석 함수)
+			{
+				// 0.05초 뒤에 실행되는 내용:
+				if (CurrentVoiceComp && CurrentVoiceComp->IsPlaying ())
+				{
+					// 합격! 오디오 엔진이 허락했음 -> 말풍선 띄우기
+					if (OnUnitSpeakChanged.IsBound ())
+					{
+						OnUnitSpeakChanged.Broadcast ( this , true , StateText );
+					}
+					SetSpeakingState ( true );
+
+					UE_LOG ( LogTemp , Log , TEXT ( "[%s] 말하기 성공! (검증 완료)" ) , *GetName () );
+				}
+				else
+				{
+					// 불합격! 동시성 규칙 때문에 소리가 짤렸음 -> 말풍선 띄우지 마!
+					SetSpeakingState ( false );
+					UE_LOG ( LogTemp , Warning , TEXT ( "[%s] 말하기 취소됨 (동시성 제한)" ) , *GetName () );
+				}
+			} ,
+			0.05f , // 0.05초 딜레이
+			false
+		);
+	}
+	else
+	{
+		SetSpeakingState ( false );
+	}
+
+
+
+
+	//if (!bIsAlive || InVoiceSound == nullptr) return;
+
+	//// 2. 기존에 재생 중이던 소리가 있다면 강제 종료 (새 소리를 위해)
+	//if (CurrentVoiceComp)
+	//{
+	//	CurrentVoiceComp->Stop (); // 이걸 호출하면 OnAudioFinished가 발동됨 -> 자막 꺼짐
+	//	CurrentVoiceComp = nullptr;
+	//}
+
+	//// 3. 소리 재생 (컴포넌트 생성)
+	//CurrentVoiceComp = UGameplayStatics::SpawnSoundAttached (
+	//	InVoiceSound ,                        // 소리 파일
+	//	GetMesh () ,                           // 붙일 곳
+	//	FName ( "HeadSocket" ) ,                 // 소켓 이름
+	//	FVector::ZeroVector ,                 // 위치 오프셋
+	//	FRotator::ZeroRotator ,               // 회전값
+	//	EAttachLocation::KeepRelativeOffset , // 붙이기 설정
+	//	false ,                               // 액터 파괴 시 멈춤 여부
+	//	1.0f ,                                // 볼륨 Multiplier
+	//	1.0f ,                                // 피치 Multiplier
+	//	0.0f ,                                // 시작 시간
+	//	UnitVoiceAttenuation ,                // 감쇠 설정
+	//	UnitVoiceConcurrency                 // ★ 동시성 설정 (여기서 2명 제한 작동!)
+	//);
+
+	//if (CurrentVoiceComp)
+	//{
+	//	CurrentVoiceComp->OnAudioFinished.AddDynamic ( this , &AB_UnitBase::OnVoiceFinished );
+
+	//	if (UnitSoundClass)
+	//	{
+	//		CurrentVoiceComp->SoundClassOverride = UnitSoundClass;
+	//	}
+
+	//	CurrentVoiceComp->Play ();
+
+	//	if (CurrentVoiceComp->IsPlaying ())
+	//	{
+	//		// 성공: 진짜 재생 중이니까 말풍선 띄워!
+	//		if (OnUnitSpeakChanged.IsBound ())
+	//		{
+	//			OnUnitSpeakChanged.Broadcast ( this , true , StateText );
+	//		}
+	//		SetSpeakingState ( true );
+
+	//		UE_LOG ( LogTemp , Log , TEXT ( "[%s] 말하기 성공! (상태: %s)" ) , *GetName () , *StateText );
+	//	}
+	//	else
+	//	{
+	//		// 실패: 동시성(Prevent New) 때문에 재생 즉시 차단됨
+	//		// 말풍선 띄우지 말고 조용히 종료 처리
+	//		UE_LOG ( LogTemp , Warning , TEXT ( "[%s] 말하기 실패 (동시성 제한 걸림)" ) , *GetName () );
+
+	//		CurrentVoiceComp->Stop (); // 확실하게 멈춤
+	//		CurrentVoiceComp = nullptr; // 포인터 비움
+	//		SetSpeakingState ( false );
+	//	}
+	//}
+	//else
+	//{
+	//	// 컨커런시 설정 때문에 소리 재생에 실패했다면 말하기 상태도 켜지 마라
+	//	SetSpeakingState ( false );
+	//}
+
+
+
+	//UE_LOG ( LogTemp , Log , TEXT ( "[%s] 음성 재생 시작 (상태: %s)" ) , *GetName () , *StateText );
+
+
+
+
+
+
+
+
+	//if (!bIsAlive || InVoiceSound == nullptr) return;
+
+
+
+	//UAudioComponent* AudioComp = UGameplayStatics::SpawnSoundAttached(
+	//	InVoiceSound,                        // 소리 파일
+	//	GetMesh(),                           // 붙일 곳
+	//	FName("HeadSocket"),                 // 소켓 이름
+	//	FVector::ZeroVector,                 // 위치 오프셋
+	//	FRotator::ZeroRotator,               // 회전값
+	//	EAttachLocation::KeepRelativeOffset, // 붙이기 설정
+	//	false,                               // 액터 파괴 시 멈춤 여부
+	//	1.0f,                                // 볼륨 Multiplier
+	//	1.0f,                                // 피치 Multiplier
+	//	0.0f,                                // 시작 시간
+	//	UnitVoiceAttenuation,                // 감쇠 설정
+	//	UnitVoiceConcurrency				 // 동시성 설정
+	//);
+
+	//if (AudioComp)
+	//{
+	//	if (UnitSoundClass)
+	//	{
+	//		AudioComp->SoundClassOverride = UnitSoundClass;
+	//	}
+
+	//	AudioComp->Play();
+	//}
+
+	//SetSpeakingState ( true );
+
+	//float SoundDuration = InVoiceSound->GetDuration ();
+
+	//if (SoundDuration <= 0.0f) SoundDuration = 1.0f;
+
+	//GetWorld ()->GetTimerManager ().ClearTimer ( SpeakingTimerHandle );
+
+	//GetWorld ()->GetTimerManager ().SetTimer (
+	//	SpeakingTimerHandle ,
+	//	this ,
+	//	&AB_UnitBase::StopUnitVoice , 
+	//	SoundDuration ,
+	//	false
+	//);
+
+	//UE_LOG ( LogTemp , Log , TEXT ( "[%s] 음성 재생 시작 (%.1f초)" ) , *GetName () , SoundDuration );
 }
 
 void AB_UnitBase::StopUnitVoice ()
 {
-	SetSpeakingState ( false );
+	if (CurrentVoiceComp)
+	{
+		CurrentVoiceComp->Stop (); // 이걸 부르면 알아서 OnVoiceFinished로 감
+	}
 }
 
 void AB_UnitBase::PlayVoiceForEvent(EUnitVoiceEvent InEvent)
@@ -1192,7 +1356,11 @@ void AB_UnitBase::PlayVoiceForEvent(EUnitVoiceEvent InEvent)
 
 	if (SoundToPlay)
 	{
-		PlayUnitVoice(SoundToPlay);
+		// 1. 현재 상태를 글자(String)로 변환
+		FString StateText = GetMentalStateText ( CurrentMentalState );
+
+		// 2. 소리와 함께 글자를 넘겨줌!
+		PlayUnitVoice ( SoundToPlay , StateText );
 	}
 }
 
@@ -1330,6 +1498,32 @@ void AB_UnitBase::RefreshIndicatorState()
 
 	// 4) Normal
 	IndicatorSprite->SetIndicatorState(EIndicatorSpriteState::Normal);
+}
+
+void AB_UnitBase::OnVoiceFinished ()
+{
+	SetSpeakingState ( false );
+
+	if (OnUnitSpeakChanged.IsBound ())
+	{
+		OnUnitSpeakChanged.Broadcast ( this , false , TEXT ( "" ) );
+	}
+
+	CurrentVoiceComp = nullptr;
+}
+
+FString AB_UnitBase::GetMentalStateText ( EUnitBehaviorState State )
+{
+	switch (State)
+	{
+	case EUnitBehaviorState::Normal:   return TEXT ( "NORMAL" );
+	case EUnitBehaviorState::Tense:    return TEXT ( "TENSE" );
+	case EUnitBehaviorState::Fear:     return TEXT ( "FEAR" );
+	case EUnitBehaviorState::Panic:    return TEXT ( "PANIC!" );
+	case EUnitBehaviorState::Madness:  return TEXT ( "MADNESS" );
+	case EUnitBehaviorState::Awakened: return TEXT ( "AWAKENED" );
+	default: return TEXT ( "" );
+	}
 }
 
 void AB_UnitBase::PlayWeaponFireSound ()

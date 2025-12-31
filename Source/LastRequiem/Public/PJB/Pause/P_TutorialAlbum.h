@@ -16,6 +16,8 @@ class LASTREQUIEM_API UP_TutorialAlbum : public UK_BaseUIWidget
 {
 	GENERATED_BODY()
 
+	UP_TutorialAlbum();
+	
 protected:
 	virtual void NativeConstruct () override;
 
@@ -25,6 +27,9 @@ public:
 
 	UPROPERTY ( meta = (BindWidget) )
 	UButton* Btn_Next;
+	
+	UPROPERTY ( meta = (BindWidget) )
+	UButton* Btn_Quit;
 
 	UPROPERTY ( meta = (BindWidget) )
 	UImage* Img_Tutorial;
@@ -41,4 +46,8 @@ private:
 
 	UFUNCTION ()
 	void OnNextClicked ();
+	
+	//(K) 닫기 버튼 추가
+	UFUNCTION()
+	void OnQuitClicked();
 };

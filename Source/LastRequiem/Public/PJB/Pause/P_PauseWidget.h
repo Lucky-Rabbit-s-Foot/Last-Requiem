@@ -7,6 +7,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnRestartRequestedPause );
 DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnQuitGameRequestedPause );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FOnTutorialRequestedPause );
 
 UCLASS()
 class LASTREQUIEM_API UP_PauseWidget : public UK_BaseUIWidget
@@ -17,7 +18,6 @@ class LASTREQUIEM_API UP_PauseWidget : public UK_BaseUIWidget
 
 	bool IsOpenTest () { return bIsOpen; }
 protected:
-
 	//(251229) B : 일시정지 메뉴 설정을 위해 삽입
 	virtual void NativeOnInitialized () override;
 	//virtual void NativeConstruct () override;
@@ -30,13 +30,26 @@ private:
 	void ResumeGame ();
 	UFUNCTION ()
 	void QuitGame ();
+	UFUNCTION ()
+	void OpenTutorialAlbum ();
+
+	UFUNCTION ()
+	void OnHoverCopyright ();
+	UFUNCTION ()
+	void OnUnhoverCopyright ();
 
 public:
 	UPROPERTY ( meta = (BindWidget) )
-	class UP_TutorialAlbum* TutorialAlbum;
+	class UP_PauseLevelSelector* LevelSelector;
 
 	UPROPERTY ( meta = (BindWidget) )
-	class UP_PauseLevelSelector* LevelSelector;
+	class UButton* Btn_CopyrightIcon;
+
+	UPROPERTY ( meta = (BindWidget) )
+	class UP_CopyrightListWidget* CopyrightList;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly )
+	class UP_CopyrightData* DA;
 
 public:
 	UPROPERTY ( BlueprintAssignable , Category = "LR|Events" )
@@ -44,4 +57,7 @@ public:
 
 	UPROPERTY ( BlueprintAssignable , Category = "LR|Events" )
 	FOnQuitGameRequestedPause onQuitGameRequestedDel;
+
+	UPROPERTY ( BlueprintAssignable , Category = "LR|Events" )
+	FOnTutorialRequestedPause onTutorialRequestedDel;
 };

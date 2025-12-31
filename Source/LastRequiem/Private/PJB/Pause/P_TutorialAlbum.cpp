@@ -6,6 +6,12 @@
 #include "Engine/Texture2D.h"
 #include "PJB/Data/P_TutorialImageDataAsset.h"
 
+UP_TutorialAlbum::UP_TutorialAlbum()
+{
+	UILayer = EUILayer::POPUP;
+	zOrder = 11;
+}
+
 void UP_TutorialAlbum::NativeConstruct ()
 {
 	Super::NativeConstruct();
@@ -21,6 +27,13 @@ void UP_TutorialAlbum::NativeConstruct ()
 		Btn_Next->OnClicked.RemoveAll ( this );
 		Btn_Next->OnClicked.AddDynamic ( this , &UP_TutorialAlbum::OnNextClicked );
 	}
+	
+	if (Btn_Quit)
+	{
+		Btn_Quit->OnClicked.RemoveAll ( this );
+		Btn_Quit->OnClicked.AddDynamic ( this , &UP_TutorialAlbum::OnQuitClicked );
+	}
+	
 	CurrentIndex = 0;
 	UpdateTutorialView ();
 }
@@ -61,4 +74,11 @@ void UP_TutorialAlbum::OnNextClicked ()
 		CurrentIndex++;
 		UpdateTutorialView ();
 	}
+}
+
+void UP_TutorialAlbum::OnQuitClicked()
+{
+	//한번 보고나면 닫기버튼 가시성 해제
+	//Btn_Quit->SetVisibility(ESlateVisibility::Hidden);
+	onCloseUIRequested.Broadcast(this);
 }

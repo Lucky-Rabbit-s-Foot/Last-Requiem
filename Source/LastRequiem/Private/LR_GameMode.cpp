@@ -6,6 +6,7 @@
 #include "PJB/Data/P_SpawnDataRow.h"
 #include "PJB/Data/P_WaveDataRow.h"
 #include "PJB/System/P_GameStateBase.h"
+#include "KHS/UI/K_UIManagerSubsystem.h"
 
 ALR_GameMode::ALR_GameMode ()
 {
@@ -34,6 +35,11 @@ void ALR_GameMode::Tick ( float DeltaSeconds )
 		if (GetWorldTimerManager ().IsTimerActive ( PhaseTimerHandle ))
 		{
 			GS->RemainingTime = GetWorldTimerManager ().GetTimerRemaining ( PhaseTimerHandle );
+			if (!GS->bIsWaveStop && GS->RemainingTime < WaveStopTime)
+			{
+				GS->bIsWaveStop = true;
+				GS->OnWaveStop.Broadcast ();
+			}
 		}
 		GS->RealGameTimeSeconds += DeltaSeconds;
 	}
@@ -65,7 +71,8 @@ void ALR_GameMode::StartWave ()
 
 	GS->CurrentWave++;
 	GS->CurrentPhase = EGamePhase::Wave;
-	
+	GS->bIsWaveStop = false;
+
 	int32 LookupWave = FMath::Min ( GS->CurrentWave , TotalWaves );
 	FName RowName = FName ( *FString::Printf ( TEXT ( "Wave%d" ) , LookupWave ) );
 	if (WaveDataTable)
@@ -101,14 +108,13 @@ void ALR_GameMode::EndWave ()
 	StartPreparation ();
 }
 
-void ALR_GameMode::OnGameOver ()
+void ALR_GameMode::OnGameOver ( AP_Fortress* Fortress )
 {
 	LOG_MESSAGE_SCREEN ( Log , TEXT ( "Game Over!" ) );
 
 	AP_GameStateBase* GS = GetGameState<AP_GameStateBase> ();
 	ULR_GameInstance* GI = Cast<ULR_GameInstance> ( GetGameInstance () );
 	if (!GS || !GI) return;
-	
 	
 	GS->OnGameOver.Broadcast ();
 	GS->SetPlayTime ();
@@ -119,6 +125,19 @@ void ALR_GameMode::OnGameOver ()
 	FTimerHandle WaitHandle;
 	GetWorldTimerManager ().SetTimer ( WaitHandle , FTimerDelegate::CreateLambda ( [this]()
 		{
+			AP_GameStateBase* GS = GetGameState<AP_GameStateBase> ();
+			if (!GS) return;
+
+			GS->CurrentPhase = EGamePhase::GameOver;
+			GS->StopTimeScore ();
+
+			UK_UIManagerSubsystem* UIManager = GetGameInstance ()->GetSubsystem<UK_UIManagerSubsystem> ();
+			if (UIManager)
+			{
+				UIManager->CloseAllPopupUI ();
+				UIManager->ResetAllUIStates ();
+			}
+
 			UGameplayStatics::OpenLevel ( this , FName ( TEXT ( "LR_Outro" ) ) );
 		} ) , GameOverDelayTime , false );
 }

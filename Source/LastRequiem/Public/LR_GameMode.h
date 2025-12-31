@@ -16,7 +16,7 @@ public:
 	virtual void Tick ( float DeltaSeconds ) override;
 
 	UFUNCTION ()
-	void OnGameOver ();
+	void OnGameOver ( AP_Fortress* Fortress = nullptr);
 
 protected:
 	virtual void BeginPlay () override;
@@ -24,14 +24,17 @@ protected:
 
 protected:
 	UPROPERTY ( EditDefaultsOnly , Category = "Data|Wave" )
-	float PreparationTime = 10.0f;
+	float PreparationTime = 60.0f;
 	UPROPERTY ( EditDefaultsOnly , Category = "Data|Wave" )
-	float WaveTime = 20.0f;
+	float WaveTime = 60.0f;
+
+	UPROPERTY ( EditDefaultsOnly , Category = "Data|Wave" )
+	float WaveStopTime = 20.0f;
 
 	UPROPERTY ( EditDefaultsOnly , Category = "Data|GameOver" )
 	float GameOverDelayTime = 5.0f;
 
-	int32 TotalWaves = 0;
+	int32 TotalWaves = 10;
 private:
 	FTimerHandle PhaseTimerHandle;
 
