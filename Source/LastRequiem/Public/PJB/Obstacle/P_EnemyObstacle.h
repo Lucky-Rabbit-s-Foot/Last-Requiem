@@ -70,6 +70,10 @@ protected:
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Data|UI" )
 	TObjectPtr<class UWidgetComponent> DetectedWidget = nullptr;
 
+	UPROPERTY ( Transient )
+	TObjectPtr<class UP_DetectedObstacleWidget> CachedDetectedWidget = nullptr;
+
 private:
 	bool bIsBroken = false;
+	bool bIsDetected = false;
 };

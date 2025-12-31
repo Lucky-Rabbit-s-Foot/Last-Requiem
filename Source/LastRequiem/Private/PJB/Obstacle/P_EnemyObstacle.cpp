@@ -8,6 +8,7 @@
 #include "PJB/System/P_GameStateBase.h"
 #include "LR_GameMode.h"
 #include "Components/WidgetComponent.h"
+#include "PJB/Obstacle/P_DetectedObstacleWidget.h"
 
 #include "NiagaraSystem.h"
 #include "NiagaraFunctionLibrary.h"
@@ -40,7 +41,6 @@ AP_EnemyObstacle::AP_EnemyObstacle()
 	DetectedWidget->SetupAttachment ( RootComponent );
 	DetectedWidget->SetWidgetSpace ( EWidgetSpace::Screen );
 	DetectedWidget->SetDrawAtDesiredSize ( true );
-	DetectedWidget->SetVisibility ( false );
 
 	AIControllerClass = nullptr;
 	AutoPossessPlayer = EAutoReceiveInput::Disabled;
@@ -72,6 +72,17 @@ void AP_EnemyObstacle::BeginPlay()
 	if(AP_GameStateBase* GS = GetWorld ()->GetGameState<AP_GameStateBase> ())
 	{
 		OnEnemyObstacleBrokenDelegate.AddDynamic ( GS , &AP_GameStateBase::CountDestructEnemyObstacle );
+	}
+
+	if (DetectedWidget)
+	{
+		DetectedWidget->SetVisibility ( true );
+
+		UUserWidget* WidgetObj = DetectedWidget->GetUserWidgetObject ();
+		if (WidgetObj)
+		{
+			CachedDetectedWidget = Cast<UP_DetectedObstacleWidget> ( WidgetObj );
+		}
 	}
 }
 
@@ -164,23 +175,42 @@ void AP_EnemyObstacle::BindDrone ( AK_Drone* InDrone )
 void AP_EnemyObstacle::OnDetected ( AActor* DetectedActor )
 {
 	if (DetectedActor != this || bIsBroken) return;
+	
+	if (bIsDetected) return;
+	bIsDetected = true;
 
 	if (SpriteComp)
 	{
 		SpriteComp->SetSpriteOnOff ( true );
 	}
 
-	if (DetectedWidget)
+	if (!CachedDetectedWidget && DetectedWidget)
 	{
-		DetectedWidget->SetVisibility ( true );
+		CachedDetectedWidget = Cast<UP_DetectedObstacleWidget> ( DetectedWidget->GetUserWidgetObject () );
+	}
+
+	if (CachedDetectedWidget)
+	{
+		if (DetectedWidget)
+		{
+			DetectedWidget->SetVisibility ( true );
+		}
+		CachedDetectedWidget->PlayShowAnimation ();
 	}
 }
 
 void AP_EnemyObstacle::OnLostDetection ( AActor* DetectedActor )
 {
 	if (DetectedActor != this || bIsBroken) return;
+	
+	if (!bIsDetected) return;
+	bIsDetected = false;
 
-	if (DetectedWidget)
+	if (CachedDetectedWidget)
+	{
+		CachedDetectedWidget->PlayHideAnimation ();
+	}
+	else if (DetectedWidget)
 	{
 		DetectedWidget->SetVisibility ( false );
 	}
